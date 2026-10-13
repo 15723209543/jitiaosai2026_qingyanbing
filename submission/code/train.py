@@ -1,0 +1,128 @@
+"""
+案例:
+    复用课堂 CNN 的训练逻辑, 训练青光眼二分类模型.
+"""
+
+# 导包
+import sys
+import time
+
+# 修改①: 深度学习库首次导入也需要时间, 点击运行后先立即显示启动信息.
+if __name__ == "__main__":
+    sys.dont_write_bytecode = True
+    print("训练程序已启动, 正在加载PyTorch和数据读取模块...", flush=True)
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+
+from model import ImageModel, create_dataset
+from predict import evaluate, predict
+from utils import (
+    BATCH_SIZE, CPU_THREADS, EPOCHS, MODEL_PATH, RESUME,
+    create_sampler, print_progress, save_training_record,
+)
+
+
+# todo 3. 模型训练.
+# 【来源】复用day07 CNN的train循环, 新增均衡采样、批次进度和每轮独立验证.
+def train(train_dataset, valid_dataset):
+    # 优化①: 参考day06 ANN优化版固定随机数种子.
+    torch.manual_seed(0)
+    torch.set_num_threads(CPU_THREADS)
+
+    # 1. 创建数据加载器.
+    # 修改②: 阳性只有约3.2%, 按类别均衡抽样后不再设置shuffle或额外加权损失.
+    dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=create_sampler(train_dataset.labels))
+    print(f"训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
+          f"共{EPOCHS}轮, 每轮{len(dataloader)}批, CPU线程:{CPU_THREADS}", flush=True)
+
+    # 2. 创建模型对象.
+    model = ImageModel()
+    best_metrics, best_epoch, history = None, 0, []
+    if RESUME and MODEL_PATH.is_file():
+        # 修改③: 继续训练已保存的模型权重；Adam状态重新初始化, 不是完全恢复中断点.
+        model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu", weights_only=True))
+        print("已加载现有参数, 先验证训练前模型...", flush=True)
+        best_metrics = evaluate(valid_dataset, model)
+        history.append({"epoch": 0, **best_metrics})
+
+    # 3. 创建损失函数对象.
+    # 修改④: 已均衡采样, 采用课堂普通交叉熵, 避免对阳性重复加权.
+    criterion = nn.CrossEntropyLoss()  # softmax()激活函数 + 损失计算.
+
+    # 4. 创建优化器对象.
+    # 优化②: 按ANN优化版和CNN课件, Adam学习率由1e-3改为1e-4.
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+
+    # 5. 循环遍历epoch, 开始每轮的训练动作.
+    epochs = EPOCHS
+    for epoch_idx in range(epochs):
+        # 5.1 定义变量, 记录总损失、总样本数、预测正确数和训练开始时间.
+        total_loss, total_samples, total_correct, start = 0.0, 0, 0, time.time()
+
+        # 5.2 遍历数据加载器, 获取每批次的数据.
+        print(f"开始训练 epoch: {epoch_idx + 1}/{epochs}", flush=True)
+        for batch_idx, (x, y) in enumerate(dataloader, 1):
+            # 5.2.1 切换训练模式.
+            model.train()
+
+            # 5.2.2 模型预测.
+            y_pred = model(x)
+
+            # 5.2.3 计算损失.
+            loss = criterion(y_pred, y)
+
+            # 5.2.4 梯度清零 + 反向传播 + 参数更新.
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # 5.2.5 统计预测正确的样本个数、总损失和总样本个数.
+            total_correct += (torch.argmax(y_pred, dim=-1) == y).sum().item()
+            total_loss += loss.item() * len(y)
+            total_samples += len(y)
+            # 修改⑤: 首批、每25批及末批显示实时进度, 不再等待整轮结束才输出.
+            print_progress(
+                f"epoch: {epoch_idx + 1}/{epochs}", batch_idx, len(dataloader), start,
+                f", loss:{total_loss / total_samples:.5f}, acc:{total_correct / total_samples:.4f}"
+            )
+
+        # 5.2.6 按课堂CNN原格式打印该轮训练信息.
+        print(
+            f"epoch: {epoch_idx + 1}, loss: {total_loss / total_samples:.5f}, "
+            f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True
+        )
+
+        # 6. 修改⑥: 每轮调用predict.py验证；先比较AUROC, 相同时比较AUPRC.
+        metrics = evaluate(valid_dataset, model)
+        history.append({"epoch": epoch_idx + 1, "train_loss": total_loss / total_samples,
+                        "train_accuracy": total_correct / total_samples, **metrics})
+        if best_metrics is None or (metrics["auroc"], metrics["auprc"]) > (best_metrics["auroc"], best_metrics["auprc"]):
+            best_metrics, best_epoch = metrics, epoch_idx + 1
+            MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+            # 先完整保存临时参数, 再替换最佳参数, 避免写到一半覆盖原模型.
+            temporary_path = MODEL_PATH.with_suffix(".tmp")
+            torch.save(model.state_dict(), temporary_path)
+            temporary_path.replace(MODEL_PATH)
+            print(f"已保存最佳模型: {MODEL_PATH}, AUROC:{metrics['auroc']:.6f}", flush=True)
+        else:
+            print(f"本轮未超过最佳AUROC:{best_metrics['auroc']:.6f}, 保留最佳参数", flush=True)
+        save_training_record(history, best_metrics, best_epoch)
+
+    print(f"训练完成, 最佳验证AUROC:{best_metrics['auroc']:.6f}, "
+          f"阳性召回率:{best_metrics['recall']:.2%}", flush=True)
+
+
+# 5. 测试.
+if __name__ == "__main__":
+    # 1. 获取数据集.
+    print("正在读取glaucoma_first的训练集和官方验证集...", flush=True)
+    train_dataset, valid_dataset = create_dataset()
+
+    # 2. 模型训练.
+    train(train_dataset, valid_dataset)
+
+    # 3. 修改⑦: 每轮已验证, 最后自动用最佳模型预测无标签test文件夹并生成提交CSV.
+    predict()
