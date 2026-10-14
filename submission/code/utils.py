@@ -33,7 +33,7 @@ IMAGE_SIZE = 64
 # 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
 BATCH_SIZE = 64
 # 修改②: 每次训练3轮；已有参数时继续训练, 每轮按独立验证集AUROC选择最佳参数.
-EPOCHS = 3
+EPOCHS = 5
 RESUME = True
 CPU_THREADS = 8
 LOG_EVERY = 25
