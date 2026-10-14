@@ -96,5 +96,5 @@ def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
 
 # 5. 测试.
 if __name__ == "__main__":
-    # main函数供参赛者本地直接运行, 自动生成可以上传的submission.csv.
+    # 修改⑤: 只有单独运行本文件才执行测试集预测并生成submission.csv；被train导入时不执行.
     predict()

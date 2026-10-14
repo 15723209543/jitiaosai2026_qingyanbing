@@ -18,7 +18,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
-from predict import evaluate, predict
+from predict import evaluate
 from utils import (
     BATCH_SIZE, CPU_THREADS, EPOCHS, MODEL_PATH, RESUME,
     create_sampler, print_progress, save_training_record,
@@ -124,5 +124,5 @@ if __name__ == "__main__":
     # 2. 模型训练.
     train(train_dataset, valid_dataset)
 
-    # 3. 修改⑦: 每轮已验证, 最后自动用最佳模型预测无标签test文件夹并生成提交CSV.
-    predict()
+    # 3. 修改⑦: 本文件只负责训练和验证；提交答案由用户单独运行predict.py生成.
+    print("训练与验证结束。需要生成提交答案时, 请单独运行predict.py。", flush=True)

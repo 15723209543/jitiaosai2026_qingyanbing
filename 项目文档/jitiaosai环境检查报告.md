@@ -1,6 +1,9 @@
 # `jitiaosai` 环境与 2026 规程适配报告
 
-更新日期：2026-10-13
+更新日期：2026-10-14
+
+执行约定：助手后续只做代码修改和轻量检查，由用户启动训练/预测。
+`train.py` 只训练与验证，`predict.py` 单独运行时才生成提交答案。
 
 ## 1. 解释器状态
 
@@ -50,6 +53,7 @@ crpi-4leqgt7v1jo7rycf.cn-beijing.personal.cr.aliyuncs.com/coder02026/compete:1.0
 | NumPy | 1.26.4 |
 | pandas | 2.2.3 |
 | torchsummary | 已安装 |
+| scikit-learn | 1.9.0，上次修改已验证可导入，用于验证指标 |
 | pip check | 项目必需包可用；全环境存在无关工具的缺失依赖，见下文 |
 
 Python 主版本符合规程；PyTorch/torchvision 比推荐版本更新，且当前为 CPU 版。本轮
@@ -94,7 +98,10 @@ torchvision==0.25.0
 `Image_name/Age/True_Label`，测试 CSV 只有 `Image_name/Age`，
 训练/验证/测试规模分别为 51396/5849/5855。首轮 CPU 全量训练（1 epoch）已完成：
 loss `0.49328`、训练打印 acc `0.97`、用时 `1624.53s`；验证 accuracy `0.967345`、
-AUROC `0.628867`、AP/AUPRC `0.048873`。
+AUROC `0.628867`、AP `0.048873`。这些为旧首轮结果。
+
+此后于 2026-10-13 完成三轮续训，最佳验证 AUROC `0.885387`、梯形 AUPRC `0.362978`、
+AP `0.365991`、阳性召回率 `64.40%`。本次只调整入口职责，没有重新训练。
 
 训练输入：`glaucoma_first/train.csv` 与 `glaucoma_first/train/`；验证输入：
 `glaucoma_first/valid.csv` 与 `glaucoma_first/valid/`。
