@@ -1,4 +1,4 @@
-# jitiaosai 环境与 V1.3.1 适配报告
+# jitiaosai 环境与 V1.3.2 适配报告
 
 更新日期：2026-10-15。只做轻量检查，不启动训练或整批预测。
 
@@ -28,7 +28,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 - V1.3.1加宽Conv2d并增加AdaptiveAvgPool2d；改用PyTorch默认初始化，不再使用Dirac，不增加依赖。
 
 上述均为推荐版本提供的基础接口。本轮实际回归在本机jitiaosai执行，不能冒称已经在官方2.10.0/T4环境复测。
-新版pth保存由张量和基础字段构成的字典，包含state_dict、model_config、image_size、format_version=3及selection_metric="validation_accuracy"；不是完整Python模型对象。旧纯state_dict仍兼容。
+新版pth保存由张量和基础字段构成的字典，包含state_dict、model_config、image_size、format_version=3及selection_metric="validation_auroc"、tie_break_metric="validation_auprc"；不是完整Python模型对象。旧纯state_dict仍兼容。
 不再直接把新版pth整体传给model.load_state_dict，应调用项目utils.load_model。
 
 ## 4. 运行与记录
@@ -38,7 +38,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 & "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" submission/code/train.py
 ```
 
-最多12轮，可能提前停止。只使用train/valid，完整验证Acc严格提高时保存到submission/model/best_model.pth；学习率和早停也跟随验证Acc，AUROC仍显示供比赛效果对照。
+最多12轮，可能提前停止。只使用train/valid，完整验证集AUROC优先；AUROC完全相同时，AUPRC更高才保存，两项都相同保留旧模型。准确率和AP不参与保存判断；保存到submission/model/best_model.pth。学习率和早停观察本次候选模型自身的验证AUROC，不以旧冠军为进步门槛。首轮建立自身基准；随后连续2轮未超过自身最高值则学习率减半，连续10轮未提高则早停。
 记录保存到项目文档/训练记录/时间目录，不在results生成训练历史。
 
 预测：
@@ -51,7 +51,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 
 ## 5. 仍需用户后续确认
 
-- 本版真实训练的验证Acc是否提高，以及AUROC/AUPRC/AP和阳性召回率是否退步；验证集全部猜阴性也有约96.73%Acc，不能只以Acc判断比赛效果。
+- 本版真实训练的验证AUROC/AUPRC是否提高，以及Acc、AP和阳性召回率的变化；验证集全部猜阴性也有约96.73%Acc，不能只以Acc判断比赛效果。
 - 新CSV的平台成绩；用户反馈的79分属于修改前版本。
 - 官方推荐框架/T4环境下的兼容性与单张端到端延迟≤100ms。
 - CPU续训的实际耗时；轻量合成检查不能推算整套训练性能。

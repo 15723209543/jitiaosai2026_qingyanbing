@@ -33,9 +33,9 @@ LABEL_COLUMN = "True_Label"
 IMAGE_SIZE = 64
 # 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
 BATCH_SIZE = 64
-# 修改②: 最多续训12轮, 连续5轮未超过最佳验证指标就提前结束.
+# 修改②: 最多续训12轮, 本轮训练模型自身的验证AUROC连续10轮未提高就提前结束.
 EPOCHS = 12
-EARLY_STOPPING_PATIENCE = 5
+EARLY_STOPPING_PATIENCE = 10
 LEARNING_RATE = 5e-5
 WEIGHT_DECAY = 1e-4
 LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
@@ -253,7 +253,7 @@ def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_
     config = {
         "updated_at": datetime.now().isoformat(timespec="seconds"),
         "status": "best_validated_model", "model_file": MODEL_PATH.name,
-        "selection_metric": "validation_accuracy",
+        "selection_metric": "validation_auroc", "tie_break_metric": "validation_auprc",
         "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
         "completed_epochs": history[-1]["epoch"],

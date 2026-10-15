@@ -1,0 +1,51 @@
+{
+  "updated_at": "2026-10-15T17:07:49",
+  "status": "best_validated_model",
+  "model_file": "best_model.pth",
+  "selection_metric": "validation_auroc",
+  "tie_break_metric": "validation_auprc",
+  "image_size": 64,
+  "batch_size": 64,
+  "epochs_this_run": 12,
+  "best_epoch_this_run": 0,
+  "resume": true,
+  "sampling": "balanced_with_replacement",
+  "completed_epochs": 0,
+  "initial_learning_rate": 5e-05,
+  "weight_decay": 0.0001,
+  "lr_patience": 1,
+  "min_learning_rate": 1e-06,
+  "early_stopping_patience": 5,
+  "model_config": {
+    "negative_slope": 0.01,
+    "conv_dropout": 0.1,
+    "dropout": 0.5,
+    "extra_convs": 2
+  },
+  "training_model_config": {
+    "negative_slope": 0.01,
+    "conv_dropout": 0.1,
+    "dropout": 0.5,
+    "architecture": "wide5"
+  },
+  "threshold": 0.5,
+  "positive_label": 1,
+  "validation": {
+    "accuracy": 0.9251154043426226,
+    "auroc": 0.8983480740794205,
+    "auprc": 0.417889785732986,
+    "ap": 0.4216114600059425,
+    "recall": 0.6544502617801047,
+    "specificity": 0.9342523860021209,
+    "tp": 125,
+    "tn": 5286,
+    "fp": 372,
+    "fn": 66
+  },
+  "submission_columns": [
+    "Image_name",
+    "Probability",
+    "Pred_Label"
+  ],
+  "note": "best_epoch_this_run=0表示保留训练前模型；初赛只上传results/submission.csv。"
+}
