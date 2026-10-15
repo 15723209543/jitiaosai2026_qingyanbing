@@ -203,14 +203,28 @@ def load_model(model_path=MODEL_PATH):
     if "state_dict" in checkpoint:
         if checkpoint.get("image_size") != IMAGE_SIZE:
             raise ValueError("模型输入尺寸与IMAGE_SIZE不一致, 请使用对应的训练配置")
-        model = ImageModel(**checkpoint["model_config"])
+        # 修改⑧: v1.2.x没有深度字段, 必须按三层重建, 不能套用五层训练默认值.
+        model_config = {"extra_convs": 0, **checkpoint["model_config"]}
+        model = ImageModel(**model_config)
         state_dict = checkpoint["state_dict"]
     else:
         # v1.1.1及更早的参数: ReLU、无卷积失活、全连接Dropout=0.5.
-        model = ImageModel(negative_slope=0.0, conv_dropout=0.0, dropout=0.5)
+        model = ImageModel(negative_slope=0.0, conv_dropout=0.0, dropout=0.5, extra_convs=0)
         state_dict = checkpoint
     model.load_state_dict(state_dict)
     return model
+
+
+# 【来源】本项目自写: 三层扩到五层时迁移旧权重, 只允许新增的两层使用初始化参数.
+def transfer_model_weights(model, previous_model):
+    # 1. 旧层全部继承；只有三层到五层的迁移允许补入conv4和conv5.
+    state_dict = previous_model.state_dict()
+    if previous_model.model_config["extra_convs"] == 0 and model.model_config["extra_convs"] == 2:
+        for name, value in model.state_dict().items():
+            if name.startswith(("conv4.", "conv5.")):
+                state_dict[name] = value
+    # 2. 保持严格检查, 其他缺失、尺寸不匹配或五层回退三层都直接报错.
+    model.load_state_dict(state_dict)
 
 
 # 【来源】本项目自写: 每次运行独立保存记录, 未改善时不改写旧模型配置.

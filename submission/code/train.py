@@ -24,12 +24,12 @@ from utils import (
     BATCH_SIZE, CPU_THREADS, EARLY_STOPPING_PATIENCE, EPOCHS, IMAGE_SIZE,
     LEARNING_RATE, LR_PATIENCE, MIN_LEARNING_RATE, MODEL_PATH, RESUME,
     TRAINING_RECORD_DIR, WEIGHT_DECAY,
-    create_sampler, load_model, print_progress, save_training_record,
+    create_sampler, load_model, print_progress, save_training_record, transfer_model_weights,
 )
 
 
 # todo 3. 模型训练.
-# 【来源】复用day07 CNN的train循环；v1.2.0自写改动: 精调、学习率衰减、早停和独立记录.
+# 【来源】复用day07 CNN的train循环；v1.3.0只补充三层到五层的权重迁移, 训练循环不变.
 def train(train_dataset, valid_dataset):
     # 优化①: 参考day06 ANN优化版固定随机数种子.
     torch.manual_seed(0)
@@ -43,6 +43,7 @@ def train(train_dataset, valid_dataset):
 
     # 2. 创建模型对象.
     model = ImageModel()
+    print(f"本轮训练模型: {3 + model.model_config['extra_convs']}层卷积", flush=True)
     best_metrics, best_epoch, history = None, 0, []
     best_model_config = model.model_config.copy()
     run_dir = TRAINING_RECORD_DIR / datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -54,8 +55,8 @@ def train(train_dataset, valid_dataset):
         best_metrics = evaluate(valid_dataset, previous_model)
         best_model_config = previous_model.model_config.copy()
         history.append({"epoch": 0, **best_metrics})
-        # 修改⑧: 先按旧模型原配置验证, 再把同形状权重交给新激活/失活配置精调.
-        model.load_state_dict(previous_model.state_dict())
+        # 修改⑧: 先按旧结构验证, 再调用工具迁移权重；新增卷积保留自己的初始化参数.
+        transfer_model_weights(model, previous_model)
         del previous_model
         save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config, model.model_config)
 

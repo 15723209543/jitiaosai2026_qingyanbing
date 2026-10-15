@@ -1,6 +1,6 @@
-# jitiaosai 环境与 v1.2.0 适配报告
+# jitiaosai 环境与 v1.3.0 适配报告
 
-更新日期：2026-10-14。只做轻量检查，不启动正式训练或整批预测。
+更新日期：2026-10-15。只做轻量检查，不启动训练或整批预测。
 
 ## 1. 解释器
 
@@ -16,7 +16,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 历史核对的jitiaosai为Python3.12.13、PyTorch2.13.0+cpu、torchvision0.28.0+cpu、NumPy1.26.4、pandas2.2.3、Pillow12.3.0、scikit-learn1.9.0。本机当前采用CPU计算。
 旧全环境pip check曾报告与本项目无关的工具缺少依赖，本次没有对无关工具做清理或安装；本轮具体接口检查见代码检查记录。
 
-本轮第一次在受限沙箱执行时，scipy目录访问被拒绝，从而出现ModuleNotFoundError: scipy.sparse。
+此前v1.2.0在受限沙箱执行时，scipy目录访问被拒绝，从而出现ModuleNotFoundError: scipy.sparse。
 读取授权后，**同一个jitiaosai解释器**成功导入并通过回归检查，未重装SciPy。因此不能把沙箱访问失败解释为用户环境已经损坏。
 
 ## 3. 新增功能的接口
@@ -25,6 +25,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 - torch.optim.Adam的weight_decay参数。
 - torch.optim.lr_scheduler.ReduceLROnPlateau。
 - torch.save/load以及weights_only=True。
+- v1.3.0新增Conv2d的padding=1及torch.nn.init.dirac_/zeros_初始化，不增加依赖。
 
 上述均为推荐版本提供的基础接口。本轮实际回归在本机jitiaosai执行，不能冒称已经在官方2.10.0/T4环境复测。
 新版pth保存由张量和基础字段构成的字典，包含state_dict、model_config、image_size、format_version；不是完整Python模型对象。旧纯state_dict仍兼容。
@@ -46,7 +47,7 @@ requirements.txt继续保留官方推荐框架版本，不会因为运行代码�
 ```
 
 只有预测入口生成submission/results/submission.csv，训练不会刷新旧答案。
-当前旧权重按原ReLU配置加载；新训练权重按自身配置加载。
+旧纯权重按三层ReLU加载，v1.2.x权重按原三层配置加载；v1.3.0权重在model_config中记录extra_convs=2，恢复五层。现有三层模型不随训练默认结构改变。
 
 ## 5. 仍需用户后续确认
 
