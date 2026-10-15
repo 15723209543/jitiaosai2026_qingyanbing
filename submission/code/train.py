@@ -29,7 +29,7 @@ from utils import (
 
 
 # todo 3. 模型训练.
-# 【来源】复用day07 CNN的train循环；v1.3.0只补充三层到五层的权重迁移, 训练循环不变.
+# 【来源】复用day07 CNN的train循环；V1.3.1改为固定宽五层, 仅按验证集准确率选模型.
 def train(train_dataset, valid_dataset):
     # 优化①: 参考day06 ANN优化版固定随机数种子.
     torch.manual_seed(0)
@@ -43,7 +43,7 @@ def train(train_dataset, valid_dataset):
 
     # 2. 创建模型对象.
     model = ImageModel()
-    print(f"本轮训练模型: {3 + model.model_config['extra_convs']}层卷积", flush=True)
+    print("本轮训练模型: 5层卷积, 通道32→64→128→256→512", flush=True)
     best_metrics, best_epoch, history = None, 0, []
     best_model_config = model.model_config.copy()
     run_dir = TRAINING_RECORD_DIR / datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -55,7 +55,7 @@ def train(train_dataset, valid_dataset):
         best_metrics = evaluate(valid_dataset, previous_model)
         best_model_config = previous_model.model_config.copy()
         history.append({"epoch": 0, **best_metrics})
-        # 修改⑧: 先按旧结构验证, 再调用工具迁移权重；新增卷积保留自己的初始化参数.
+        # 修改⑧: 先验证旧模型；加宽时只迁移前三层, 相同宽模型续训恢复全部权重.
         transfer_model_weights(model, previous_model)
         del previous_model
         save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config, model.model_config)
@@ -67,13 +67,13 @@ def train(train_dataset, valid_dataset):
     # 4. 创建优化器对象.
     # 优化②: 保留课堂Adam, 学习率减为5e-5；L2权重衰减抑制权重过大.
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    # 优化⑥: 验证AUROC连续2轮没有显著提升时学习率减半, 最低1e-6.
+    # 优化⑥: 验证准确率连续2轮没有提高时学习率减半, 最低1e-6.
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="max", factor=0.5, patience=LR_PATIENCE,
-        threshold=1e-4, threshold_mode="abs", min_lr=MIN_LEARNING_RATE,
+        threshold=0.0, threshold_mode="abs", min_lr=MIN_LEARNING_RATE,
     )
     if best_metrics is not None:
-        scheduler.step(best_metrics["auroc"])
+        scheduler.step(best_metrics["accuracy"])
     epochs_without_improvement = 0
 
     # 5. 循环遍历epoch, 开始每轮的训练动作.
@@ -116,12 +116,12 @@ def train(train_dataset, valid_dataset):
             f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True
         )
 
-        # 6. 修改⑥: 每轮调用predict.py验证；先比较AUROC, 相同时比较AUPRC.
+        # 6. 修改⑥: 只比较完整验证集准确率；训练acc、AUROC和AUPRC不参与保存判断.
         metrics = evaluate(valid_dataset, model)
         history.append({"epoch": epoch_idx + 1, "train_loss": total_loss / total_samples,
                         "train_accuracy": total_correct / total_samples,
                         "learning_rate": learning_rate, **metrics})
-        if best_metrics is None or (metrics["auroc"], metrics["auprc"]) > (best_metrics["auroc"], best_metrics["auprc"]):
+        if best_metrics is None or metrics["accuracy"] > best_metrics["accuracy"]:
             best_metrics, best_epoch = metrics, epoch_idx + 1
             best_model_config = model.model_config.copy()
             epochs_without_improvement = 0
@@ -129,24 +129,25 @@ def train(train_dataset, valid_dataset):
             # 先完整保存临时参数, 再替换最佳参数, 避免写到一半覆盖原模型.
             temporary_path = MODEL_PATH.with_suffix(".tmp")
             # 修改⑨: 权重与实际激活/失活配置放在同一个pth中, 避免配置和权重错配.
-            torch.save({"format_version": 2, "state_dict": model.state_dict(),
-                        "model_config": best_model_config, "image_size": IMAGE_SIZE}, temporary_path)
+            torch.save({"format_version": 3, "state_dict": model.state_dict(),
+                        "model_config": best_model_config, "image_size": IMAGE_SIZE,
+                        "selection_metric": "validation_accuracy"}, temporary_path)
             temporary_path.replace(MODEL_PATH)
-            print(f"已保存最佳模型: {MODEL_PATH}, AUROC:{metrics['auroc']:.6f}", flush=True)
+            print(f"已保存最佳模型: {MODEL_PATH}, 验证Acc:{metrics['accuracy']:.6f}", flush=True)
         else:
             epochs_without_improvement += 1
-            print(f"本轮未超过最佳AUROC:{best_metrics['auroc']:.6f}, 保留最佳参数", flush=True)
-        scheduler.step(metrics["auroc"])
+            print(f"本轮未超过最佳验证Acc:{best_metrics['accuracy']:.6f}, 保留最佳参数", flush=True)
+        scheduler.step(metrics["accuracy"])
         history[-1]["next_learning_rate"] = optimizer.param_groups[0]["lr"]
         if optimizer.param_groups[0]["lr"] < learning_rate:
-            print(f"验证AUROC停滞, 下一轮lr:{optimizer.param_groups[0]['lr']:.2e}", flush=True)
+            print(f"验证Acc停滞, 下一轮lr:{optimizer.param_groups[0]['lr']:.2e}", flush=True)
         save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config, model.model_config)
         # 优化⑦: 不为了凑足12轮持续过拟合；连续5轮没有更佳模型则提前结束.
         if epochs_without_improvement >= EARLY_STOPPING_PATIENCE:
             print(f"连续{EARLY_STOPPING_PATIENCE}轮未改善, 提前结束训练", flush=True)
             break
 
-    print(f"训练完成, 最佳验证AUROC:{best_metrics['auroc']:.6f}, "
+    print(f"训练完成, 最佳验证Acc:{best_metrics['accuracy']:.6f}, "
           f"阳性召回率:{best_metrics['recall']:.2%}", flush=True)
     print(f"训练记录: {run_dir}", flush=True)
 

@@ -203,27 +203,43 @@ def load_model(model_path=MODEL_PATH):
     if "state_dict" in checkpoint:
         if checkpoint.get("image_size") != IMAGE_SIZE:
             raise ValueError("模型输入尺寸与IMAGE_SIZE不一致, 请使用对应的训练配置")
-        # 修改⑧: v1.2.x没有深度字段, 必须按三层重建, 不能套用五层训练默认值.
-        model_config = {"extra_convs": 0, **checkpoint["model_config"]}
-        model = ImageModel(**model_config)
+        model_config = dict(checkpoint["model_config"])
         state_dict = checkpoint["state_dict"]
     else:
         # v1.1.1及更早的参数: ReLU、无卷积失活、全连接Dropout=0.5.
-        model = ImageModel(negative_slope=0.0, conv_dropout=0.0, dropout=0.5, extra_convs=0)
+        model_config = {"negative_slope": 0.0, "conv_dropout": 0.0, "dropout": 0.5}
         state_dict = checkpoint
+    architecture = model_config.pop("architecture", None)
+    extra_convs = model_config.pop("extra_convs", 0)
+    if architecture not in (None, "wide5") or extra_convs not in (0, 2):
+        raise ValueError("不支持的模型结构配置")
+    model = ImageModel(**model_config)
+    # 修改⑧: 旧三层/窄五层仅在工具中兼容, 不让model.py承担历史结构分支.
+    if architecture is None:
+        model.pool4 = torch.nn.Identity()
+        if extra_convs == 0:
+            for name in ("conv4", "conv5", "activation4", "activation5"):
+                setattr(model, name, torch.nn.Identity())
+        else:
+            model.conv4 = torch.nn.Conv2d(128, 128, 3, 1, 1)
+            model.conv5 = torch.nn.Conv2d(128, 128, 3, 1, 1)
+        model.model_config = {**model_config, "extra_convs": extra_convs}
     model.load_state_dict(state_dict)
     return model
 
 
-# 【来源】本项目自写: 三层扩到五层时迁移旧权重, 只允许新增的两层使用初始化参数.
+# 【来源】本项目自写: 加宽模型迁移前三个卷积层；相同结构继续训练则恢复全部权重.
 def transfer_model_weights(model, previous_model):
-    # 1. 旧层全部继承；只有三层到五层的迁移允许补入conv4和conv5.
-    state_dict = previous_model.state_dict()
-    if previous_model.model_config["extra_convs"] == 0 and model.model_config["extra_convs"] == 2:
-        for name, value in model.state_dict().items():
-            if name.startswith(("conv4.", "conv5.")):
-                state_dict[name] = value
-    # 2. 保持严格检查, 其他缺失、尺寸不匹配或五层回退三层都直接报错.
+    # 1. 加宽/池化后特征组织已变化, 即使拉平长度相同也不沿用旧分类头.
+    old_state = previous_model.state_dict()
+    state_dict = old_state
+    if model.model_config.get("architecture") == "wide5" and previous_model.model_config.get("architecture") != "wide5":
+        state_dict = model.state_dict()
+        for layer in ("conv1", "conv2", "conv3"):
+            for parameter in ("weight", "bias"):
+                name = f"{layer}.{parameter}"
+                state_dict[name] = old_state[name]
+    # 2. 不改变磁盘文件；共享层缺失/尺寸错误仍直接报错, 其余新层保持默认初始化.
     model.load_state_dict(state_dict)
 
 
@@ -237,6 +253,7 @@ def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_
     config = {
         "updated_at": datetime.now().isoformat(timespec="seconds"),
         "status": "best_validated_model", "model_file": MODEL_PATH.name,
+        "selection_metric": "validation_accuracy",
         "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
         "completed_epochs": history[-1]["epoch"],
