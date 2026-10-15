@@ -14,15 +14,14 @@ if __name__ == "__main__":
 import torch
 from torch.utils.data import DataLoader
 
-from model import ImageModel
 from utils import (
     BATCH_SIZE,
     CPU_THREADS,
-    MODEL_PATH,
     OUTPUT_CSV,
     TEST_DIR,
     calculate_metrics,
     load_test_data,
+    load_model,
     print_progress,
     write_submission,
 )
@@ -37,8 +36,8 @@ def evaluate(test_dataset, model=None):
     # 2. 修改①: 训练时直接验证当前模型；单独调用时才读取已保存的最佳参数.
     torch.set_num_threads(CPU_THREADS)
     if model is None:
-        model = ImageModel()
-        model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu", weights_only=True))
+        # 修改⑥: 按参数文件自己的配置加载, 兼容旧ReLU和新LeakyReLU模型.
+        model = load_model()
 
     # 3. 切换测试模式并关闭梯度, 保存真实标签和阳性概率.
     labels, positive_probability, start = [], [], time.time()
@@ -71,8 +70,7 @@ def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
     dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
     # 3. 创建模型对象并加载训练好的参数.
-    model = ImageModel()
-    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu", weights_only=True))
+    model = load_model()
 
     # 4. 遍历本地无标签测试集.
     positive_probability, start = [], time.time()

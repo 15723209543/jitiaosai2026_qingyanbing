@@ -27,13 +27,19 @@ TEST_CSV = DATASET_DIR / "test.csv"
 TEST_DIR = DATASET_DIR / "test"
 MODEL_PATH = SUBMISSION_DIR / "model" / "best_model.pth"
 OUTPUT_CSV = SUBMISSION_DIR / "results" / "submission.csv"
+TRAINING_RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录"
 IMAGE_COLUMN = "Image_name"
 LABEL_COLUMN = "True_Label"
 IMAGE_SIZE = 64
 # 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
 BATCH_SIZE = 64
-# 修改②: 每次训练3轮；已有参数时继续训练, 每轮按独立验证集AUROC选择最佳参数.
-EPOCHS = 5
+# 修改②: 最多续训12轮, 连续5轮未超过最佳验证指标就提前结束.
+EPOCHS = 12
+EARLY_STOPPING_PATIENCE = 5
+LEARNING_RATE = 5e-5
+WEIGHT_DECAY = 1e-4
+LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
+MIN_LEARNING_RATE = 1e-6
 RESUME = True
 CPU_THREADS = 8
 LOG_EVERY = 25
@@ -187,20 +193,53 @@ def calculate_metrics(labels, positive_probability):
     }
 
 
-# 【来源】本项目自写: 保存本次训练历史及最佳模型说明, 避免参数更新而说明仍写上轮结果.
-def save_training_record(history, best_metrics, best_epoch):
-    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(history).to_csv(OUTPUT_CSV.parent / "training_history.csv", index=False)
+# 【来源】本项目自写: 兼容旧纯权重及新配置+权重文件, 供训练验证和提交预测共同调用.
+def load_model(model_path=MODEL_PATH):
+    # 1. 修改⑥: 局部导入避免model.py引用utils时出现循环导入.
+    from model import ImageModel
+
+    checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
+    # 2. 新参数按文件内配置重建；不能用当前训练默认配置解释历史权重.
+    if "state_dict" in checkpoint:
+        if checkpoint.get("image_size") != IMAGE_SIZE:
+            raise ValueError("模型输入尺寸与IMAGE_SIZE不一致, 请使用对应的训练配置")
+        model = ImageModel(**checkpoint["model_config"])
+        state_dict = checkpoint["state_dict"]
+    else:
+        # v1.1.1及更早的参数: ReLU、无卷积失活、全连接Dropout=0.5.
+        model = ImageModel(negative_slope=0.0, conv_dropout=0.0, dropout=0.5)
+        state_dict = checkpoint
+    model.load_state_dict(state_dict)
+    return model
+
+
+# 【来源】本项目自写: 每次运行独立保存记录, 未改善时不改写旧模型配置.
+def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config,
+                         training_model_config=None):
+    # 修改⑦: 只在项目文档/训练记录下写训练历史, 不再写入results.
+    run_dir = Path(run_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(history).fillna("").to_csv(run_dir / "training_history.csv", index=False, encoding="utf-8")
     config = {
         "updated_at": datetime.now().isoformat(timespec="seconds"),
         "status": "best_validated_model", "model_file": MODEL_PATH.name,
         "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
+        "completed_epochs": history[-1]["epoch"],
+        "initial_learning_rate": LEARNING_RATE, "weight_decay": WEIGHT_DECAY,
+        "lr_patience": LR_PATIENCE, "min_learning_rate": MIN_LEARNING_RATE,
+        "early_stopping_patience": EARLY_STOPPING_PATIENCE,
+        "model_config": best_model_config,
+        "training_model_config": training_model_config or best_model_config,
         "threshold": 0.5, "positive_label": 1, "validation": best_metrics,
         "submission_columns": ["Image_name", "Probability", "Pred_Label"],
         "note": "best_epoch_this_run=0表示保留训练前模型；初赛只上传results/submission.csv。",
     }
-    MODEL_PATH.with_name("config.json").write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+    content = json.dumps(config, ensure_ascii=False, indent=2)
+    (run_dir / "run_config.json").write_text(content, encoding="utf-8")
+    # 只有本次确实保存了新权重, 才同步更新model/config.json；预测以pth内配置为准.
+    if best_epoch > 0:
+        MODEL_PATH.with_name("config.json").write_text(content, encoding="utf-8")
 
 
 # 【来源】本项目自写: 按官方test.csv顺序读取测试图片并构建无标签Dataset.

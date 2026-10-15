@@ -23,10 +23,15 @@ def create_dataset():
 # todo 2. 搭建(卷积)神经网络.
 class ImageModel(nn.Module):
     # 1. 初始化父类成员, 搭建神经网络.
-    # 【来源】复用day07 CNN的init, ANN和CNN课件只用于增加深度和参数量.
-    def __init__(self):
+    # 【来源】复用day07 CNN的init；v1.2.0自写改动: 可配置激活函数和卷积失活, 不增加神经元.
+    def __init__(self, negative_slope=0.01, conv_dropout=0.1, dropout=0.5):
         # 1.1 初始化父类成员.
         super().__init__()
+        # 修改③: 配置随权重保存；旧模型使用ReLU, 不能直接套用新激活函数预测.
+        self.model_config = {
+            "negative_slope": negative_slope, "conv_dropout": conv_dropout, "dropout": dropout,
+        }
+        self.activation = nn.LeakyReLU(negative_slope) if negative_slope else nn.ReLU()
 
         # 1.2 搭建神经网络.
         # 优化①: 参考CNN课件增加卷积核数量, 输入3通道, 输出32通道.
@@ -50,26 +55,29 @@ class ImageModel(nn.Module):
         self.output = nn.Linear(2048, 2)
 
         # 优化④: 参考CNN课件增加Dropout, 缓解训练集准确率高、测试集准确率低.
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=dropout)
+        # 优化⑤: 第3组卷积/池化后随机关闭10%的特征通道；eval时自动关闭失活.
+        self.conv_dropout = nn.Dropout2d(p=conv_dropout)
 
     # 2. 定义前向传播.
-    # 【来源】复用day07 CNN的forward, 原样保留加权求和、ReLU、池化和拉平逻辑.
+    # 【来源】复用day07 CNN的forward；v1.2.0只替换中间激活并补充卷积失活.
     def forward(self, x):
         # 第1层: 卷积层(加权求和) + 激励层(激活函数) + 池化层(降维).
-        x = self.pool1(torch.relu(self.conv1(x)))
+        # 修改④: 新训练使用LeakyReLU, 负数保留0.01倍信号；旧权重加载时仍使用ReLU.
+        x = self.pool1(self.activation(self.conv1(x)))
 
         # 第2层: 卷积层(加权求和) + 激励层(激活函数) + 池化层(降维).
-        x = self.pool2(torch.relu(self.conv2(x)))
+        x = self.pool2(self.activation(self.conv2(x)))
 
-        # 优化②: 新增层仍然原样使用 卷积 + ReLU + 池化.
-        x = self.pool3(torch.relu(self.conv3(x)))
+        # 优化②: 第3层仍使用 卷积 + 激活 + 池化, 后面增加轻量通道失活.
+        x = self.conv_dropout(self.pool3(self.activation(self.conv3(x))))
 
         # 细节: 全连接层只能处理二维数据, 所以要将数据进行拉平.
         x = x.reshape(x.size(0), -1)
 
         # 全连接层(加权求和) + 激励层(激活函数) + Dropout.
-        x = self.dropout(torch.relu(self.linear1(x)))
-        x = self.dropout(torch.relu(self.linear2(x)))
+        x = self.dropout(self.activation(self.linear1(x)))
+        x = self.dropout(self.activation(self.linear2(x)))
 
         # 输出层只做加权求和, CrossEntropyLoss中包含softmax过程.
         return self.output(x)

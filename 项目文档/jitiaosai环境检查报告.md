@@ -1,163 +1,58 @@
-# `jitiaosai` 环境与 2026 规程适配报告
+# jitiaosai 环境与 v1.2.0 适配报告
 
-更新日期：2026-10-14
+更新日期：2026-10-14。只做轻量检查，不启动正式训练或整批预测。
 
-执行约定：助手后续只做代码修改和轻量检查，由用户启动训练/预测。
-`train.py` 只训练与验证，`predict.py` 单独运行时才生成提交答案。
+## 1. 解释器
 
-## 1. 解释器状态
+项目解释器：`C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe`。
+原学习解释器：`C:\Users\LENOVO\.conda\envs\deepStudy\python.exe`。
+本轮没有安装/卸载依赖、升级/降级解释器，也没有删除、改名或覆盖deepStudy。
 
-项目专用解释器：
+规程推荐Python3.12、PyTorch2.10.0、torchvision0.25.0；参考环境为T4 16GB、8核CPU、32GB内存、CUDA12.8/cuDNN9、NVIDIA驱动至少570.117。
+requirements.txt继续保留官方推荐框架版本，不会因为运行代码而自动改变本机环境。
 
-```text
-C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe
-```
+## 2. 本机环境与验证限制
 
-原学习解释器仍保留：
+历史核对的jitiaosai为Python3.12.13、PyTorch2.13.0+cpu、torchvision0.28.0+cpu、NumPy1.26.4、pandas2.2.3、Pillow12.3.0、scikit-learn1.9.0。本机当前采用CPU计算。
+旧全环境pip check曾报告与本项目无关的工具缺少依赖，本次没有对无关工具做清理或安装；本轮具体接口检查见代码检查记录。
 
-```text
-C:\Users\LENOVO\.conda\envs\deepStudy\python.exe
-```
+本轮第一次在受限沙箱执行时，scipy目录访问被拒绝，从而出现ModuleNotFoundError: scipy.sparse。
+读取授权后，**同一个jitiaosai解释器**成功导入并通过回归检查，未重装SciPy。因此不能把沙箱访问失败解释为用户环境已经损坏。
 
-本轮没有删除、改名、覆盖或重建 `deepStudy`。
+## 3. 新增功能的接口
 
-## 2. 2026 规程推荐环境
+- torch.nn.LeakyReLU、Dropout2d；原有Conv2d、Linear、Dropout、CrossEntropyLoss继续保留。
+- torch.optim.Adam的weight_decay参数。
+- torch.optim.lr_scheduler.ReduceLROnPlateau。
+- torch.save/load以及weights_only=True。
 
-| 项目 | 官方推荐值 |
-|---|---|
-| GPU | NVIDIA T4 16GB ×1 |
-| CPU | 8 核 |
-| 内存 | 32GB |
-| 磁盘 | ≥100GB SSD |
-| NVIDIA 驱动 | ≥570.117 |
-| CUDA/cuDNN | CUDA 12.8 + cuDNN 9 |
-| Python | 3.12 |
-| PyTorch | 2.10.0 |
-| torchvision | 0.25.0 |
+上述均为推荐版本提供的基础接口。本轮实际回归在本机jitiaosai执行，不能冒称已经在官方2.10.0/T4环境复测。
+新版pth保存由张量和基础字段构成的字典，包含state_dict、model_config、image_size、format_version；不是完整Python模型对象。旧纯state_dict仍兼容。
+不再直接把新版pth整体传给model.load_state_dict，应调用项目utils.load_model。
 
-推荐镜像：
-
-```text
-crpi-4leqgt7v1jo7rycf.cn-beijing.personal.cr.aliyuncs.com/coder02026/compete:1.0
-```
-
-## 3. 本机 jitiaosai 当前环境
-
-| 项目 | 当前值 |
-|---|---|
-| Python | 3.12.13 |
-| PyTorch | 2.13.0+cpu |
-| torchvision | 0.28.0+cpu |
-| CUDA | 不可用，当前为 CPU 版 |
-| Pillow | 12.3.0 |
-| NumPy | 1.26.4 |
-| pandas | 2.2.3 |
-| torchsummary | 已安装 |
-| scikit-learn | 1.9.0，上次修改已验证可导入，用于验证指标 |
-| pip check | 项目必需包可用；全环境存在无关工具的缺失依赖，见下文 |
-
-Python 主版本符合规程；PyTorch/torchvision 比推荐版本更新，且当前为 CPU 版。本轮
-没有直接降级解释器，避免破坏现有可用环境。训练、验证、预测和模型重载均已成功，说明
-本项目直接依赖可用。全环境 `pip check` 会报告 alembic、httpx、pytest、uvicorn 等
-与本项目无关的工具缺少 sqlalchemy、anyio 等依赖；本轮未为这些无关工具安装或删除包。
-`requirements.txt` 已将正式复现目标固定为：
-
-```text
-torch==2.10.0
-torchvision==0.25.0
-```
-
-初赛只上传 CSV，不上传本机环境。正式大规模训练或复赛模型验证前，应在单独环境或
-官方镜像中复跑推荐版本。
-
-## 4. 代码兼容范围
-
-当前代码只使用稳定基础接口：
-
-- `torch.nn.Conv2d/Linear/Dropout/CrossEntropyLoss`；
-- `torch.optim.Adam`；
-- `torch.utils.data.Dataset/DataLoader`；
-- `torch.save/torch.load`；
-- `torchvision.transforms.Resize/ToTensor/Normalize`；
-- Pillow RGB 图片读取；
-- pandas CSV 读写。
-
-没有使用 PyTorch 2.13 独有编译器、算子或序列化特性。保存内容是纯 `state_dict`，
-便于在官方推荐版本重新加载验证。
-
-## 5. 2026 本地工作流
+## 4. 运行与记录
 
 训练：
-
 ```powershell
 & "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" submission/code/train.py
 ```
 
-真实数据位于 `glaucoma_first/`，包含 `train.csv`、`valid.csv`、`test.csv` 和
-对应的 `train/`、`valid/`、`test/` 图片目录。训练、验证 CSV 列为
-`Image_name/Age/True_Label`，测试 CSV 只有 `Image_name/Age`，
-训练/验证/测试规模分别为 51396/5849/5855。首轮 CPU 全量训练（1 epoch）已完成：
-loss `0.49328`、训练打印 acc `0.97`、用时 `1624.53s`；验证 accuracy `0.967345`、
-AUROC `0.628867`、AP `0.048873`。这些为旧首轮结果。
-
-此后于 2026-10-13 完成三轮续训，最佳验证 AUROC `0.885387`、梯形 AUPRC `0.362978`、
-AP `0.365991`、阳性召回率 `64.40%`。本次只调整入口职责，没有重新训练。
-
-训练输入：`glaucoma_first/train.csv` 与 `glaucoma_first/train/`；验证输入：
-`glaucoma_first/valid.csv` 与 `glaucoma_first/valid/`。
-
-输出：
-
-```text
-submission/model/best_model.pth
-```
+最多12轮，可能提前停止。只使用train/valid，最佳参数保存在submission/model/best_model.pth。
+记录保存到项目文档/训练记录/时间目录，不在results生成训练历史。
 
 预测：
-
 ```powershell
 & "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" submission/code/predict.py
 ```
 
-需要 `glaucoma_first/test/` 与 `submission/model/best_model.pth`。
+只有预测入口生成submission/results/submission.csv，训练不会刷新旧答案。
+当前旧权重按原ReLU配置加载；新训练权重按自身配置加载。
 
-输出：
+## 5. 仍需用户后续确认
 
-```text
-submission/results/submission.csv
-```
+- 本版真实训练的验证AUROC/AUPRC/AP是否超过旧基线。
+- 新CSV的平台成绩；用户反馈的79分属于修改前版本。
+- 官方推荐框架/T4环境下的兼容性与单张端到端延迟≤100ms。
+- CPU续训的实际耗时；轻量合成检查不能推算整套训练性能。
 
-## 6. 本轮接口验证与真实首轮结果
-
-已使用真实数据完成以下验收：4 个 Python 源文件语法通过；`best_model.pth` 能重新加载；
-2 张 3×64×64 张量的模型输出形状为 `(2,2)`；测试接口和 CSV 均为 5855 行；CSV 三列及
-图片名称/顺序与官方 `test.csv` 逐字一致；`config.json` 可正常解析。
-
-真实首轮验证集概率范围为 `0.064293`～`0.308502`；0.5 阈值下 TP=0、TN=5658、FP=0、FN=191，
-sensitivity=0、specificity=1。约 97% 的准确率受类别不平衡误导，不能说明阳性检出有效。
-
-验证阈值诊断参考：F1 阈值 `0.257520`（F1 `0.094390`、sensitivity `0.277487`、
-specificity `0.844645`）；Youden 阈值 `0.190134`（sensitivity `0.790576`、
-specificity `0.446271`）。提交 CSV 为 5855 个数据行，三列及测试文件名/顺序匹配正确，
-但 `Pred_Label` 在默认 0.5 阈值下全为 0；连续 Probability 仍可用于 AUROC 排序评价。
-实际模型文件为 54935871 bytes。模型和 CSV 当前仅为首轮流程基线，不建议视为最终竞赛方案。
-
-## 7. 依赖安装说明
-
-正式复现环境建议使用全新的 Python 3.12 环境，不覆盖 `deepStudy`。根据本机 GPU、
-驱动和官方镜像情况安装与 CUDA 12.8 对应的 PyTorch 2.10.0；如果只做 CSV 接口检查，
-CPU 版本也可以运行，但 51396 张训练图片会较慢。
-
-环境核对命令：
-
-```powershell
-& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" -c "import sys,torch,torchvision; print(sys.version); print(torch.__version__, torchvision.__version__); print(torch.cuda.is_available())"
-& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" -m pip check
-```
-
-第二条命令检查解释器中的所有已安装工具，不只检查本项目。若仍保留无关 Web/打包工具，
-可能显示它们的缺失依赖；判断本项目时应同时以训练、预测、模型重载和上述核心包导入为准。
-
-## 8. 尚未完成的验证
-
-仍需在主办方推荐的 T4/CUDA 12.8 环境测量单张端到端延迟，并通过后续实验改善阳性
-检出能力。当前首轮模型和提交 CSV 仅为流程基线，不应视为最终竞赛方案。
+如需安装推荐版本，应另行确认环境方案，不覆盖原有学习解释器。
