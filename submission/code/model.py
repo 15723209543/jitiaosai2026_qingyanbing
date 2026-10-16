@@ -23,14 +23,14 @@ def create_dataset():
 # todo 2. 搭建(卷积)神经网络.
 class ImageModel(nn.Module):
     # 1. 初始化父类成员, 搭建神经网络.
-    # 【来源】复用day07 CNN的init；V1.3.1自写改动: 固定五层、加宽通道、增加平均池化.
+    # 【来源】复用day07 CNN的init；v1.4.3自写改动: 保留五层卷积, 精简全连接层.
     def __init__(self, negative_slope=0.01, conv_dropout=0.1, dropout=0.5):
         # 1.1 初始化父类成员.
         super().__init__()
         # 修改③: 配置随权重保存；旧模型使用ReLU, 不能直接套用新激活函数预测.
         self.model_config = {
             "negative_slope": negative_slope, "conv_dropout": conv_dropout, "dropout": dropout,
-            "architecture": "wide5",
+            "architecture": "wide5_slim",
         }
         self.activation = nn.LeakyReLU(negative_slope) if negative_slope else nn.ReLU()
         self.activation4 = self.activation
@@ -55,16 +55,15 @@ class ImageModel(nn.Module):
         # 优化⑦: 第3次最大池化后为512*6*6, 再平均汇总为512*3*3, 控制全连接参数量.
         self.pool4 = nn.AdaptiveAvgPool2d((3, 3))
 
-        # 优化③: 参考CNN课件增加全连接层的参数量.
-        # 64*64图片经过5次卷积、3次最大池化、1次自适应平均池化后, 拉平为4608.
-        self.linear1 = nn.Linear(512 * 3 * 3, 2048)
-        self.linear2 = nn.Linear(2048, 2048)
-
-        # 修改②: 青光眼是二分类, 输出分类数由10改为2.
-        self.output = nn.Linear(2048, 2)
-
-        # 优化④: 参考CNN课件增加Dropout, 缓解训练集准确率高、测试集准确率低.
-        self.dropout = nn.Dropout(p=dropout)
+        # 修改⑧: 方案B1, 将4608→2048→2048→2改为4608→512→2.
+        # Sequential只是按顺序执行课堂的全连接、激活、失活、输出, 不增加新算法.
+        # 分类头变小以减少参数；保留Dropout(0.5), 不把其他变量一次全部修改.
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 3 * 3, 512),
+            self.activation,
+            nn.Dropout(p=dropout),
+            nn.Linear(512, 2),
+        )
         # 优化⑤: 第3组卷积/池化后随机关闭10%的特征通道；eval时自动关闭失活.
         self.conv_dropout = nn.Dropout2d(p=conv_dropout)
 
@@ -88,12 +87,9 @@ class ImageModel(nn.Module):
         # 细节: 全连接层只能处理二维数据, 所以要将数据进行拉平.
         x = x.reshape(x.size(0), -1)
 
-        # 全连接层(加权求和) + 激励层(激活函数) + Dropout.
-        x = self.dropout(self.activation(self.linear1(x)))
-        x = self.dropout(self.activation(self.linear2(x)))
-
-        # 输出层只做加权求和, CrossEntropyLoss中包含softmax过程.
-        return self.output(x)
+        # 修改⑨: 一组全连接(加权求和)+激活+Dropout, 再输出两类logits.
+        # 输出层不做softmax, CrossEntropyLoss中已包含该过程.
+        return self.classifier(x)
 
 
 # 5. 测试.

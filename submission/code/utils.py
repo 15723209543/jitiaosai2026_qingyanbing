@@ -4,6 +4,7 @@
 import json
 import time
 from datetime import datetime
+from os.path import relpath
 from pathlib import Path
 
 import numpy as np
@@ -33,15 +34,18 @@ LABEL_COLUMN = "True_Label"
 IMAGE_SIZE = 64
 # 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
 BATCH_SIZE = 64
-# 修改②: 最多续训12轮, 本轮训练模型自身的所选验证指标连续10轮未提高就提前结束.
+# 修改②: 最多12轮不变, 候选模型自身AUROC连续5轮未提高就结束, 不靠加轮数提分.
 EPOCHS = 12
-EARLY_STOPPING_PATIENCE = 10
-LEARNING_RATE = 5e-5
+EARLY_STOPPING_PATIENCE = 5
+# 修改⑨: 新分类头用1e-4；已训练卷积只用1e-5微调, 无旧权重时全网用1e-4.
+LEARNING_RATE = 1e-4
+FINETUNE_LEARNING_RATE = 1e-5
 WEIGHT_DECAY = 1e-4
+MAX_GRAD_NORM = 5.0  # 梯度范数上限, 仅限制异常大步长, 不是治疗过拟合.
 LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
 MIN_LEARNING_RATE = 1e-6
 RESUME = True
-CPU_THREADS = 8 # 本机8核, 与PyTorch默认一致.
+CPU_THREADS = 8  # 沿用本机已测配置, 不是物理核心数或PyTorch默认值.
 LOG_EVERY = 25
 
 # 优化①: 参考day06 ANN优化版的数据标准化方法，对图像张量进行标准化.
@@ -211,7 +215,7 @@ def load_model(model_path=MODEL_PATH):
         state_dict = checkpoint
     architecture = model_config.pop("architecture", None)
     extra_convs = model_config.pop("extra_convs", 0)
-    if architecture not in (None, "wide5") or extra_convs not in (0, 2):
+    if architecture not in (None, "wide5", "wide5_slim") or extra_convs not in (0, 2):
         raise ValueError("不支持的模型结构配置")
     model = ImageModel(**model_config)
     # 修改⑧: 旧三层/窄五层仅在工具中兼容, 不让model.py承担历史结构分支.
@@ -224,46 +228,83 @@ def load_model(model_path=MODEL_PATH):
             model.conv4 = torch.nn.Conv2d(128, 128, 3, 1, 1)
             model.conv5 = torch.nn.Conv2d(128, 128, 3, 1, 1)
         model.model_config = {**model_config, "extra_convs": extra_convs}
+    # 修改⑩: 旧模型仍重建4608→2048→2048→2, 不能拿新分类头解释旧参数.
+    if architecture != "wide5_slim":
+        model.classifier = torch.nn.Sequential(
+            torch.nn.Linear(4608, 2048), model.activation, torch.nn.Dropout(model_config["dropout"]),
+            torch.nn.Linear(2048, 2048), model.activation, torch.nn.Dropout(model_config["dropout"]),
+            torch.nn.Linear(2048, 2),
+        )
+        # 只映射内存中的层名, 不修改磁盘旧权重；卷积/激活/池化计算与旧版一致.
+        renamed = {"linear1": "classifier.0", "linear2": "classifier.3", "output": "classifier.6"}
+        state_dict = {renamed.get(name.split(".")[0], name.split(".")[0]) + "." + name.split(".", 1)[1]: value
+                      for name, value in state_dict.items()}
+        if architecture == "wide5":
+            model.model_config = {**model_config, "architecture": "wide5"}
     model.load_state_dict(state_dict)
     return model
 
 
-# 【来源】本项目自写: 加宽模型迁移前三个卷积层；相同结构继续训练则恢复全部权重.
+# 【来源】本项目自写: v1.4.3换分类头时只迁移尺寸相同的卷积；同结构恢复全部权重.
 def transfer_model_weights(model, previous_model):
-    # 1. 加宽/池化后特征组织已变化, 即使拉平长度相同也不沿用旧分类头.
+    # 1. 宽五层→精简五层迁移全部五层卷积；旧三层/窄五层只迁移相同尺寸卷积.
     old_state = previous_model.state_dict()
     state_dict = old_state
-    if model.model_config.get("architecture") == "wide5" and previous_model.model_config.get("architecture") != "wide5":
+    if model.model_config.get("architecture") != previous_model.model_config.get("architecture"):
         state_dict = model.state_dict()
-        for layer in ("conv1", "conv2", "conv3"):
-            for parameter in ("weight", "bias"):
-                name = f"{layer}.{parameter}"
-                state_dict[name] = old_state[name]
-    # 2. 不改变磁盘文件；共享层缺失/尺寸错误仍直接报错, 其余新层保持默认初始化.
+        for name, value in old_state.items():
+            if name.startswith("conv") and name in state_dict and value.shape == state_dict[name].shape:
+                state_dict[name] = value
+    # 2. 新分类头保持初始化；同结构续训严格加载, 不偷偷忽略不匹配的参数.
     model.load_state_dict(state_dict)
 
 
-# 【来源】本项目自写: 每次运行独立保存记录；v1.4.1由训练分支传入实际选模指标.
+# 【来源】复用课堂torch.save；本项目自写临时文件替换, 供正式模型和本轮最佳共用.
+def save_model(model, model_path, metrics, epoch):
+    # 1. 权重、结构、选模规则、指标和轮数一起保存, 防止记录与参数无法对应.
+    model_path = Path(model_path)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = model_path.with_suffix(".tmp")
+    torch.save({"format_version": 4, "state_dict": model.state_dict(),
+                "model_config": model.model_config, "image_size": IMAGE_SIZE,
+                "selection_metric": "validation_auroc", "tie_break_metric": None,
+                "validation": metrics, "epoch": epoch}, temporary_path)
+    # 2. 完整写入后替换；不保存优化器状态, 不是完整断点续训.
+    temporary_path.replace(model_path)
+
+
+# 【来源】本项目自写: v1.4.3分开记录正式冠军与本次候选最佳, 路径相对项目根目录.
 def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config,
-                         training_model_config=None, selection_metric=None):
+                         training_model_config=None, selection_metric="validation_auroc"):
     # 修改⑦: 只在项目文档/训练记录下写训练历史, 不再写入results.
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(history).fillna("").to_csv(run_dir / "training_history.csv", index=False, encoding="utf-8")
+    # 同分时max保留最先出现的一轮, 与AUROC严格提高的保存条件一致；排除旧冠军epoch=0.
+    candidate = max((row for row in history if row["epoch"] > 0),
+                    key=lambda row: row["auroc"], default=None)
     config = {
         "updated_at": datetime.now().isoformat(timespec="seconds"),
-        "status": "best_validated_model", "model_file": MODEL_PATH.name,
-        # 修改⑧: epoch=0尚未进入选模分支, 指标暂记null；每轮按实际启用方案更新.
+        "status": "best_validated_model", "model_file": Path(relpath(MODEL_PATH, PROJECT_DIR)).as_posix(),
+        "path_base": "project_root",
+        # 修改⑧: 只记录AUROC选模, 相等不更新；AUPRC仍打印, 但不参与本地决胜.
         "selection_metric": selection_metric,
-        "tie_break_metric": "validation_auprc" if selection_metric == "validation_auroc" else None,
+        "tie_break_metric": None,
         "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
         "completed_epochs": history[-1]["epoch"],
         "initial_learning_rate": LEARNING_RATE, "weight_decay": WEIGHT_DECAY,
+        "finetune_learning_rate": FINETUNE_LEARNING_RATE, "max_grad_norm": MAX_GRAD_NORM,
         "lr_patience": LR_PATIENCE, "min_learning_rate": MIN_LEARNING_RATE,
         "early_stopping_patience": EARLY_STOPPING_PATIENCE,
         "model_config": best_model_config,
         "training_model_config": training_model_config or best_model_config,
+        "candidate_best": None if candidate is None else {
+            "model_file": Path(relpath(run_dir / "best_model.pth", PROJECT_DIR)).as_posix(),
+            "epoch": candidate["epoch"],
+            "validation": {key: candidate[key] for key in best_metrics},
+            "model_config": training_model_config or best_model_config,
+        },
         "threshold": 0.5, "positive_label": 1, "validation": best_metrics,
         "submission_columns": ["Image_name", "Probability", "Pred_Label"],
         "note": "best_epoch_this_run=0表示保留训练前模型；初赛只上传results/submission.csv。",
