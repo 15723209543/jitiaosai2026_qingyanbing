@@ -33,7 +33,7 @@ LABEL_COLUMN = "True_Label"
 IMAGE_SIZE = 64
 # 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
 BATCH_SIZE = 64
-# 修改②: 最多续训12轮, 本轮训练模型自身的验证AUROC连续10轮未提高就提前结束.
+# 修改②: 最多续训12轮, 本轮训练模型自身的所选验证指标连续10轮未提高就提前结束.
 EPOCHS = 12
 EARLY_STOPPING_PATIENCE = 10
 LEARNING_RATE = 5e-5
@@ -243,9 +243,9 @@ def transfer_model_weights(model, previous_model):
     model.load_state_dict(state_dict)
 
 
-# 【来源】本项目自写: 每次运行独立保存记录, 未改善时不改写旧模型配置.
+# 【来源】本项目自写: 每次运行独立保存记录；v1.4.1由训练分支传入实际选模指标.
 def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config,
-                         training_model_config=None):
+                         training_model_config=None, selection_metric=None):
     # 修改⑦: 只在项目文档/训练记录下写训练历史, 不再写入results.
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -253,7 +253,9 @@ def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_
     config = {
         "updated_at": datetime.now().isoformat(timespec="seconds"),
         "status": "best_validated_model", "model_file": MODEL_PATH.name,
-        "selection_metric": "validation_auroc", "tie_break_metric": "validation_auprc",
+        # 修改⑧: epoch=0尚未进入选模分支, 指标暂记null；每轮按实际启用方案更新.
+        "selection_metric": selection_metric,
+        "tie_break_metric": "validation_auprc" if selection_metric == "validation_auroc" else None,
         "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
         "completed_epochs": history[-1]["epoch"],
