@@ -41,7 +41,7 @@ WEIGHT_DECAY = 1e-4
 LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
 MIN_LEARNING_RATE = 1e-6
 RESUME = True
-CPU_THREADS = 8
+CPU_THREADS = 8 # 本机8核, 与PyTorch默认一致.
 LOG_EVERY = 25
 
 # 优化①: 参考day06 ANN优化版的数据标准化方法，对图像张量进行标准化.
