@@ -1,0 +1,76 @@
+{
+  "updated_at": "2026-10-17T15:55:17",
+  "status": "best_validated_model",
+  "model_file": "submission/model/best_model.pth",
+  "path_base": "project_root",
+  "selection_metric": "validation_auroc",
+  "tie_break_metric": null,
+  "image_size": 64,
+  "batch_size": 64,
+  "epochs_this_run": 12,
+  "best_epoch_this_run": 1,
+  "resume": true,
+  "sampling": "balanced_with_replacement",
+  "completed_epochs": 6,
+  "initial_learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "finetune_learning_rate": 1e-05,
+  "max_grad_norm": 5.0,
+  "lr_patience": 1,
+  "min_learning_rate": 1e-06,
+  "early_stopping_patience": 5,
+  "model_config": {
+    "negative_slope": 0.01,
+    "conv_dropout": 0.1,
+    "dropout": 0.5,
+    "architecture": "wide5_slim"
+  },
+  "training_model_config": {
+    "negative_slope": 0.01,
+    "conv_dropout": 0.1,
+    "dropout": 0.5,
+    "architecture": "wide5_slim"
+  },
+  "candidate_best": {
+    "model_file": "项目文档/训练记录/20261017_142535_344793/best_model.pth",
+    "epoch": 1,
+    "validation": {
+      "accuracy": 0.9146862711574628,
+      "auroc": 0.9183003632904528,
+      "auprc": 0.415799579071646,
+      "ap": 0.4182528143628741,
+      "recall": 0.7172774869109948,
+      "specificity": 0.9213503004595264,
+      "tp": 137,
+      "tn": 5213,
+      "fp": 445,
+      "fn": 54
+    },
+    "model_config": {
+      "negative_slope": 0.01,
+      "conv_dropout": 0.1,
+      "dropout": 0.5,
+      "architecture": "wide5_slim"
+    }
+  },
+  "threshold": 0.5,
+  "positive_label": 1,
+  "validation": {
+    "accuracy": 0.9146862711574628,
+    "auroc": 0.9183003632904528,
+    "auprc": 0.415799579071646,
+    "ap": 0.4182528143628741,
+    "recall": 0.7172774869109948,
+    "specificity": 0.9213503004595264,
+    "tp": 137,
+    "tn": 5213,
+    "fp": 445,
+    "fn": 54
+  },
+  "submission_columns": [
+    "Image_name",
+    "Probability",
+    "Pred_Label"
+  ],
+  "note": "best_epoch_this_run=0表示保留训练前模型；初赛只上传results/submission.csv。"
+}

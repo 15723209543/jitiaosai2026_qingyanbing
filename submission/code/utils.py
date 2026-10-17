@@ -38,15 +38,15 @@ BATCH_SIZE = 64
 EPOCHS = 12
 EARLY_STOPPING_PATIENCE = 5
 # 修改⑨: 新分类头用1e-4；已训练卷积只用1e-5微调, 无旧权重时全网用1e-4.
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-4 # 初始学习率, 用于全网训练.
 FINETUNE_LEARNING_RATE = 1e-5
-WEIGHT_DECAY = 1e-4
+WEIGHT_DECAY = 1e-4 # 权重衰减, 防止过拟合.
 MAX_GRAD_NORM = 5.0  # 梯度范数上限, 仅限制异常大步长, 不是治疗过拟合.
 LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
-MIN_LEARNING_RATE = 1e-6
-RESUME = True
+MIN_LEARNING_RATE = 1e-6 # 最小学习率, 避免学习率过小导致训练失败.
+RESUME = True # 是否恢复训练, 仅在有旧模型时有效.
 CPU_THREADS = 8  # 沿用本机已测配置, 不是物理核心数或PyTorch默认值.
-LOG_EVERY = 25
+LOG_EVERY = 25 # 每25轮打印一次日志.
 
 # 优化①: 参考day06 ANN优化版的数据标准化方法，对图像张量进行标准化.
 transform = Compose([
