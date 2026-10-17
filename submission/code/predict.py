@@ -17,6 +17,8 @@ from torch.utils.data import DataLoader
 from utils import (
     BATCH_SIZE,
     CPU_THREADS,
+    PREDICT_CPU_THREADS,
+    ImageDataset,
     OUTPUT_CSV,
     TEST_DIR,
     calculate_metrics,
@@ -30,14 +32,14 @@ from utils import (
 # todo 4. 模型测试.
 # 【来源】复用day07 CNN的evaluate, 新增验证进度及比赛指标, 返回指标字典.
 def evaluate(test_dataset, model=None):
-    # 1. 创建测试集数据加载器.
-    dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-    # 2. 修改①: 训练时直接验证当前模型；单独调用时才读取已保存的最佳参数.
+    # 1. 修改①: 旧冠军按64像素、新候选按128像素分别验证, 两者仍用同一官方验证集.
     torch.set_num_threads(CPU_THREADS)
     if model is None:
-        # 修改⑥: 按参数文件自己的配置加载, 兼容旧ReLU和新LeakyReLU模型.
         model = load_model()
+    if test_dataset.image_size != model.image_size:
+        test_dataset = ImageDataset(test_dataset.image_paths, test_dataset.labels,
+                                    image_size=model.image_size)
+    dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
     # 3. 切换测试模式并关闭梯度, 保存真实标签和阳性概率.
     labels, positive_probability, start = [], [], time.time()
@@ -62,15 +64,16 @@ def evaluate(test_dataset, model=None):
 # 【来源】复用课堂CNN测试循环改写, 本地读取无标签测试集并生成2026规定CSV.
 def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
     # 1. 修改②: 2026初赛不再由服务器传参, 默认读取glaucoma_first/test和test.csv.
-    torch.set_num_threads(CPU_THREADS)
+    torch.set_num_threads(PREDICT_CPU_THREADS)
     print("开始读取test文件夹；测试集没有真实标签, 此阶段生成提交CSV, 不计算准确率.", flush=True)
-    test_dataset, image_names = load_test_data(test_dir)
+    # 修改②: 先读权重内输入尺寸, 再创建测试Dataset；旧CSV生成逻辑仍可复现.
+    model = load_model()
+    test_dataset, image_names = load_test_data(test_dir, image_size=model.image_size)
 
     # 2. 创建测试集数据加载器.
     dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    # 3. 创建模型对象并加载训练好的参数.
-    model = load_model()
+    # 3. 模型对象已按参数文件自己的结构和尺寸加载.
 
     # 4. 遍历本地无标签测试集.
     positive_probability, start = [], time.time()

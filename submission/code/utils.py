@@ -2,6 +2,7 @@
 
 # 导包
 import json
+import math
 import time
 from datetime import datetime
 from os.path import relpath
@@ -12,7 +13,8 @@ import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, WeightedRandomSampler
-from torchvision.transforms import Compose, Normalize, RandomHorizontalFlip, Resize, ToTensor
+from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Normalize,
+                                    RandomHorizontalFlip, RandomRotation, Resize, ToTensor)
 from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
 
 
@@ -31,41 +33,57 @@ OUTPUT_CSV = SUBMISSION_DIR / "results" / "submission.csv"
 TRAINING_RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录"
 IMAGE_COLUMN = "Image_name"
 LABEL_COLUMN = "True_Label"
-IMAGE_SIZE = 64
-# 优化④: 本机实测64张一批比8张一批的每张计算耗时更低, 同时让批内两类比例更稳定.
-BATCH_SIZE = 64
-# 修改②: 最多12轮不变, 候选模型自身AUROC连续5轮未提高就结束, 不靠加轮数提分.
-EPOCHS = 12
-EARLY_STOPPING_PATIENCE = 5
-# 修改⑨: 新分类头用1e-4；已训练卷积只用1e-5微调, 无旧权重时全网用1e-4.
-LEARNING_RATE = 1e-4 # 初始学习率, 用于全网训练.
+# 修改①: 新训练使用128像素；历史模型按权重内记录的尺寸处理.
+IMAGE_SIZE = 128
+PREPROCESSING = "rgb_bilinear_half_v1"
+BATCH_SIZE = 32
+EPOCHS = 30
+MIN_EPOCHS = 10
+EARLY_STOPPING_PATIENCE = 8
+WARMUP_EPOCHS = 2
+LEARNING_RATE = 3e-4
 FINETUNE_LEARNING_RATE = 1e-5
-WEIGHT_DECAY = 1e-4 # 权重衰减, 防止过拟合.
-MAX_GRAD_NORM = 5.0  # 梯度范数上限, 仅限制异常大步长, 不是治疗过拟合.
-LR_PATIENCE = 1  # ReduceLROnPlateau允许1轮停滞, 第2轮仍无改善时学习率减半.
-MIN_LEARNING_RATE = 1e-6 # 最小学习率, 避免学习率过小导致训练失败.
-RESUME = True # 是否恢复训练, 仅在有旧模型时有效.
-CPU_THREADS = 8  # 沿用本机已测配置, 不是物理核心数或PyTorch默认值.
-LOG_EVERY = 25 # 每25轮打印一次日志.
+WEIGHT_DECAY = 1e-4
+MAX_GRAD_NORM = 5.0
+MIN_LEARNING_RATE = 1e-6
+RESUME = True
+CPU_THREADS = 8
+# 修改⑤: 单张预测在本机24图抽测时4线程平均/最大耗时更低；训练仍用8线程.
+PREDICT_CPU_THREADS = 4
+LOG_EVERY = 25
 
-# 优化①: 参考day06 ANN优化版的数据标准化方法，对图像张量进行标准化.
-transform = Compose([
-    Resize((IMAGE_SIZE, IMAGE_SIZE)),
-    ToTensor(),
-    Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])
-train_transform = Compose([RandomHorizontalFlip(p=0.5), transform])
+
+# 【来源】本项目自写: 复用课堂归一化, 方案A仅训练增加温和增强.
+def create_transform(image_size, training=False):
+    steps = [Resize((image_size, image_size))]
+    if training:
+        # 修改②: 不做大幅裁剪/遮挡；验证与提交预测固定处理.
+        steps += [RandomHorizontalFlip(p=0.5),
+                  RandomRotation(15, interpolation=InterpolationMode.BILINEAR),
+                  ColorJitter(brightness=0.1, contrast=0.1)]
+    return Compose(steps + [ToTensor(), Normalize((0.5,) * 3, (0.5,) * 3)])
+
+
+# 【来源】本项目自写: 前两轮线性预热, 随后余弦下降到最低学习率.
+def get_learning_rate(epoch, peak_lr=LEARNING_RATE):
+    if not 1 <= epoch <= EPOCHS or peak_lr < MIN_LEARNING_RATE:
+        raise ValueError("轮数或学习率超出有效范围")
+    if epoch <= WARMUP_EPOCHS:
+        return peak_lr * (0.1 + 0.9 * (epoch - 1) / (WARMUP_EPOCHS - 1))
+    progress = (epoch - WARMUP_EPOCHS) / (EPOCHS - WARMUP_EPOCHS)
+    return MIN_LEARNING_RATE + (peak_lr - MIN_LEARNING_RATE) * (1 + math.cos(math.pi * progress)) / 2
 
 
 class ImageDataset(Dataset):
     # 【来源】本项目自写: 替代课堂CNN自带的CIFAR10数据集.
-    def __init__(self, image_paths, labels=None, training=False):
+    def __init__(self, image_paths, labels=None, training=False, image_size=IMAGE_SIZE):
         self.image_paths = list(image_paths)
         self.labels = None if labels is None else list(labels)
-        # 优化③: 均衡采样会重复阳性图片, 仅训练集增加水平翻转, 验证/测试保持固定变换.
-        self.transform = train_transform if training else transform
+        self.image_size = image_size
+        self.training = training
+        self.transform = create_transform(image_size, training)
         # 优化⑤: 只在内存缓存缩小后的RGB图, 避免多轮训练反复解码高分辨率原图.
-        # 训练+验证共57245张, RGB像素约671MiB；不在磁盘额外生成图片或改动原数据.
+        # 128像素训练+验证RGB像素约2.62GiB(另有Python开销)；不改动原图.
         self.cache = {}
 
     # 【来源】复用PyTorch Dataset标准写法: 返回样本数量.
@@ -74,12 +92,12 @@ class ImageDataset(Dataset):
 
     # 【来源】本项目自写: 读取RGB图片, 有标签时返回x和y, 否则只返回x.
     def __getitem__(self, index):
-        # 优化②: 原图分辨率很大, 先让JPEG解码器按64*64附近尺寸读取, 再执行课堂Resize.
+        # 修改③: 缓存属于当前Dataset自己的尺寸, 不能把旧64缓存冒充128输入.
         if index not in self.cache:
             with Image.open(self.image_paths[index]) as image:
-                image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
+                image.draft("RGB", (self.image_size, self.image_size))
                 self.cache[index] = image.convert("RGB").resize(
-                    (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR
+                    (self.image_size, self.image_size), Image.Resampling.BILINEAR
                 )
         # 缓存不含随机增强；每次取样仍独立执行训练翻转.
         x = self.transform(self.cache[index])
@@ -197,66 +215,98 @@ def calculate_metrics(labels, positive_probability):
     }
 
 
-# 【来源】本项目自写: 兼容旧纯权重及新配置+权重文件, 供训练验证和提交预测共同调用.
+# 【来源】迁移本项目v1.4.3的课堂CNN, 仅用于读取历史模型, 不参与新建网络.
+class LegacyImageModel(torch.nn.Module):
+    # 【来源】复用原CNN的init；旧三层/窄五层/宽五层/精简分类头统一放工具中.
+    def __init__(self, model_config):
+        super().__init__()
+        self.model_config = dict(model_config)
+        self.image_size = model_config["image_size"]
+        architecture = model_config.get("architecture")
+        slope = model_config.get("negative_slope", 0.0)
+        dropout = model_config.get("dropout", 0.5)
+        self.activation = torch.nn.LeakyReLU(slope) if slope else torch.nn.ReLU()
+        self.activation4 = self.activation5 = self.activation
+        self.conv1 = torch.nn.Conv2d(3, 32, 3)
+        self.conv2 = torch.nn.Conv2d(32, 64, 3)
+        self.conv3 = torch.nn.Conv2d(64, 128, 3)
+        self.pool1 = self.pool2 = self.pool3 = torch.nn.MaxPool2d(2, 2)
+        self.conv_dropout = torch.nn.Dropout2d(model_config.get("conv_dropout", 0.0))
+        if architecture is None:
+            self.pool4 = torch.nn.Identity()
+            if model_config.get("extra_convs", 0) == 0:
+                self.conv4 = self.conv5 = torch.nn.Identity()
+                self.activation4 = self.activation5 = torch.nn.Identity()
+            else:
+                self.conv4 = torch.nn.Conv2d(128, 128, 3, padding=1)
+                self.conv5 = torch.nn.Conv2d(128, 128, 3, padding=1)
+        else:
+            self.conv4 = torch.nn.Conv2d(128, 256, 3, padding=1)
+            self.conv5 = torch.nn.Conv2d(256, 512, 3, padding=1)
+            self.pool4 = torch.nn.AdaptiveAvgPool2d((3, 3))
+        if architecture == "wide5_slim":
+            self.classifier = torch.nn.Sequential(
+                torch.nn.Linear(4608, 512), self.activation, torch.nn.Dropout(dropout),
+                torch.nn.Linear(512, 2))
+        else:
+            self.classifier = torch.nn.Sequential(
+                torch.nn.Linear(4608, 2048), self.activation, torch.nn.Dropout(dropout),
+                torch.nn.Linear(2048, 2048), self.activation, torch.nn.Dropout(dropout),
+                torch.nn.Linear(2048, 2))
+
+    # 【来源】原样保留课堂CNN旧前向顺序；不改变已有92分权重的计算.
+    def forward(self, x):
+        x = self.pool1(self.activation(self.conv1(x)))
+        x = self.pool2(self.activation(self.conv2(x)))
+        x = self.activation(self.conv3(x))
+        x = self.activation4(self.conv4(x))
+        x = self.activation5(self.conv5(x))
+        x = self.pool4(self.conv_dropout(self.pool3(x)))
+        return self.classifier(x.reshape(x.size(0), -1))
+
+
+# 【来源】本项目自写: 按pth自身结构/输入配置加载, 不使用当前训练默认值替代历史配置.
 def load_model(model_path=MODEL_PATH):
-    # 1. 修改⑥: 局部导入避免model.py引用utils时出现循环导入.
-    from model import ImageModel
+    from model import ImageModel  # 局部导入避免循环引用.
 
     checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
-    # 2. 新参数按文件内配置重建；不能用当前训练默认配置解释历史权重.
     if "state_dict" in checkpoint:
-        if checkpoint.get("image_size") != IMAGE_SIZE:
-            raise ValueError("模型输入尺寸与IMAGE_SIZE不一致, 请使用对应的训练配置")
         model_config = dict(checkpoint["model_config"])
         state_dict = checkpoint["state_dict"]
+        image_size = checkpoint["image_size"]
+        if model_config.get("image_size", image_size) != image_size:
+            raise ValueError("权重内两处输入尺寸不一致")
     else:
-        # v1.1.1及更早的参数: ReLU、无卷积失活、全连接Dropout=0.5.
         model_config = {"negative_slope": 0.0, "conv_dropout": 0.0, "dropout": 0.5}
-        state_dict = checkpoint
-    architecture = model_config.pop("architecture", None)
-    extra_convs = model_config.pop("extra_convs", 0)
-    if architecture not in (None, "wide5", "wide5_slim") or extra_convs not in (0, 2):
-        raise ValueError("不支持的模型结构配置")
-    model = ImageModel(**model_config)
-    # 修改⑧: 旧三层/窄五层仅在工具中兼容, 不让model.py承担历史结构分支.
-    if architecture is None:
-        model.pool4 = torch.nn.Identity()
-        if extra_convs == 0:
-            for name in ("conv4", "conv5", "activation4", "activation5"):
-                setattr(model, name, torch.nn.Identity())
-        else:
-            model.conv4 = torch.nn.Conv2d(128, 128, 3, 1, 1)
-            model.conv5 = torch.nn.Conv2d(128, 128, 3, 1, 1)
-        model.model_config = {**model_config, "extra_convs": extra_convs}
-    # 修改⑩: 旧模型仍重建4608→2048→2048→2, 不能拿新分类头解释旧参数.
-    if architecture != "wide5_slim":
-        model.classifier = torch.nn.Sequential(
-            torch.nn.Linear(4608, 2048), model.activation, torch.nn.Dropout(model_config["dropout"]),
-            torch.nn.Linear(2048, 2048), model.activation, torch.nn.Dropout(model_config["dropout"]),
-            torch.nn.Linear(2048, 2),
-        )
-        # 只映射内存中的层名, 不修改磁盘旧权重；卷积/激活/池化计算与旧版一致.
+        state_dict, image_size = checkpoint, 64
+    architecture = model_config.get("architecture")
+    if type(image_size) is not int or image_size < 32:
+        raise ValueError("模型输入尺寸必须是至少32的整数")
+    if model_config.get("preprocessing", PREPROCESSING) != PREPROCESSING:
+        raise ValueError("不支持的模型预处理配置")
+    model_config.update(image_size=image_size, preprocessing=PREPROCESSING)
+    if architecture == "resnet18_a":
+        model = ImageModel(dropout=model_config["dropout"], image_size=image_size)
+    elif architecture in (None, "wide5", "wide5_slim"):
+        if image_size != 64 or model_config.get("extra_convs", 0) not in (0, 2):
+            raise ValueError("旧CNN只支持其原始64像素及已知层数")
+        model = LegacyImageModel(model_config)
+        # 修改④: 只映射内存中的旧层名, 不修改磁盘原权重.
         renamed = {"linear1": "classifier.0", "linear2": "classifier.3", "output": "classifier.6"}
         state_dict = {renamed.get(name.split(".")[0], name.split(".")[0]) + "." + name.split(".", 1)[1]: value
                       for name, value in state_dict.items()}
-        if architecture == "wide5":
-            model.model_config = {**model_config, "architecture": "wide5"}
+    else:
+        raise ValueError("不支持的模型结构配置")
     model.load_state_dict(state_dict)
     return model
 
 
-# 【来源】本项目自写: v1.4.3换分类头时只迁移尺寸相同的卷积；同结构恢复全部权重.
+# 【来源】本项目自写: 仅同结构/同输入配置恢复；旧CNN权重不得迁移到ResNet.
 def transfer_model_weights(model, previous_model):
-    # 1. 宽五层→精简五层迁移全部五层卷积；旧三层/窄五层只迁移相同尺寸卷积.
-    old_state = previous_model.state_dict()
-    state_dict = old_state
-    if model.model_config.get("architecture") != previous_model.model_config.get("architecture"):
-        state_dict = model.state_dict()
-        for name, value in old_state.items():
-            if name.startswith("conv") and name in state_dict and value.shape == state_dict[name].shape:
-                state_dict[name] = value
-    # 2. 新分类头保持初始化；同结构续训严格加载, 不偷偷忽略不匹配的参数.
-    model.load_state_dict(state_dict)
+    if model.model_config != previous_model.model_config:
+        return False
+    model.load_state_dict(previous_model.state_dict())
+    return True
 
 
 # 【来源】复用课堂torch.save；本项目自写临时文件替换, 供正式模型和本轮最佳共用.
@@ -265,8 +315,8 @@ def save_model(model, model_path, metrics, epoch):
     model_path = Path(model_path)
     model_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = model_path.with_suffix(".tmp")
-    torch.save({"format_version": 4, "state_dict": model.state_dict(),
-                "model_config": model.model_config, "image_size": IMAGE_SIZE,
+    torch.save({"format_version": 5, "state_dict": model.state_dict(),
+                "model_config": model.model_config, "image_size": model.image_size,
                 "selection_metric": "validation_auroc", "tie_break_metric": None,
                 "validation": metrics, "epoch": epoch}, temporary_path)
     # 2. 完整写入后替换；不保存优化器状态, 不是完整断点续训.
@@ -275,7 +325,8 @@ def save_model(model, model_path, metrics, epoch):
 
 # 【来源】本项目自写: v1.4.3分开记录正式冠军与本次候选最佳, 路径相对项目根目录.
 def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_config,
-                         training_model_config=None, selection_metric="validation_auroc"):
+                         training_model_config=None, selection_metric="validation_auroc",
+                         peak_learning_rate=LEARNING_RATE):
     # 修改⑦: 只在项目文档/训练记录下写训练历史, 不再写入results.
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -290,20 +341,26 @@ def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_
         # 修改⑧: 只记录AUROC选模, 相等不更新；AUPRC仍打印, 但不参与本地决胜.
         "selection_metric": selection_metric,
         "tie_break_metric": None,
-        "image_size": IMAGE_SIZE, "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
+        "image_size": best_model_config["image_size"], "batch_size": BATCH_SIZE, "epochs_this_run": EPOCHS,
+        "training_image_size": (training_model_config or best_model_config)["image_size"],
         "best_epoch_this_run": best_epoch, "resume": RESUME, "sampling": "balanced_with_replacement",
         "completed_epochs": history[-1]["epoch"],
-        "initial_learning_rate": LEARNING_RATE, "weight_decay": WEIGHT_DECAY,
+        "initial_learning_rate": get_learning_rate(1, peak_learning_rate),
+        "peak_learning_rate": peak_learning_rate, "weight_decay": WEIGHT_DECAY,
         "finetune_learning_rate": FINETUNE_LEARNING_RATE, "max_grad_norm": MAX_GRAD_NORM,
-        "lr_patience": LR_PATIENCE, "min_learning_rate": MIN_LEARNING_RATE,
+        "schedule": "two_epoch_warmup_then_cosine", "warmup_epochs": WARMUP_EPOCHS,
+        "min_epochs": MIN_EPOCHS, "min_learning_rate": MIN_LEARNING_RATE,
         "early_stopping_patience": EARLY_STOPPING_PATIENCE,
         "model_config": best_model_config,
         "training_model_config": training_model_config or best_model_config,
+        "baseline_model_file": (Path(relpath(run_dir / "baseline_model.pth", PROJECT_DIR)).as_posix()
+                                if (run_dir / "baseline_model.pth").is_file() else None),
         "candidate_best": None if candidate is None else {
             "model_file": Path(relpath(run_dir / "best_model.pth", PROJECT_DIR)).as_posix(),
             "epoch": candidate["epoch"],
             "validation": {key: candidate[key] for key in best_metrics},
             "model_config": training_model_config or best_model_config,
+            "image_size": (training_model_config or best_model_config)["image_size"],
         },
         "threshold": 0.5, "positive_label": 1, "validation": best_metrics,
         "submission_columns": ["Image_name", "Probability", "Pred_Label"],
@@ -317,7 +374,7 @@ def save_training_record(history, best_metrics, best_epoch, run_dir, best_model_
 
 
 # 【来源】本项目自写: 按官方test.csv顺序读取测试图片并构建无标签Dataset.
-def load_test_data(test_dir=TEST_DIR, test_csv=TEST_CSV):
+def load_test_data(test_dir=TEST_DIR, test_csv=TEST_CSV, image_size=IMAGE_SIZE):
     # 修改④: 读取test.csv, 保留官方图片名的大小写和排列顺序.
     suffixes = (".jpg", ".jpeg", ".png")
     test_dir = Path(test_dir)
@@ -340,7 +397,7 @@ def load_test_data(test_dir=TEST_DIR, test_csv=TEST_CSV):
         if image_path is None:
             raise FileNotFoundError("找不到测试图片: %s" % image_name)
         image_paths.append(image_path)
-    return ImageDataset(image_paths), image_names
+    return ImageDataset(image_paths, image_size=image_size), image_names
 
 
 # 【来源】本项目自写: 按2026规程保存可直接提交的三列CSV.
