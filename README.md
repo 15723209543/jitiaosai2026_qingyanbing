@@ -1,6 +1,19 @@
 # 2026 青光眼眼底图像二分类
 
-当前代码版本：**v1.5.2**。方案A使用ResNet-18和128×128眼底图像，从随机参数开始训练。正式训练、生成提交答案由你运行；旧92分模型在训练前仍位于`submission/model/best_model.pth`。
+当前代码版本：**v1.5.3**。原`submission/`仍是v1.5.2单模型基线；新增根目录`01/`～`08/`八套独立双模型实验。正式训练、生成提交答案由你运行；旧92分模型仍位于`submission/model/best_model.pth`。
+
+## 八组双模型实验（新）
+
+每个编号目录都只有`code/`、`model/`、`results/`三个子目录；四份Python源码仅在它自己的`code/`内。八套共用本地`glaucoma_first/`官方数据，不复制原图，也不触碰旧`submission/`的权重与CSV。组合清单、运行顺序及风险见[八组实验说明](项目文档/修改说明/v1.5.3八组双模型实验.md)。
+
+建议依次运行`01`、`02`、`03`、`04`，可训练五种单模型；运行`05`～`08`时，代码会核验相同架构/训练方案的参数并复制进本方案`model/`，避免重复训练。若你改变训练参数，必须同步修改`utils.py`中的`RECIPE`标记以免误复用旧权重。每套`train.py`都只训练或复用两种单模型，并打印双模型验证AUROC；**不会写提交CSV**。只有对应`predict.py`运行后，才会生成该套`results/submission.csv`。
+
+```powershell
+& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" 01/code/train.py
+& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" 01/code/predict.py
+```
+
+把`01`替换为其他编号即可。每套可能生成自己的`submission.csv`供比较，但**不要把八份全部提交**；根据独立验证AUROC、AUPRC、模型总大小及单张端到端延迟筛选后，只手动提交选中的一份。若双模型不如最佳单模型或超出赛项限制，应保留单模型。本机轻量检查不保证官网成绩或最终设备的100ms合规性。
 
 ## 文件放置
 
