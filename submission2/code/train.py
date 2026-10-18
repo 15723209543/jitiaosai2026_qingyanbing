@@ -56,6 +56,10 @@ def train(train_dataset, valid_dataset):
         saved = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
         best_auroc = saved["validation"]["auroc"]
         print("从已有融合参数继续联合训练, 只在验证AUROC提高时覆盖.", flush=True)
+        # 修改⑦: 续训前先用有标签的valid检查现有模型；test无标签，不能计算准确率或AUROC。
+        print("训练前验证当前模型:", flush=True)
+        baseline = evaluate(valid_dataset, model)
+        print(f"训练前AUROC:{baseline['auroc']:.6f}, 已保存最佳AUROC:{best_auroc:.6f}", flush=True)
     else:
         model = ImageModel()
         if BASELINE_RESNET.is_file() and BASELINE_DENSE.is_file():
