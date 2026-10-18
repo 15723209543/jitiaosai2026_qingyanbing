@@ -1,6 +1,6 @@
 # 2026 青光眼眼底图像二分类
 
-代码版本 **v1.6.1**。`submission2/` 是新方案：ResNet-18 与 DenseNet-121 在**特征层连接**，经过同一个融合分类头，联合训练并保存为**一份** `model/best_model.pth`。这与历史版本中「分别训练，再平均两个阳性概率」不同。原 `submission/` 是独立保留的旧单模型基线，不受本次修改影响。
+代码版本 **v1.6.2**。`submission2/` 是新方案：ResNet-18 与 DenseNet-121 在**特征层连接**，经过同一个融合分类头，联合训练并保存为**一份** `model/best_model.pth`。这与历史版本中「分别训练，再平均两个阳性概率」不同。原 `submission/` 是独立保留的旧单模型基线，不受本次修改影响。
 
 ## 目录
 
@@ -10,7 +10,6 @@
 | `submission2/code/train.py` | 在官方训练集上联合训练；每轮用官方验证集计算 AUROC，仅在提高时更新权重；**不写提交 CSV** |
 | `submission2/code/predict.py` | 读取单个融合权重，预测无标签测试集，生成提交 CSV |
 | `submission2/code/utils.py` | 数据读取、图像变换、指标、权重读写和 CSV 工具 |
-| `submission2/code/tests/` | 联合训练、单文件权重及加载的回归测试 |
 | `submission2/model/best_model.pth` | 唯一一份融合模型参数，含两骨干和分类头；当前需继续训练 |
 | `submission2/results/submission.csv` | `predict.py` 生成的待提交文件 |
 | `submission/` | 旧单模型基线；不作为本版训练初始化或提交目录 |
@@ -18,6 +17,8 @@
 | `项目文档/训练记录/` | 各次训练的日志和逐轮指标，不混入 `results/` |
 
 旧版 01–08 双模型筛选过程见[历史实验结果](项目文档/八组双模型训练结果_2026-10-18.md)。03 的官网历史提交得分是 **92.37**；它不是本次联合融合网络的官网成绩。新方案的运行实测见[本版记录](项目文档/修改说明/v1.6.1联合融合与后续方案.md)。
+
+`submission2/code/` 与原 `submission/code/` 一样，只保留 `model.py`、`train.py`、`predict.py`、`utils.py` 和 `requirements.txt`；数据与权重分别在同级的 `glaucoma_first/`、`submission2/model/`，训练记录在 `项目文档/`。`utils.py` 就是原项目约定的工具文件，不另增测试源码目录。
 
 ## 运行
 
