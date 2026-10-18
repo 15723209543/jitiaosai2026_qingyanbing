@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
 from predict import evaluate
-from utils import (BATCH_SIZE, CPU_THREADS, EPOCHS,
+from utils import (CPU_THREADS, EPOCHS,
                    MAX_GRAD_NORM, MODEL_NAMES, MODEL_PATH, RECORD_DIR,
                    RECIPE, WEIGHT_DECAY,
                    get_learning_rate, load_ensemble, print_progress, save_ensemble,
@@ -26,6 +26,7 @@ from utils import (BATCH_SIZE, CPU_THREADS, EPOCHS,
 
 
 SEED = 0
+TRAIN_BATCH_SIZE = 64
 
 
 # 【来源】本项目自写；各模型只比较自己的验证AUROC，严格提高才更新该模型参数。
@@ -46,7 +47,7 @@ def training_order(best_metrics, rounds):
 
 # 【来源】复用课堂CNN的DataLoader洗牌；修改：每轮遍历官方训练集全部图片一次。
 def create_train_loader(train_dataset):
-    return DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    return DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
 
 # 【来源】由原25%阳性抽样改成等效类别加权；每张图片仍在每轮恰好使用一次。
@@ -150,6 +151,9 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
         else:
             print("无历史参数, 三种CNN均从随机初始化开始训练.", flush=True)
         best_models = copy.deepcopy(models)
+    print("并行预读取完整训练集与验证集图片...", flush=True)
+    train_dataset.preload()
+    valid_dataset.preload()
     dataloaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
     optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
                   for name in MODEL_NAMES}

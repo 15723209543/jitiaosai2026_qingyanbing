@@ -7,10 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import torch
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from utils import median_probabilities, save_ensemble  # noqa: E402
+from utils import ImageDataset, median_probabilities, save_ensemble  # noqa: E402
 from predict import collect_probabilities  # noqa: E402
 from train import create_class_weights, create_train_loader, is_better, training_order  # noqa: E402
 
@@ -91,10 +92,26 @@ class EnsembleTests(unittest.TestCase):
                 return index
 
         dataloader = create_train_loader(NumberedDataset())
-        self.assertEqual(len(dataloader), 3)
+        self.assertEqual(len(dataloader), 2)
         for _ in range(2):
             indices = [int(index) for batch in dataloader for index in batch]
             self.assertEqual(sorted(indices), list(range(65)))
+
+    def test_preload_caches_resized_images_before_training(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            paths = []
+            for index in range(3):
+                path = Path(directory) / f"{index}.png"
+                Image.new("RGB", (80, 80), (index * 40, 10, 20)).save(path)
+                paths.append(path)
+            dataset = ImageDataset(paths, [0, 1, 0], training=True)
+            dataset.preload(workers=2)
+            self.assertEqual(set(dataset.cache), {0, 1, 2})
+            self.assertEqual([dataset.cache[index].size for index in range(3)],
+                             [(64, 64)] * 3)
+            x, y = dataset[1]
+            self.assertEqual(tuple(x.shape), (3, 64, 64))
+            self.assertEqual(int(y), 1)
 
     def test_full_dataset_loss_retains_positive_class_balance(self):
         weights = create_class_weights([0] * 9 + [1])

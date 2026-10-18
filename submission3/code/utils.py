@@ -3,6 +3,7 @@
 import json
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -53,14 +54,27 @@ class ImageDataset(Dataset):
     def __len__(self):
         return len(self.image_paths)
 
-    # 【来源】复用课堂CNN取样逻辑；修改：用眼底图片代替CIFAR10。
-    def __getitem__(self, index):
+    # 【来源】沿用原眼底图片缩放缓存；拆出纯读取供多线程预加载复用。
+    def _load_image(self, index):
         if index not in self.cache:
             with Image.open(self.image_paths[index]) as image:
                 image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
                 self.cache[index] = image.convert("RGB").resize(
                     (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR)
-        x = self.transform(self.cache[index])
+        return self.cache[index]
+
+    # 【来源】本项目自写；首次训练前并行解码全部图片，后续轮次仍用各自随机增强。
+    def preload(self, workers=8):
+        start, total = time.time(), math.ceil(len(self) / 512)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for batch_idx, offset in enumerate(range(0, len(self), 512), 1):
+                for _ in pool.map(self._load_image, range(offset, min(offset + 512, len(self)))):
+                    pass
+                print_progress("preload", batch_idx, total, start)
+
+    # 【来源】复用课堂CNN取样逻辑；修改：用眼底图片代替CIFAR10。
+    def __getitem__(self, index):
+        x = self.transform(self._load_image(index))
         if self.labels is None:
             return x
         return x, torch.tensor(int(self.labels[index]), dtype=torch.long)

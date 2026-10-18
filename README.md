@@ -1,6 +1,6 @@
 # 2026 青光眼眼底图像二分类
 
-代码版本 **v1.6.7**。`submission3/` 是正在验证的三模型实验：ResNet-18、DenseNet-121、EfficientNet-B0 独立训练和选模，在预测时对三个阳性概率取中位数，三份参数封装在**一份** `model/best_model.pth`。每个模型每轮遍历全部 51,396 张训练图片，而非抽样 4,096 次；批量 32 时为 1,607 批。仅在三种模型都完成训练后，才单独运行 `submission3/code/predict.py` 写 CSV。`submission2/` 是已保留的双骨干特征融合方案；原 `submission/` 是旧单模型基线。
+代码版本 **v1.6.8**。`submission3/` 是正在验证的三模型实验：ResNet-18、DenseNet-121、EfficientNet-B0 独立训练和选模，在预测时对三个阳性概率取中位数，三份参数封装在**一份** `model/best_model.pth`。每个模型每轮遍历全部 51,396 张训练图片，而非抽样 4,096 次；训练批量 64 时为 804 批。首次训练前并行解码并缓存缩小后的训练/验证图片，后续轮次复用缓存。仅在三种模型都完成训练后，才单独运行 `submission3/code/predict.py` 写 CSV。`submission2/` 是已保留的双骨干特征融合方案；原 `submission/` 是旧单模型基线。
 
 ## 目录
 
