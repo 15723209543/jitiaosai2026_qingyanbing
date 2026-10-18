@@ -1,6 +1,7 @@
 """课堂CNN的todo3：三种CNN各自训练、验证与选模，最后封装为一份pth。"""
 
 import argparse
+import copy
 import sys
 import time
 from datetime import datetime
@@ -17,8 +18,8 @@ from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
 from predict import evaluate
-from utils import (BATCH_SIZE, CPU_THREADS, EARLY_STOPPING_PATIENCE, EPOCHS,
-                   MAX_GRAD_NORM, MIN_EPOCHS, MODEL_NAMES, MODEL_PATH, RECORD_DIR,
+from utils import (BATCH_SIZE, CPU_THREADS, EPOCHS,
+                   MAX_GRAD_NORM, MODEL_NAMES, MODEL_PATH, RECORD_DIR,
                    RECIPE, SAMPLES_PER_EPOCH, WEIGHT_DECAY, create_sampler,
                    get_learning_rate, load_ensemble, print_progress, save_ensemble,
                    save_training_record)
@@ -30,6 +31,17 @@ SEED = 0
 # 【来源】本项目自写；各模型只比较自己的验证AUROC，严格提高才更新该模型参数。
 def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
+
+
+# 【来源】本项目自写；未有最佳验证记录的模型先跑首轮，此后每轮依次训练三个模型。
+def training_order(best_metrics, rounds):
+    untrained = [name for name in MODEL_NAMES if name not in best_metrics]
+    for name in untrained:
+        yield 1, name
+    for epoch in range(1, rounds + 1):
+        for name in MODEL_NAMES:
+            if epoch != 1 or name not in untrained:
+                yield epoch, name
 
 
 # 【来源】沿用旧03的历史权重读取；仅用赛方数据训练的03参数作为两种骨干初始值。
@@ -56,60 +68,50 @@ def train_step(model, x, y, optimizer, criterion):
     return loss.item(), int((torch.argmax(y_pred, dim=1) == y).sum().item())
 
 
-# 【来源】沿用旧03的单模型训练循环；修改：最佳参数存在同一pth的对应模型槽位。
-def train_one(name, models, train_dataset, valid_dataset, best_metrics, run_dir, history):
+# 【来源】沿用旧03的单模型训练循环；修改：每次只跑一轮，最佳参数单独更新对应槽位。
+def train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
+              best_metrics, run_dir, history, optimizer, dataloader, criterion):
     model = models[name]
-    print("训练前单模型验证:", name, flush=True)
-    baseline = evaluate(valid_dataset, {name: model})
-    if is_better(baseline, best_metrics.get(name)):
-        best_metrics[name] = baseline
-        save_ensemble(models, MODEL_PATH, {}, best_metrics=best_metrics)
+    if epoch == 1:
+        print("训练前单模型验证:", name, flush=True)
+        baseline = evaluate(valid_dataset, {name: model})
+        if is_better(baseline, best_metrics.get(name)):
+            best_metrics[name] = baseline
+            best_models[name].load_state_dict(model.state_dict())
+            save_ensemble(best_models, MODEL_PATH, {}, best_metrics=best_metrics)
+        print(f"模型:{name}, 训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
+              f"共{EPOCHS[name]}轮, 每轮{len(dataloader)}批, CPU线程:{CPU_THREADS}", flush=True)
 
-    dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                            sampler=create_sampler(train_dataset.labels))
-    optimizer = optim.AdamW(model.parameters(), weight_decay=WEIGHT_DECAY)
-    criterion = nn.CrossEntropyLoss()
-    stale_epochs = 0
-    print(f"模型:{name}, 训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
-          f"共{EPOCHS[name]}轮, 每轮{len(dataloader)}批, CPU线程:{CPU_THREADS}", flush=True)
-    for epoch in range(1, EPOCHS[name] + 1):
-        lr = get_learning_rate(epoch, EPOCHS[name])
-        optimizer.param_groups[0]["lr"] = lr
-        total_loss, total_correct, total_samples, start = 0.0, 0, 0, time.time()
-        print(f"开始训练 {name} epoch: {epoch}/{EPOCHS[name]}, lr:{lr:.2e}", flush=True)
-        for batch_idx, (x, y) in enumerate(dataloader, 1):
-            loss, correct = train_step(model, x, y, optimizer, criterion)
-            total_loss += loss * len(y)
-            total_correct += correct
-            total_samples += len(y)
-            print_progress(f"{name} epoch: {epoch}/{EPOCHS[name]}", batch_idx,
-                           len(dataloader), start,
-                           f", loss:{total_loss / total_samples:.5f}, "
-                           f"acc:{total_correct / total_samples:.4f}")
-        print(f"epoch: {epoch}, loss: {total_loss / total_samples:.5f}, "
-              f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True)
-        metrics = evaluate(valid_dataset, {name: model})
-        history.append({"model": name, "epoch": epoch,
-                        "train_loss": total_loss / total_samples,
-                        "train_accuracy": total_correct / total_samples,
-                        "learning_rate": lr, **metrics})
-        if is_better(metrics, best_metrics.get(name)):
-            best_metrics[name], stale_epochs = metrics, 0
-            save_ensemble(models, MODEL_PATH, {}, epoch=epoch, best_metrics=best_metrics)
-            print(f"已更新{name}独立最佳参数, 验证AUROC:{metrics['auroc']:.6f}", flush=True)
-        else:
-            stale_epochs += 1
-            print(f"未超过{name}最佳验证AUROC:{best_metrics[name]['auroc']:.6f}", flush=True)
-        save_training_record(run_dir, history,
-                             {"recipe": RECIPE, "selection_metric": "individual_validation_auroc",
-                              "best_metrics": best_metrics, "complete": False})
-        if epoch >= MIN_EPOCHS and stale_epochs >= EARLY_STOPPING_PATIENCE:
-            print(f"{name}连续{EARLY_STOPPING_PATIENCE}轮无提高, 提前结束", flush=True)
-            break
-    # 当前训练状态未必是最佳轮；下一模型开始前从单文件恢复该模型的最佳参数。
-    best_models, _ = load_ensemble(MODEL_PATH)
-    models[name].load_state_dict(best_models[name].state_dict())
-    print(f"{name}训练结束, 最佳验证AUROC:{best_metrics[name]['auroc']:.6f}", flush=True)
+    lr = get_learning_rate(epoch, EPOCHS[name])
+    optimizer.param_groups[0]["lr"] = lr
+    total_loss, total_correct, total_samples, start = 0.0, 0, 0, time.time()
+    print(f"开始训练 {name} epoch: {epoch}/{EPOCHS[name]}, lr:{lr:.2e}", flush=True)
+    for batch_idx, (x, y) in enumerate(dataloader, 1):
+        loss, correct = train_step(model, x, y, optimizer, criterion)
+        total_loss += loss * len(y)
+        total_correct += correct
+        total_samples += len(y)
+        print_progress(f"{name} epoch: {epoch}/{EPOCHS[name]}", batch_idx,
+                       len(dataloader), start,
+                       f", loss:{total_loss / total_samples:.5f}, "
+                       f"acc:{total_correct / total_samples:.4f}")
+    print(f"epoch: {epoch}, loss: {total_loss / total_samples:.5f}, "
+          f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True)
+    metrics = evaluate(valid_dataset, {name: model})
+    history.append({"model": name, "epoch": epoch,
+                    "train_loss": total_loss / total_samples,
+                    "train_accuracy": total_correct / total_samples,
+                    "learning_rate": lr, **metrics})
+    if is_better(metrics, best_metrics.get(name)):
+        best_metrics[name] = metrics
+        best_models[name].load_state_dict(model.state_dict())
+        save_ensemble(best_models, MODEL_PATH, {}, epoch=epoch, best_metrics=best_metrics)
+        print(f"已更新{name}独立最佳参数, 验证AUROC:{metrics['auroc']:.6f}", flush=True)
+    else:
+        print(f"未超过{name}最佳验证AUROC:{best_metrics[name]['auroc']:.6f}", flush=True)
+    save_training_record(run_dir, history,
+                         {"recipe": RECIPE, "selection_metric": "individual_validation_auroc",
+                          "best_metrics": best_metrics, "complete": False})
 
 
 # todo 3. 模型训练：三个网络各自更新，全部完成后才评估三模型中位数。
@@ -123,7 +125,8 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
     if MODEL_PATH.is_file():
         if bootstrap_dir is not None:
             raise ValueError("已有submission3参数时不能再使用bootstrap_dir")
-        models, checkpoint = load_ensemble(MODEL_PATH)
+        best_models, checkpoint = load_ensemble(MODEL_PATH)
+        models = copy.deepcopy(best_models)
         best_metrics = dict(checkpoint.get("best_metrics", {}))
         print("从已有单文件三模型参数继续分别训练.", flush=True)
     else:
@@ -133,12 +136,20 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
             load_bootstrap(models, bootstrap_dir)
         else:
             print("无历史参数, 三种CNN均从随机初始化开始训练.", flush=True)
-    for name in MODEL_NAMES:
-        train_one(name, models, train_dataset, valid_dataset, best_metrics, run_dir, history)
+        best_models = copy.deepcopy(models)
+    dataloaders = {name: DataLoader(train_dataset, batch_size=BATCH_SIZE,
+                                   sampler=create_sampler(train_dataset.labels))
+                   for name in MODEL_NAMES}
+    optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
+                  for name in MODEL_NAMES}
+    criterion = nn.CrossEntropyLoss()
+    for epoch, name in training_order(best_metrics, max(EPOCHS.values())):
+        train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
+                  best_metrics, run_dir, history, optimizers[name], dataloaders[name], criterion)
 
     print("三模型中位数联合验证:", " + ".join(MODEL_NAMES), flush=True)
-    combined = evaluate(valid_dataset, models)
-    save_ensemble(models, MODEL_PATH, combined, best_metrics=best_metrics, complete=True)
+    combined = evaluate(valid_dataset, best_models)
+    save_ensemble(best_models, MODEL_PATH, combined, best_metrics=best_metrics, complete=True)
     if MODEL_PATH.stat().st_size > 500_000_000:
         raise ValueError("最终权重超过500MB限制")
     save_training_record(run_dir, history,

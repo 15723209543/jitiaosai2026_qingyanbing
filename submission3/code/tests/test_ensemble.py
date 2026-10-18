@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import torch
 
@@ -11,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from utils import median_probabilities, save_ensemble  # noqa: E402
 from predict import collect_probabilities  # noqa: E402
-from train import is_better  # noqa: E402
+from train import is_better, training_order  # noqa: E402
 
 
 class TinyDataset(torch.utils.data.Dataset):
@@ -73,6 +74,33 @@ class EnsembleTests(unittest.TestCase):
         self.assertTrue(is_better({"auroc": 0.91}, {"auroc": 0.90}))
         self.assertFalse(is_better({"auroc": 0.89}, {"auroc": 0.90}))
         self.assertFalse(is_better({"auroc": 0.90}, {"auroc": 0.90}))
+
+    def test_untrained_model_runs_first_then_each_round_has_three_models(self):
+        order = list(training_order({"resnet18": {"auroc": 0.94},
+                                     "densenet121": {"auroc": 0.93}}, 2))
+        self.assertEqual(order, [(1, "efficientnet_b0"), (1, "resnet18"),
+                                 (1, "densenet121"), (2, "resnet18"),
+                                 (2, "densenet121"), (2, "efficientnet_b0")])
+
+    def test_checkpoint_save_retries_temporary_windows_lock(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            path = Path(directory) / "best_model.pth"
+            models = {name: torch.nn.Linear(1, 2) for name in
+                      ("resnet18", "densenet121", "efficientnet_b0")}
+            original_replace = Path.replace
+            attempts = []
+
+            def replace_after_unlock(source, target):
+                attempts.append((source, target))
+                if len(attempts) < 3:
+                    raise PermissionError("[WinError 5] target temporarily locked")
+                return original_replace(source, target)
+
+            with patch.object(Path, "replace", replace_after_unlock), patch("utils.time.sleep"):
+                save_ensemble(models, path, {"auroc": 0.91})
+            self.assertEqual(len(attempts), 3)
+            self.assertTrue(path.is_file())
+            self.assertFalse(path.with_suffix(".tmp").exists())
 
 
 if __name__ == "__main__":

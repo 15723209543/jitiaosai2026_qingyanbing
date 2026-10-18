@@ -25,8 +25,7 @@ TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train",
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("resnet18", "densenet121", "efficientnet_b0")
 IMAGE_SIZE, BATCH_SIZE, SAMPLES_PER_EPOCH = 64, 32, 4096
-EPOCHS = {"resnet18": 8, "densenet121": 8, "efficientnet_b0": 20}
-EARLY_STOPPING_PATIENCE, MIN_EPOCHS = 5, 6
+EPOCHS = {"resnet18": 12, "densenet121": 12, "efficientnet_b0": 12}
 LEARNING_RATE, MIN_LEARNING_RATE, WEIGHT_DECAY = 1e-4, 1e-6, 1e-4
 MAX_GRAD_NORM, CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 5.0, 8, 4, 25
 RECIPE = "official_rgb64_independent_three_median_v1"
@@ -160,7 +159,15 @@ def save_ensemble(models, path, validation, epoch=0, best_metrics=None, complete
                 "model_names": MODEL_NAMES, "image_size": IMAGE_SIZE, "recipe": RECIPE,
                 "best_metrics": best_metrics or {}, "validation": validation,
                 "epoch": epoch, "complete": complete}, temporary)
-    temporary.replace(path)
+    # 【修改】Windows 上杀毒扫描或文件预览可能短暂占用旧参数；等待释放后再原子替换。
+    for attempt in range(30):
+        try:
+            temporary.replace(path)
+            break
+        except PermissionError:
+            if attempt == 29:
+                raise
+            time.sleep(1)
 
 
 # 【来源】本项目自写；按单个pth内记录的三种结构严格恢复参数。
