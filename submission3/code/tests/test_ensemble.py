@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from utils import median_probabilities, save_ensemble  # noqa: E402
 from predict import collect_probabilities  # noqa: E402
-from train import is_better, training_order  # noqa: E402
+from train import create_class_weights, create_train_loader, is_better, training_order  # noqa: E402
 
 
 class TinyDataset(torch.utils.data.Dataset):
@@ -81,6 +81,25 @@ class EnsembleTests(unittest.TestCase):
         self.assertEqual(order, [(1, "efficientnet_b0"), (1, "resnet18"),
                                  (1, "densenet121"), (2, "resnet18"),
                                  (2, "densenet121"), (2, "efficientnet_b0")])
+
+    def test_each_epoch_uses_every_training_image_once(self):
+        class NumberedDataset(torch.utils.data.Dataset):
+            def __len__(self):
+                return 65
+
+            def __getitem__(self, index):
+                return index
+
+        dataloader = create_train_loader(NumberedDataset())
+        self.assertEqual(len(dataloader), 3)
+        for _ in range(2):
+            indices = [int(index) for batch in dataloader for index in batch]
+            self.assertEqual(sorted(indices), list(range(65)))
+
+    def test_full_dataset_loss_retains_positive_class_balance(self):
+        weights = create_class_weights([0] * 9 + [1])
+        self.assertAlmostEqual(weights[0].item() * 9, 0.75, places=6)
+        self.assertAlmostEqual(weights[1].item(), 0.25, places=6)
 
     def test_checkpoint_save_retries_temporary_windows_lock(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:

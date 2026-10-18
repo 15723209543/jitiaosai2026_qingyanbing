@@ -10,7 +10,7 @@ import pandas as pd
 import torch
 from PIL import Image
 from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
-from torch.utils.data import Dataset, WeightedRandomSampler
+from torch.utils.data import Dataset
 from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Normalize,
                                     RandomHorizontalFlip, RandomRotation, Resize, ToTensor)
 
@@ -24,7 +24,7 @@ RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("resnet18", "densenet121", "efficientnet_b0")
-IMAGE_SIZE, BATCH_SIZE, SAMPLES_PER_EPOCH = 64, 32, 4096
+IMAGE_SIZE, BATCH_SIZE = 64, 32
 EPOCHS = {"resnet18": 12, "densenet121": 12, "efficientnet_b0": 12}
 LEARNING_RATE, MIN_LEARNING_RATE, WEIGHT_DECAY = 1e-4, 1e-6, 1e-4
 MAX_GRAD_NORM, CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 5.0, 8, 4, 25
@@ -95,16 +95,6 @@ def load_train_data():
     valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
     return (ImageDataset(train_paths, train_labels, training=True),
             ImageDataset(valid_paths, valid_labels))
-
-
-# 【来源】参考旧03的WeightedRandomSampler；修改：阳性抽样约25%，减少0.5阈值误报。
-def create_sampler(labels):
-    labels = torch.tensor(labels, dtype=torch.long)
-    counts = torch.bincount(labels, minlength=2).float()
-    if torch.any(counts == 0):
-        raise ValueError("训练集必须同时包含0和1")
-    weights = torch.where(labels == 1, 0.25 / counts[1], 0.75 / counts[0])
-    return WeightedRandomSampler(weights, SAMPLES_PER_EPOCH, replacement=True)
 
 
 # 【来源】沿用课堂训练的批次进度输出；显示已耗时和预计剩余时间。

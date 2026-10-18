@@ -20,7 +20,7 @@ from model import ImageModel, create_dataset
 from predict import evaluate
 from utils import (BATCH_SIZE, CPU_THREADS, EPOCHS,
                    MAX_GRAD_NORM, MODEL_NAMES, MODEL_PATH, RECORD_DIR,
-                   RECIPE, SAMPLES_PER_EPOCH, WEIGHT_DECAY, create_sampler,
+                   RECIPE, WEIGHT_DECAY,
                    get_learning_rate, load_ensemble, print_progress, save_ensemble,
                    save_training_record)
 
@@ -42,6 +42,19 @@ def training_order(best_metrics, rounds):
         for name in MODEL_NAMES:
             if epoch != 1 or name not in untrained:
                 yield epoch, name
+
+
+# 【来源】复用课堂CNN的DataLoader洗牌；修改：每轮遍历官方训练集全部图片一次。
+def create_train_loader(train_dataset):
+    return DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+
+# 【来源】由原25%阳性抽样改成等效类别加权；每张图片仍在每轮恰好使用一次。
+def create_class_weights(labels):
+    counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=2)
+    if torch.any(counts == 0):
+        raise ValueError("训练集必须同时包含0和1")
+    return torch.tensor([0.75 / counts[0], 0.25 / counts[1]], dtype=torch.float32)
 
 
 # 【来源】沿用旧03的历史权重读取；仅用赛方数据训练的03参数作为两种骨干初始值。
@@ -137,12 +150,10 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
         else:
             print("无历史参数, 三种CNN均从随机初始化开始训练.", flush=True)
         best_models = copy.deepcopy(models)
-    dataloaders = {name: DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                                   sampler=create_sampler(train_dataset.labels))
-                   for name in MODEL_NAMES}
+    dataloaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
     optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
                   for name in MODEL_NAMES}
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=create_class_weights(train_dataset.labels))
     for epoch, name in training_order(best_metrics, max(EPOCHS.values())):
         train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
                   best_metrics, run_dir, history, optimizers[name], dataloaders[name], criterion)

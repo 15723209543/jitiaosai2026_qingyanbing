@@ -1,11 +1,14 @@
 # 2026 青光眼眼底图像二分类
 
-代码版本 **v1.6.3**。`submission2/` 是新方案：ResNet-18 与 DenseNet-121 在**特征层连接**，经过同一个融合分类头，联合训练并保存为**一份** `model/best_model.pth`。这与历史版本中「分别训练，再平均两个阳性概率」不同。原 `submission/` 是独立保留的旧单模型基线，不受本次修改影响。
+代码版本 **v1.6.7**。`submission3/` 是正在验证的三模型实验：ResNet-18、DenseNet-121、EfficientNet-B0 独立训练和选模，在预测时对三个阳性概率取中位数，三份参数封装在**一份** `model/best_model.pth`。每个模型每轮遍历全部 51,396 张训练图片，而非抽样 4,096 次；批量 32 时为 1,607 批。仅在三种模型都完成训练后，才单独运行 `submission3/code/predict.py` 写 CSV。`submission2/` 是已保留的双骨干特征融合方案；原 `submission/` 是旧单模型基线。
 
 ## 目录
 
 | 路径 | 用途 |
 | --- | --- |
+| `submission3/code/` | 三模型实验的训练、模型、预测、工具及测试源码；用 `deepStudy` 解释器运行 |
+| `submission3/model/best_model.pth` | 三份模型参数合为一份；`complete=False` 时不可预测 |
+| `submission3/results/submission.csv` | 只在单独执行 `submission3/code/predict.py` 后生成 |
 | `submission2/code/model.py` | 定义双骨干特征融合网络；直接运行可看网络结构和参数量 |
 | `submission2/code/train.py` | 在官方训练集上联合训练；每轮用官方验证集计算 AUROC，仅在提高时更新权重；**不写提交 CSV** |
 | `submission2/code/predict.py` | 读取单个融合权重，预测无标签测试集，生成提交 CSV |
@@ -21,6 +24,15 @@
 `submission2/code/` 与原 `submission/code/` 一样，只保留 `model.py`、`train.py`、`predict.py`、`utils.py` 和 `requirements.txt`；数据与权重分别在同级的 `glaucoma_first/`、`submission2/model/`，训练记录在 `项目文档/`。`utils.py` 就是原项目约定的工具文件，不另增测试源码目录。
 
 ## 运行
+
+`submission3` 使用你指定的 `deepStudy` 解释器。已有单文件参数时，直接运行训练入口续训，不要再添加 `--bootstrap-dir`；全量训练会比旧抽样方案耗时明显更长。训练全部结束后才单独运行预测入口：
+
+```powershell
+& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission3/code/train.py
+& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission3/code/predict.py
+```
+
+`submission3` 的逐轮规则、保存错误处理和验证说明见[三模型方案](项目文档/修改说明/submission3三模型独立训练方案.md)。下方是保留的 `submission2` 使用说明。
 
 本机解释器是 `C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe`，依赖见 `submission2/code/requirements.txt`；原 `deepStudy` 环境不受影响。
 
