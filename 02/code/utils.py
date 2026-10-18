@@ -25,12 +25,13 @@ RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 DATA_DIR = PROJECT_DIR / "glaucoma_first"
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
-IMAGE_SIZE, BATCH_SIZE = 128, 32
-EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 30, 10, 8
+IMAGE_SIZE, BATCH_SIZE = 64, 32
+SAMPLES_PER_EPOCH = 8192
+EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 20, 10, 6
 WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
 WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
-RECIPE = "official_train_rgb128_balanced_adamw_v1"
+RECIPE = "official_train_rgb64_balanced8192_adamw_v2"
 
 
 # 【来源】本项目自写；复用课堂Resize/ToTensor/Normalize，随机增强只用于训练。
@@ -100,12 +101,14 @@ def load_train_data():
 
 
 # 【来源】本项目自写；按类别频数倒数进行有放回均衡采样。
-def create_sampler(labels):
+def create_sampler(labels, num_samples=None):
     labels = torch.tensor(labels, dtype=torch.long)
     counts = torch.bincount(labels, minlength=2).float()
     if torch.any(counts == 0):
         raise ValueError("训练集必须同时包含0和1")
-    return WeightedRandomSampler(1.0 / counts[labels], len(labels), replacement=True)
+    return WeightedRandomSampler(1.0 / counts[labels],
+                                 len(labels) if num_samples is None else num_samples,
+                                 replacement=True)
 
 
 # 【来源】本项目自写；延续课堂首批/中间/末批进度输出。

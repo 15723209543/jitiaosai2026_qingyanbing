@@ -19,6 +19,7 @@ from model import ImageModel, MODEL_NAMES, create_dataset
 from predict import evaluate
 from utils import (BATCH_SIZE, CPU_THREADS, EARLY_STOPPING_PATIENCE, EPOCHS,
                    LEARNING_RATE, MAX_GRAD_NORM, MIN_EPOCHS, MODEL_DIR, RECORD_DIR,
+                   SAMPLES_PER_EPOCH,
                    WEIGHT_DECAY, create_sampler, get_learning_rate, load_model,
                    model_path, print_progress, reuse_model, save_model, save_training_record)
 
@@ -37,9 +38,9 @@ def train_one(model_name, train_dataset, valid_dataset):
     run_dir = RECORD_DIR / (datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_" + model_name)
     run_dir.mkdir(parents=True, exist_ok=False)
 
-    # 1. 创建数据加载器；每批32张，类别均衡有放回采样。
+    # 1. 修改⑤: 每轮均衡抽取8192张，控制CPU训练耗时；每批仍为32张。
     dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                            sampler=create_sampler(train_dataset.labels))
+                            sampler=create_sampler(train_dataset.labels, SAMPLES_PER_EPOCH))
     print(f"模型:{model_name}, 训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
           f"共{EPOCHS}轮, 每轮{len(dataloader)}批, CPU线程:{CPU_THREADS}", flush=True)
 
