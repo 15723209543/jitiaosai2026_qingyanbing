@@ -1,0 +1,45 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+���в���, �����ظ�ѵ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\02\model\resnet18.pth
+��ģ����֤: resnet18
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.7s, remaining:2.0min
+valid, batch: 25/183 (13.7%), time:12.6s, remaining:1.3min
+valid, batch: 50/183 (27.3%), time:25.6s, remaining:1.1min
+valid, batch: 75/183 (41.0%), time:39.5s, remaining:0.9min
+valid, batch: 100/183 (54.6%), time:53.8s, remaining:0.7min
+valid, batch: 125/183 (68.3%), time:67.8s, remaining:0.5min
+valid, batch: 150/183 (82.0%), time:82.4s, remaining:0.3min
+valid, batch: 175/183 (95.6%), time:96.2s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:100.1s, remaining:0.0min
+Acc: 0.9010, AUROC: 0.940166, AUPRC(����): 0.458639, AP: 0.460936
+�����ٻ���: 81.15%, �����: 90.40%, TP:155 TN:5115 FP:543 FN:36
+���в���, �����ظ�ѵ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\02\model\efficientnet_b0.pth
+��ģ����֤: efficientnet_b0
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.3s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:8.0s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:10.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:11.9s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:14.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:14.7s, remaining:0.0min
+Acc: 0.8466, AUROC: 0.877233, AUPRC(����): 0.334673, AP: 0.337243
+�����ٻ���: 73.30%, �����: 85.05%, TP:140 TN:4812 FP:846 FN:51
+˫ģ�͵�Ȩƽ����֤: resnet18 + efficientnet_b0
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.4s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:8.2s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:11.4s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.4s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:20.8s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:24.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:24.9s, remaining:0.0min
+Acc: 0.8991, AUROC: 0.924338, AUPRC(����): 0.452993, AP: 0.455774
+�����ٻ���: 77.49%, �����: 90.33%, TP:148 TN:5111 FP:547 FN:43
+˫ģ����֤AUROC:0.924338, AUPRC:0.452993
+ѵ������֤��������Ҫ�����ύ��ʱ, �뵥������predict.py��

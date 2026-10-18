@@ -1,0 +1,586 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+����ͬ�ܹ�����: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth -> C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\resnet18.pth
+��ģ����֤: resnet18
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.7s, remaining:2.1min
+valid, batch: 25/183 (13.7%), time:14.6s, remaining:1.5min
+valid, batch: 50/183 (27.3%), time:30.3s, remaining:1.3min
+valid, batch: 75/183 (41.0%), time:45.8s, remaining:1.1min
+valid, batch: 100/183 (54.6%), time:61.2s, remaining:0.8min
+valid, batch: 125/183 (68.3%), time:77.2s, remaining:0.6min
+valid, batch: 150/183 (82.0%), time:93.1s, remaining:0.3min
+valid, batch: 175/183 (95.6%), time:108.5s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:113.0s, remaining:0.0min
+Acc: 0.9010, AUROC: 0.940166, AUPRC(����): 0.458639, AP: 0.460936
+�����ٻ���: 81.15%, �����: 90.40%, TP:155 TN:5115 FP:543 FN:36
+ģ��:densenet121, ѵ����:51396��, ��֤��:5849��, ��20��, ÿ��256��, CPU�߳�:8
+��ʼѵ�� densenet121 epoch: 1/20, lr:3.00e-05
+epoch: 1/20, batch: 1/256 (0.4%), time:3.1s, remaining:13.2min, loss:0.70015, acc:0.5000
+epoch: 1/20, batch: 25/256 (9.8%), time:59.0s, remaining:9.1min, loss:0.69063, acc:0.5288
+epoch: 1/20, batch: 50/256 (19.5%), time:135.9s, remaining:9.3min, loss:0.69029, acc:0.5463
+epoch: 1/20, batch: 75/256 (29.3%), time:207.7s, remaining:8.4min, loss:0.68758, acc:0.5533
+epoch: 1/20, batch: 100/256 (39.1%), time:266.8s, remaining:6.9min, loss:0.67986, acc:0.5706
+epoch: 1/20, batch: 125/256 (48.8%), time:335.6s, remaining:5.9min, loss:0.67637, acc:0.5837
+epoch: 1/20, batch: 150/256 (58.6%), time:397.6s, remaining:4.7min, loss:0.67527, acc:0.5848
+epoch: 1/20, batch: 175/256 (68.4%), time:453.5s, remaining:3.5min, loss:0.67283, acc:0.5909
+epoch: 1/20, batch: 200/256 (78.1%), time:513.3s, remaining:2.4min, loss:0.66994, acc:0.5953
+epoch: 1/20, batch: 225/256 (87.9%), time:565.8s, remaining:1.3min, loss:0.66605, acc:0.6026
+epoch: 1/20, batch: 250/256 (97.7%), time:617.3s, remaining:0.2min, loss:0.66470, acc:0.6028
+epoch: 1/20, batch: 256/256 (100.0%), time:630.3s, remaining:0.0min, loss:0.66350, acc:0.6049
+epoch: 1, loss: 0.66350, acc:0.6049, time:630.33s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.4s, remaining:1.1min
+valid, batch: 25/183 (13.7%), time:8.6s, remaining:0.9min
+valid, batch: 50/183 (27.3%), time:17.4s, remaining:0.8min
+valid, batch: 75/183 (41.0%), time:26.5s, remaining:0.6min
+valid, batch: 100/183 (54.6%), time:36.6s, remaining:0.5min
+valid, batch: 125/183 (68.3%), time:46.3s, remaining:0.4min
+valid, batch: 150/183 (82.0%), time:54.9s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:63.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:65.7s, remaining:0.0min
+Acc: 0.5991, AUROC: 0.689236, AUPRC(����): 0.073521, AP: 0.076066
+�����ٻ���: 66.49%, �����: 59.69%, TP:127 TN:3377 FP:2281 FN:64
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.689236
+��ʼѵ�� densenet121 epoch: 2/20, lr:3.00e-04
+epoch: 2/20, batch: 1/256 (0.4%), time:1.6s, remaining:6.9min, loss:0.60122, acc:0.5938
+epoch: 2/20, batch: 25/256 (9.8%), time:52.0s, remaining:8.0min, loss:0.66940, acc:0.5950
+epoch: 2/20, batch: 50/256 (19.5%), time:108.7s, remaining:7.5min, loss:0.68300, acc:0.5875
+epoch: 2/20, batch: 75/256 (29.3%), time:194.7s, remaining:7.8min, loss:0.68274, acc:0.5829
+epoch: 2/20, batch: 100/256 (39.1%), time:351.4s, remaining:9.1min, loss:0.68412, acc:0.5853
+epoch: 2/20, batch: 125/256 (48.8%), time:439.3s, remaining:7.7min, loss:0.67806, acc:0.5940
+epoch: 2/20, batch: 150/256 (58.6%), time:509.1s, remaining:6.0min, loss:0.67563, acc:0.5958
+epoch: 2/20, batch: 175/256 (68.4%), time:574.7s, remaining:4.4min, loss:0.67124, acc:0.6021
+epoch: 2/20, batch: 200/256 (78.1%), time:641.7s, remaining:3.0min, loss:0.66815, acc:0.6081
+epoch: 2/20, batch: 225/256 (87.9%), time:712.1s, remaining:1.6min, loss:0.66462, acc:0.6115
+epoch: 2/20, batch: 250/256 (97.7%), time:783.2s, remaining:0.3min, loss:0.66194, acc:0.6145
+epoch: 2/20, batch: 256/256 (100.0%), time:800.2s, remaining:0.0min, loss:0.66124, acc:0.6155
+epoch: 2, loss: 0.66124, acc:0.6155, time:800.21s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.6s, remaining:1.7min
+valid, batch: 25/183 (13.7%), time:11.8s, remaining:1.2min
+valid, batch: 50/183 (27.3%), time:23.1s, remaining:1.0min
+valid, batch: 75/183 (41.0%), time:34.9s, remaining:0.8min
+valid, batch: 100/183 (54.6%), time:47.0s, remaining:0.7min
+valid, batch: 125/183 (68.3%), time:59.9s, remaining:0.5min
+valid, batch: 150/183 (82.0%), time:72.4s, remaining:0.3min
+valid, batch: 175/183 (95.6%), time:85.0s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:90.9s, remaining:0.0min
+Acc: 0.7639, AUROC: 0.636499, AUPRC(����): 0.094150, AP: 0.096360
+�����ٻ���: 47.12%, �����: 77.38%, TP:90 TN:4378 FP:1280 FN:101
+����δ���������֤AUROC:0.689236, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 3/20, lr:2.98e-04
+epoch: 3/20, batch: 1/256 (0.4%), time:4.3s, remaining:18.4min, loss:0.61904, acc:0.6562
+epoch: 3/20, batch: 25/256 (9.8%), time:74.3s, remaining:11.4min, loss:0.63195, acc:0.6587
+epoch: 3/20, batch: 50/256 (19.5%), time:134.5s, remaining:9.2min, loss:0.62290, acc:0.6506
+epoch: 3/20, batch: 75/256 (29.3%), time:185.1s, remaining:7.4min, loss:0.60977, acc:0.6608
+epoch: 3/20, batch: 100/256 (39.1%), time:222.1s, remaining:5.8min, loss:0.60949, acc:0.6616
+epoch: 3/20, batch: 125/256 (48.8%), time:291.4s, remaining:5.1min, loss:0.61459, acc:0.6575
+epoch: 3/20, batch: 150/256 (58.6%), time:367.3s, remaining:4.3min, loss:0.61369, acc:0.6598
+epoch: 3/20, batch: 175/256 (68.4%), time:446.7s, remaining:3.4min, loss:0.61126, acc:0.6621
+epoch: 3/20, batch: 200/256 (78.1%), time:526.8s, remaining:2.5min, loss:0.60851, acc:0.6650
+epoch: 3/20, batch: 225/256 (87.9%), time:589.2s, remaining:1.4min, loss:0.60597, acc:0.6694
+epoch: 3/20, batch: 250/256 (97.7%), time:630.3s, remaining:0.3min, loss:0.60329, acc:0.6724
+epoch: 3/20, batch: 256/256 (100.0%), time:639.6s, remaining:0.0min, loss:0.60362, acc:0.6724
+epoch: 3, loss: 0.60362, acc:0.6724, time:639.55s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.4s, remaining:1.2min
+valid, batch: 25/183 (13.7%), time:6.7s, remaining:0.7min
+valid, batch: 50/183 (27.3%), time:13.8s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:20.3s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:26.6s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:33.1s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:39.7s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:46.3s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:48.3s, remaining:0.0min
+Acc: 0.6726, AUROC: 0.762798, AUPRC(����): 0.145482, AP: 0.149400
+�����ٻ���: 69.63%, �����: 67.18%, TP:133 TN:3801 FP:1857 FN:58
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.762798
+��ʼѵ�� densenet121 epoch: 4/20, lr:2.91e-04
+epoch: 4/20, batch: 1/256 (0.4%), time:1.7s, remaining:7.0min, loss:0.55263, acc:0.6875
+epoch: 4/20, batch: 25/256 (9.8%), time:34.2s, remaining:5.3min, loss:0.55575, acc:0.7188
+epoch: 4/20, batch: 50/256 (19.5%), time:66.1s, remaining:4.5min, loss:0.55350, acc:0.7156
+epoch: 4/20, batch: 75/256 (29.3%), time:99.7s, remaining:4.0min, loss:0.55478, acc:0.7142
+epoch: 4/20, batch: 100/256 (39.1%), time:134.3s, remaining:3.5min, loss:0.55574, acc:0.7113
+epoch: 4/20, batch: 125/256 (48.8%), time:169.0s, remaining:3.0min, loss:0.55375, acc:0.7160
+epoch: 4/20, batch: 150/256 (58.6%), time:203.9s, remaining:2.4min, loss:0.54969, acc:0.7179
+epoch: 4/20, batch: 175/256 (68.4%), time:239.9s, remaining:1.9min, loss:0.54857, acc:0.7189
+epoch: 4/20, batch: 200/256 (78.1%), time:282.5s, remaining:1.3min, loss:0.54698, acc:0.7195
+epoch: 4/20, batch: 225/256 (87.9%), time:319.5s, remaining:0.7min, loss:0.54593, acc:0.7203
+epoch: 4/20, batch: 250/256 (97.7%), time:355.2s, remaining:0.1min, loss:0.54480, acc:0.7198
+epoch: 4/20, batch: 256/256 (100.0%), time:365.7s, remaining:0.0min, loss:0.54465, acc:0.7203
+epoch: 4, loss: 0.54465, acc:0.7203, time:365.69s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.3s, remaining:1.0min
+valid, batch: 25/183 (13.7%), time:7.6s, remaining:0.8min
+valid, batch: 50/183 (27.3%), time:15.2s, remaining:0.7min
+valid, batch: 75/183 (41.0%), time:22.4s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:30.2s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:37.3s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:44.0s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:51.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:53.5s, remaining:0.0min
+Acc: 0.6401, AUROC: 0.815414, AUPRC(����): 0.200193, AP: 0.203663
+�����ٻ���: 81.68%, �����: 63.41%, TP:156 TN:3588 FP:2070 FN:35
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.815414
+��ʼѵ�� densenet121 epoch: 5/20, lr:2.80e-04
+epoch: 5/20, batch: 1/256 (0.4%), time:2.5s, remaining:10.7min, loss:0.62593, acc:0.8125
+epoch: 5/20, batch: 25/256 (9.8%), time:37.2s, remaining:5.7min, loss:0.51203, acc:0.7512
+epoch: 5/20, batch: 50/256 (19.5%), time:71.7s, remaining:4.9min, loss:0.50829, acc:0.7488
+epoch: 5/20, batch: 75/256 (29.3%), time:110.9s, remaining:4.5min, loss:0.49678, acc:0.7592
+epoch: 5/20, batch: 100/256 (39.1%), time:145.3s, remaining:3.8min, loss:0.48989, acc:0.7650
+epoch: 5/20, batch: 125/256 (48.8%), time:180.1s, remaining:3.1min, loss:0.49090, acc:0.7625
+epoch: 5/20, batch: 150/256 (58.6%), time:212.3s, remaining:2.5min, loss:0.48050, acc:0.7696
+epoch: 5/20, batch: 175/256 (68.4%), time:248.4s, remaining:1.9min, loss:0.48001, acc:0.7702
+epoch: 5/20, batch: 200/256 (78.1%), time:283.1s, remaining:1.3min, loss:0.47563, acc:0.7728
+epoch: 5/20, batch: 225/256 (87.9%), time:315.8s, remaining:0.7min, loss:0.47741, acc:0.7707
+epoch: 5/20, batch: 250/256 (97.7%), time:350.1s, remaining:0.1min, loss:0.47837, acc:0.7706
+epoch: 5/20, batch: 256/256 (100.0%), time:358.3s, remaining:0.0min, loss:0.47655, acc:0.7720
+epoch: 5, loss: 0.47655, acc:0.7720, time:358.28s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.3s, remaining:1.0min
+valid, batch: 25/183 (13.7%), time:7.4s, remaining:0.8min
+valid, batch: 50/183 (27.3%), time:14.3s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:21.0s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:29.0s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:36.2s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:43.3s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:50.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:53.4s, remaining:0.0min
+Acc: 0.7827, AUROC: 0.843636, AUPRC(����): 0.263505, AP: 0.265866
+�����ٻ���: 73.82%, �����: 78.42%, TP:141 TN:4437 FP:1221 FN:50
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.843636
+��ʼѵ�� densenet121 epoch: 6/20, lr:2.65e-04
+epoch: 6/20, batch: 1/256 (0.4%), time:1.4s, remaining:6.1min, loss:0.55209, acc:0.6875
+epoch: 6/20, batch: 25/256 (9.8%), time:35.4s, remaining:5.4min, loss:0.46076, acc:0.7887
+epoch: 6/20, batch: 50/256 (19.5%), time:68.0s, remaining:4.7min, loss:0.45734, acc:0.7881
+epoch: 6/20, batch: 75/256 (29.3%), time:102.7s, remaining:4.1min, loss:0.44922, acc:0.7921
+epoch: 6/20, batch: 100/256 (39.1%), time:136.7s, remaining:3.6min, loss:0.45054, acc:0.7894
+epoch: 6/20, batch: 125/256 (48.8%), time:171.7s, remaining:3.0min, loss:0.44554, acc:0.7923
+epoch: 6/20, batch: 150/256 (58.6%), time:207.6s, remaining:2.4min, loss:0.44446, acc:0.7946
+epoch: 6/20, batch: 175/256 (68.4%), time:241.9s, remaining:1.9min, loss:0.44351, acc:0.7948
+epoch: 6/20, batch: 200/256 (78.1%), time:277.3s, remaining:1.3min, loss:0.44358, acc:0.7944
+epoch: 6/20, batch: 225/256 (87.9%), time:315.8s, remaining:0.7min, loss:0.44157, acc:0.7951
+epoch: 6/20, batch: 250/256 (97.7%), time:347.9s, remaining:0.1min, loss:0.44074, acc:0.7953
+epoch: 6/20, batch: 256/256 (100.0%), time:357.2s, remaining:0.0min, loss:0.43974, acc:0.7957
+epoch: 6, loss: 0.43974, acc:0.7957, time:357.21s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.8min
+valid, batch: 25/183 (13.7%), time:6.9s, remaining:0.7min
+valid, batch: 50/183 (27.3%), time:13.6s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:20.6s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:27.9s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:34.6s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:41.0s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:47.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:49.6s, remaining:0.0min
+Acc: 0.8366, AUROC: 0.837769, AUPRC(����): 0.251448, AP: 0.255583
+�����ٻ���: 68.06%, �����: 84.18%, TP:130 TN:4763 FP:895 FN:61
+����δ���������֤AUROC:0.843636, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 7/20, lr:2.47e-04
+epoch: 7/20, batch: 1/256 (0.4%), time:1.6s, remaining:6.6min, loss:0.62389, acc:0.5312
+epoch: 7/20, batch: 25/256 (9.8%), time:32.5s, remaining:5.0min, loss:0.45248, acc:0.7762
+epoch: 7/20, batch: 50/256 (19.5%), time:66.1s, remaining:4.5min, loss:0.42577, acc:0.7950
+epoch: 7/20, batch: 75/256 (29.3%), time:99.7s, remaining:4.0min, loss:0.42009, acc:0.7971
+epoch: 7/20, batch: 100/256 (39.1%), time:133.9s, remaining:3.5min, loss:0.42179, acc:0.7944
+epoch: 7/20, batch: 125/256 (48.8%), time:167.3s, remaining:2.9min, loss:0.42229, acc:0.7957
+epoch: 7/20, batch: 150/256 (58.6%), time:198.9s, remaining:2.3min, loss:0.42355, acc:0.7994
+epoch: 7/20, batch: 175/256 (68.4%), time:232.1s, remaining:1.8min, loss:0.42316, acc:0.8002
+epoch: 7/20, batch: 200/256 (78.1%), time:264.2s, remaining:1.2min, loss:0.42656, acc:0.8002
+epoch: 7/20, batch: 225/256 (87.9%), time:297.2s, remaining:0.7min, loss:0.42775, acc:0.7996
+epoch: 7/20, batch: 250/256 (97.7%), time:330.1s, remaining:0.1min, loss:0.42512, acc:0.8017
+epoch: 7/20, batch: 256/256 (100.0%), time:338.5s, remaining:0.0min, loss:0.42495, acc:0.8018
+epoch: 7, loss: 0.42495, acc:0.8018, time:338.47s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.4s, remaining:1.2min
+valid, batch: 25/183 (13.7%), time:7.1s, remaining:0.7min
+valid, batch: 50/183 (27.3%), time:14.0s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:20.7s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:27.0s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:34.7s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:41.5s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:49.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:52.2s, remaining:0.0min
+Acc: 0.8324, AUROC: 0.880891, AUPRC(����): 0.292153, AP: 0.295218
+�����ٻ���: 76.44%, �����: 83.47%, TP:146 TN:4723 FP:935 FN:45
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.880891
+��ʼѵ�� densenet121 epoch: 8/20, lr:2.25e-04
+epoch: 8/20, batch: 1/256 (0.4%), time:1.4s, remaining:5.9min, loss:0.36827, acc:0.8438
+epoch: 8/20, batch: 25/256 (9.8%), time:35.5s, remaining:5.5min, loss:0.42938, acc:0.7963
+epoch: 8/20, batch: 50/256 (19.5%), time:67.2s, remaining:4.6min, loss:0.42262, acc:0.8025
+epoch: 8/20, batch: 75/256 (29.3%), time:106.1s, remaining:4.3min, loss:0.42060, acc:0.8075
+epoch: 8/20, batch: 100/256 (39.1%), time:140.8s, remaining:3.7min, loss:0.41915, acc:0.8078
+epoch: 8/20, batch: 125/256 (48.8%), time:173.2s, remaining:3.0min, loss:0.41486, acc:0.8090
+epoch: 8/20, batch: 150/256 (58.6%), time:205.4s, remaining:2.4min, loss:0.41327, acc:0.8113
+epoch: 8/20, batch: 175/256 (68.4%), time:238.8s, remaining:1.8min, loss:0.41342, acc:0.8093
+epoch: 8/20, batch: 200/256 (78.1%), time:272.3s, remaining:1.3min, loss:0.41174, acc:0.8113
+epoch: 8/20, batch: 225/256 (87.9%), time:304.3s, remaining:0.7min, loss:0.40737, acc:0.8136
+epoch: 8/20, batch: 250/256 (97.7%), time:337.9s, remaining:0.1min, loss:0.40961, acc:0.8124
+epoch: 8/20, batch: 256/256 (100.0%), time:346.9s, remaining:0.0min, loss:0.40994, acc:0.8121
+epoch: 8, loss: 0.40994, acc:0.8121, time:346.86s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.7min
+valid, batch: 25/183 (13.7%), time:7.1s, remaining:0.7min
+valid, batch: 50/183 (27.3%), time:14.2s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:20.6s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:28.4s, remaining:0.4min
+valid, batch: 125/183 (68.3%), time:36.1s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:43.4s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:50.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:52.9s, remaining:0.0min
+Acc: 0.8839, AUROC: 0.892677, AUPRC(����): 0.362933, AP: 0.365739
+�����ٻ���: 72.77%, �����: 88.92%, TP:139 TN:5031 FP:627 FN:52
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.892677
+��ʼѵ�� densenet121 epoch: 9/20, lr:2.02e-04
+epoch: 9/20, batch: 1/256 (0.4%), time:1.6s, remaining:6.9min, loss:0.33106, acc:0.8125
+epoch: 9/20, batch: 25/256 (9.8%), time:40.4s, remaining:6.2min, loss:0.41446, acc:0.7950
+epoch: 9/20, batch: 50/256 (19.5%), time:128.6s, remaining:8.8min, loss:0.41715, acc:0.8119
+epoch: 9/20, batch: 75/256 (29.3%), time:207.8s, remaining:8.4min, loss:0.39508, acc:0.8246
+epoch: 9/20, batch: 100/256 (39.1%), time:295.0s, remaining:7.7min, loss:0.38922, acc:0.8266
+epoch: 9/20, batch: 125/256 (48.8%), time:343.0s, remaining:6.0min, loss:0.38384, acc:0.8295
+epoch: 9/20, batch: 150/256 (58.6%), time:434.2s, remaining:5.1min, loss:0.38395, acc:0.8290
+epoch: 9/20, batch: 175/256 (68.4%), time:491.2s, remaining:3.8min, loss:0.38422, acc:0.8273
+epoch: 9/20, batch: 200/256 (78.1%), time:558.8s, remaining:2.6min, loss:0.38438, acc:0.8247
+epoch: 9/20, batch: 225/256 (87.9%), time:637.5s, remaining:1.5min, loss:0.37907, acc:0.8278
+epoch: 9/20, batch: 250/256 (97.7%), time:722.2s, remaining:0.3min, loss:0.37613, acc:0.8296
+epoch: 9/20, batch: 256/256 (100.0%), time:741.4s, remaining:0.0min, loss:0.37545, acc:0.8296
+epoch: 9, loss: 0.37545, acc:0.8296, time:741.43s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.4s, remaining:1.2min
+valid, batch: 25/183 (13.7%), time:15.7s, remaining:1.7min
+valid, batch: 50/183 (27.3%), time:35.3s, remaining:1.6min
+valid, batch: 75/183 (41.0%), time:53.7s, remaining:1.3min
+valid, batch: 100/183 (54.6%), time:69.4s, remaining:1.0min
+valid, batch: 125/183 (68.3%), time:91.0s, remaining:0.7min
+valid, batch: 150/183 (82.0%), time:114.2s, remaining:0.4min
+valid, batch: 175/183 (95.6%), time:129.2s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:140.2s, remaining:0.0min
+Acc: 0.8707, AUROC: 0.909069, AUPRC(����): 0.399280, AP: 0.400826
+�����ٻ���: 78.53%, �����: 87.36%, TP:150 TN:4943 FP:715 FN:41
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.909069
+��ʼѵ�� densenet121 epoch: 10/20, lr:1.76e-04
+epoch: 10/20, batch: 1/256 (0.4%), time:5.0s, remaining:21.3min, loss:0.36408, acc:0.8750
+epoch: 10/20, batch: 25/256 (9.8%), time:114.4s, remaining:17.6min, loss:0.35350, acc:0.8400
+epoch: 10/20, batch: 50/256 (19.5%), time:311.8s, remaining:21.4min, loss:0.35113, acc:0.8381
+epoch: 10/20, batch: 75/256 (29.3%), time:586.0s, remaining:23.6min, loss:0.35858, acc:0.8396
+epoch: 10/20, batch: 100/256 (39.1%), time:631.7s, remaining:16.4min, loss:0.35965, acc:0.8378
+epoch: 10/20, batch: 125/256 (48.8%), time:669.2s, remaining:11.7min, loss:0.35528, acc:0.8397
+epoch: 10/20, batch: 150/256 (58.6%), time:701.0s, remaining:8.3min, loss:0.35458, acc:0.8415
+epoch: 10/20, batch: 175/256 (68.4%), time:720.6s, remaining:5.6min, loss:0.35471, acc:0.8416
+epoch: 10/20, batch: 200/256 (78.1%), time:753.2s, remaining:3.5min, loss:0.35747, acc:0.8398
+epoch: 10/20, batch: 225/256 (87.9%), time:887.5s, remaining:2.0min, loss:0.35476, acc:0.8417
+epoch: 10/20, batch: 250/256 (97.7%), time:921.7s, remaining:0.4min, loss:0.35323, acc:0.8429
+epoch: 10/20, batch: 256/256 (100.0%), time:927.0s, remaining:0.0min, loss:0.35261, acc:0.8427
+epoch: 10, loss: 0.35261, acc:0.8427, time:926.96s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:4.5s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:8.9s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.5s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:18.2s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:22.5s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:27.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:31.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:33.6s, remaining:0.0min
+Acc: 0.8301, AUROC: 0.898515, AUPRC(����): 0.367558, AP: 0.370550
+�����ٻ���: 80.10%, �����: 83.10%, TP:153 TN:4702 FP:956 FN:38
+����δ���������֤AUROC:0.909069, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 11/20, lr:1.50e-04
+epoch: 11/20, batch: 1/256 (0.4%), time:1.3s, remaining:5.5min, loss:0.33508, acc:0.8438
+epoch: 11/20, batch: 25/256 (9.8%), time:25.6s, remaining:3.9min, loss:0.35894, acc:0.8350
+epoch: 11/20, batch: 50/256 (19.5%), time:56.9s, remaining:3.9min, loss:0.34459, acc:0.8469
+epoch: 11/20, batch: 75/256 (29.3%), time:79.6s, remaining:3.2min, loss:0.34039, acc:0.8521
+epoch: 11/20, batch: 100/256 (39.1%), time:123.0s, remaining:3.2min, loss:0.34581, acc:0.8497
+epoch: 11/20, batch: 125/256 (48.8%), time:144.8s, remaining:2.5min, loss:0.34428, acc:0.8498
+epoch: 11/20, batch: 150/256 (58.6%), time:168.9s, remaining:2.0min, loss:0.33992, acc:0.8519
+epoch: 11/20, batch: 175/256 (68.4%), time:207.9s, remaining:1.6min, loss:0.34138, acc:0.8504
+epoch: 11/20, batch: 200/256 (78.1%), time:239.7s, remaining:1.1min, loss:0.33773, acc:0.8523
+epoch: 11/20, batch: 225/256 (87.9%), time:261.2s, remaining:0.6min, loss:0.33654, acc:0.8538
+epoch: 11/20, batch: 250/256 (97.7%), time:281.1s, remaining:0.1min, loss:0.33683, acc:0.8525
+epoch: 11/20, batch: 256/256 (100.0%), time:286.1s, remaining:0.0min, loss:0.33785, acc:0.8519
+epoch: 11, loss: 0.33785, acc:0.8519, time:286.10s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.3s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:8.5s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.0s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:17.5s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:22.0s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:26.3s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:30.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:31.8s, remaining:0.0min
+Acc: 0.8454, AUROC: 0.908554, AUPRC(����): 0.404067, AP: 0.406836
+�����ٻ���: 80.63%, �����: 84.68%, TP:154 TN:4791 FP:867 FN:37
+����δ���������֤AUROC:0.909069, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 12/20, lr:1.25e-04
+epoch: 12/20, batch: 1/256 (0.4%), time:0.9s, remaining:3.6min, loss:0.17098, acc:1.0000
+epoch: 12/20, batch: 25/256 (9.8%), time:21.2s, remaining:3.3min, loss:0.33014, acc:0.8550
+epoch: 12/20, batch: 50/256 (19.5%), time:48.5s, remaining:3.3min, loss:0.32394, acc:0.8569
+epoch: 12/20, batch: 75/256 (29.3%), time:71.5s, remaining:2.9min, loss:0.32489, acc:0.8567
+epoch: 12/20, batch: 100/256 (39.1%), time:93.3s, remaining:2.4min, loss:0.32470, acc:0.8600
+epoch: 12/20, batch: 125/256 (48.8%), time:151.8s, remaining:2.7min, loss:0.32635, acc:0.8595
+epoch: 12/20, batch: 150/256 (58.6%), time:172.2s, remaining:2.0min, loss:0.32665, acc:0.8592
+epoch: 12/20, batch: 175/256 (68.4%), time:194.7s, remaining:1.5min, loss:0.32120, acc:0.8605
+epoch: 12/20, batch: 200/256 (78.1%), time:218.0s, remaining:1.0min, loss:0.31589, acc:0.8628
+epoch: 12/20, batch: 225/256 (87.9%), time:238.3s, remaining:0.5min, loss:0.31283, acc:0.8657
+epoch: 12/20, batch: 250/256 (97.7%), time:259.4s, remaining:0.1min, loss:0.31260, acc:0.8662
+epoch: 12/20, batch: 256/256 (100.0%), time:264.4s, remaining:0.0min, loss:0.31257, acc:0.8657
+epoch: 12, loss: 0.31257, acc:0.8657, time:264.40s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:4.0s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:8.0s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:12.0s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:16.0s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:20.4s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:24.6s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:28.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:29.9s, remaining:0.0min
+Acc: 0.8600, AUROC: 0.923731, AUPRC(����): 0.422982, AP: 0.425694
+�����ٻ���: 81.68%, �����: 86.14%, TP:156 TN:4874 FP:784 FN:35
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.923731
+��ʼѵ�� densenet121 epoch: 13/20, lr:9.94e-05
+epoch: 13/20, batch: 1/256 (0.4%), time:0.7s, remaining:3.2min, loss:0.41106, acc:0.8125
+epoch: 13/20, batch: 25/256 (9.8%), time:33.7s, remaining:5.2min, loss:0.31462, acc:0.8812
+epoch: 13/20, batch: 50/256 (19.5%), time:53.1s, remaining:3.6min, loss:0.30461, acc:0.8738
+epoch: 13/20, batch: 75/256 (29.3%), time:74.5s, remaining:3.0min, loss:0.29498, acc:0.8767
+epoch: 13/20, batch: 100/256 (39.1%), time:93.3s, remaining:2.4min, loss:0.28853, acc:0.8812
+epoch: 13/20, batch: 125/256 (48.8%), time:112.9s, remaining:2.0min, loss:0.29063, acc:0.8805
+epoch: 13/20, batch: 150/256 (58.6%), time:133.5s, remaining:1.6min, loss:0.28783, acc:0.8808
+epoch: 13/20, batch: 175/256 (68.4%), time:156.6s, remaining:1.2min, loss:0.29048, acc:0.8805
+epoch: 13/20, batch: 200/256 (78.1%), time:177.2s, remaining:0.8min, loss:0.28842, acc:0.8819
+epoch: 13/20, batch: 225/256 (87.9%), time:199.5s, remaining:0.5min, loss:0.28881, acc:0.8821
+epoch: 13/20, batch: 250/256 (97.7%), time:220.1s, remaining:0.1min, loss:0.28866, acc:0.8815
+epoch: 13/20, batch: 256/256 (100.0%), time:225.2s, remaining:0.0min, loss:0.28797, acc:0.8816
+epoch: 13, loss: 0.28797, acc:0.8816, time:225.20s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.7s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:9.1s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.1s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:16.7s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:20.2s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:23.8s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:27.3s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:28.4s, remaining:0.0min
+Acc: 0.8446, AUROC: 0.920053, AUPRC(����): 0.427710, AP: 0.430416
+�����ٻ���: 85.34%, �����: 84.43%, TP:163 TN:4777 FP:881 FN:28
+����δ���������֤AUROC:0.923731, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 14/20, lr:7.58e-05
+epoch: 14/20, batch: 1/256 (0.4%), time:0.8s, remaining:3.4min, loss:0.19641, acc:0.9062
+epoch: 14/20, batch: 25/256 (9.8%), time:18.6s, remaining:2.9min, loss:0.30796, acc:0.8850
+epoch: 14/20, batch: 50/256 (19.5%), time:36.8s, remaining:2.5min, loss:0.28598, acc:0.8850
+epoch: 14/20, batch: 75/256 (29.3%), time:55.6s, remaining:2.2min, loss:0.28478, acc:0.8833
+epoch: 14/20, batch: 100/256 (39.1%), time:74.5s, remaining:1.9min, loss:0.28790, acc:0.8791
+epoch: 14/20, batch: 125/256 (48.8%), time:92.8s, remaining:1.6min, loss:0.28387, acc:0.8810
+epoch: 14/20, batch: 150/256 (58.6%), time:111.2s, remaining:1.3min, loss:0.28916, acc:0.8773
+epoch: 14/20, batch: 175/256 (68.4%), time:134.3s, remaining:1.0min, loss:0.28708, acc:0.8782
+epoch: 14/20, batch: 200/256 (78.1%), time:154.1s, remaining:0.7min, loss:0.28565, acc:0.8797
+epoch: 14/20, batch: 225/256 (87.9%), time:173.1s, remaining:0.4min, loss:0.28418, acc:0.8818
+epoch: 14/20, batch: 250/256 (97.7%), time:192.3s, remaining:0.1min, loss:0.28277, acc:0.8825
+epoch: 14/20, batch: 256/256 (100.0%), time:197.0s, remaining:0.0min, loss:0.28511, acc:0.8812
+epoch: 14, loss: 0.28511, acc:0.8812, time:196.98s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.2s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.7s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.2s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.8s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.2s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:24.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:25.9s, remaining:0.0min
+Acc: 0.8460, AUROC: 0.926746, AUPRC(����): 0.452902, AP: 0.455165
+�����ٻ���: 84.82%, �����: 84.59%, TP:162 TN:4786 FP:872 FN:29
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.926746
+��ʼѵ�� densenet121 epoch: 15/20, lr:5.44e-05
+epoch: 15/20, batch: 1/256 (0.4%), time:0.9s, remaining:3.8min, loss:0.14329, acc:0.9688
+epoch: 15/20, batch: 25/256 (9.8%), time:19.1s, remaining:2.9min, loss:0.24769, acc:0.9025
+epoch: 15/20, batch: 50/256 (19.5%), time:37.0s, remaining:2.5min, loss:0.24153, acc:0.9044
+epoch: 15/20, batch: 75/256 (29.3%), time:55.1s, remaining:2.2min, loss:0.23711, acc:0.9050
+epoch: 15/20, batch: 100/256 (39.1%), time:74.6s, remaining:1.9min, loss:0.25654, acc:0.8947
+epoch: 15/20, batch: 125/256 (48.8%), time:93.3s, remaining:1.6min, loss:0.25676, acc:0.8962
+epoch: 15/20, batch: 150/256 (58.6%), time:111.7s, remaining:1.3min, loss:0.25027, acc:0.8988
+epoch: 15/20, batch: 175/256 (68.4%), time:130.4s, remaining:1.0min, loss:0.25213, acc:0.8988
+epoch: 15/20, batch: 200/256 (78.1%), time:148.8s, remaining:0.7min, loss:0.25055, acc:0.8995
+epoch: 15/20, batch: 225/256 (87.9%), time:168.3s, remaining:0.4min, loss:0.25645, acc:0.8981
+epoch: 15/20, batch: 250/256 (97.7%), time:187.6s, remaining:0.1min, loss:0.25774, acc:0.8972
+epoch: 15/20, batch: 256/256 (100.0%), time:192.2s, remaining:0.0min, loss:0.25840, acc:0.8969
+epoch: 15, loss: 0.25840, acc:0.8969, time:192.16s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.2s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.9s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.6s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:25.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:26.8s, remaining:0.0min
+Acc: 0.8947, AUROC: 0.930010, AUPRC(����): 0.467024, AP: 0.468973
+�����ٻ���: 81.15%, �����: 89.75%, TP:155 TN:5078 FP:580 FN:36
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\model\densenet121.pth, ��֤AUROC:0.930010
+��ʼѵ�� densenet121 epoch: 16/20, lr:3.60e-05
+epoch: 16/20, batch: 1/256 (0.4%), time:0.8s, remaining:3.2min, loss:0.20275, acc:0.9375
+epoch: 16/20, batch: 25/256 (9.8%), time:19.2s, remaining:3.0min, loss:0.26779, acc:0.8975
+epoch: 16/20, batch: 50/256 (19.5%), time:38.2s, remaining:2.6min, loss:0.25499, acc:0.9000
+epoch: 16/20, batch: 75/256 (29.3%), time:58.0s, remaining:2.3min, loss:0.25577, acc:0.9021
+epoch: 16/20, batch: 100/256 (39.1%), time:76.9s, remaining:2.0min, loss:0.25264, acc:0.9022
+epoch: 16/20, batch: 125/256 (48.8%), time:95.8s, remaining:1.7min, loss:0.25033, acc:0.8998
+epoch: 16/20, batch: 150/256 (58.6%), time:115.3s, remaining:1.4min, loss:0.24670, acc:0.9006
+epoch: 16/20, batch: 175/256 (68.4%), time:138.7s, remaining:1.1min, loss:0.24201, acc:0.9023
+epoch: 16/20, batch: 200/256 (78.1%), time:156.9s, remaining:0.7min, loss:0.24246, acc:0.9017
+epoch: 16/20, batch: 225/256 (87.9%), time:174.7s, remaining:0.4min, loss:0.24110, acc:0.9022
+epoch: 16/20, batch: 250/256 (97.7%), time:192.7s, remaining:0.1min, loss:0.24180, acc:0.9015
+epoch: 16/20, batch: 256/256 (100.0%), time:197.2s, remaining:0.0min, loss:0.24156, acc:0.9016
+epoch: 16, loss: 0.24156, acc:0.9016, time:197.19s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.3s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:11.0s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.7s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:22.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:25.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:26.9s, remaining:0.0min
+Acc: 0.8836, AUROC: 0.929724, AUPRC(����): 0.461956, AP: 0.464363
+�����ٻ���: 83.77%, �����: 88.51%, TP:160 TN:5008 FP:650 FN:31
+����δ���������֤AUROC:0.930010, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 17/20, lr:2.10e-05
+epoch: 17/20, batch: 1/256 (0.4%), time:0.7s, remaining:3.0min, loss:0.28080, acc:0.7812
+epoch: 17/20, batch: 25/256 (9.8%), time:18.5s, remaining:2.9min, loss:0.26047, acc:0.8962
+epoch: 17/20, batch: 50/256 (19.5%), time:36.5s, remaining:2.5min, loss:0.22960, acc:0.9100
+epoch: 17/20, batch: 75/256 (29.3%), time:54.8s, remaining:2.2min, loss:0.23114, acc:0.9100
+epoch: 17/20, batch: 100/256 (39.1%), time:73.0s, remaining:1.9min, loss:0.23406, acc:0.9078
+epoch: 17/20, batch: 125/256 (48.8%), time:91.1s, remaining:1.6min, loss:0.23302, acc:0.9100
+epoch: 17/20, batch: 150/256 (58.6%), time:109.0s, remaining:1.3min, loss:0.22966, acc:0.9100
+epoch: 17/20, batch: 175/256 (68.4%), time:126.9s, remaining:1.0min, loss:0.22511, acc:0.9111
+epoch: 17/20, batch: 200/256 (78.1%), time:145.4s, remaining:0.7min, loss:0.22670, acc:0.9102
+epoch: 17/20, batch: 225/256 (87.9%), time:163.7s, remaining:0.4min, loss:0.22693, acc:0.9097
+epoch: 17/20, batch: 250/256 (97.7%), time:182.3s, remaining:0.1min, loss:0.22617, acc:0.9106
+epoch: 17/20, batch: 256/256 (100.0%), time:186.7s, remaining:0.0min, loss:0.22579, acc:0.9106
+epoch: 17, loss: 0.22579, acc:0.9106, time:186.66s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.6s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.2s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.9s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.5s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:25.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.0s, remaining:0.0min
+Acc: 0.8996, AUROC: 0.926944, AUPRC(����): 0.447514, AP: 0.450396
+�����ٻ���: 79.58%, �����: 90.31%, TP:152 TN:5110 FP:548 FN:39
+����δ���������֤AUROC:0.930010, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 18/20, lr:1.00e-05
+epoch: 18/20, batch: 1/256 (0.4%), time:0.7s, remaining:3.1min, loss:0.19054, acc:0.9062
+epoch: 18/20, batch: 25/256 (9.8%), time:18.4s, remaining:2.8min, loss:0.19592, acc:0.9175
+epoch: 18/20, batch: 50/256 (19.5%), time:35.9s, remaining:2.5min, loss:0.21354, acc:0.9144
+epoch: 18/20, batch: 75/256 (29.3%), time:54.1s, remaining:2.2min, loss:0.21591, acc:0.9121
+epoch: 18/20, batch: 100/256 (39.1%), time:71.9s, remaining:1.9min, loss:0.21439, acc:0.9147
+epoch: 18/20, batch: 125/256 (48.8%), time:90.2s, remaining:1.6min, loss:0.20906, acc:0.9175
+epoch: 18/20, batch: 150/256 (58.6%), time:111.8s, remaining:1.3min, loss:0.20921, acc:0.9179
+epoch: 18/20, batch: 175/256 (68.4%), time:132.0s, remaining:1.0min, loss:0.20848, acc:0.9198
+epoch: 18/20, batch: 200/256 (78.1%), time:150.3s, remaining:0.7min, loss:0.20590, acc:0.9209
+epoch: 18/20, batch: 225/256 (87.9%), time:169.6s, remaining:0.4min, loss:0.20892, acc:0.9200
+epoch: 18/20, batch: 250/256 (97.7%), time:188.2s, remaining:0.1min, loss:0.20955, acc:0.9196
+epoch: 18/20, batch: 256/256 (100.0%), time:192.5s, remaining:0.0min, loss:0.20987, acc:0.9192
+epoch: 18, loss: 0.20987, acc:0.9192, time:192.49s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.6s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.6s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:11.2s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.7s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:26.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.5s, remaining:0.0min
+Acc: 0.8940, AUROC: 0.928732, AUPRC(����): 0.449041, AP: 0.451881
+�����ٻ���: 79.58%, �����: 89.73%, TP:152 TN:5077 FP:581 FN:39
+����δ���������֤AUROC:0.930010, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 19/20, lr:3.27e-06
+epoch: 19/20, batch: 1/256 (0.4%), time:0.7s, remaining:2.9min, loss:0.22588, acc:0.9062
+epoch: 19/20, batch: 25/256 (9.8%), time:17.9s, remaining:2.8min, loss:0.22354, acc:0.9187
+epoch: 19/20, batch: 50/256 (19.5%), time:36.2s, remaining:2.5min, loss:0.21094, acc:0.9237
+epoch: 19/20, batch: 75/256 (29.3%), time:54.2s, remaining:2.2min, loss:0.21537, acc:0.9213
+epoch: 19/20, batch: 100/256 (39.1%), time:74.3s, remaining:1.9min, loss:0.21717, acc:0.9169
+epoch: 19/20, batch: 125/256 (48.8%), time:93.1s, remaining:1.6min, loss:0.21901, acc:0.9135
+epoch: 19/20, batch: 150/256 (58.6%), time:114.8s, remaining:1.4min, loss:0.21471, acc:0.9158
+epoch: 19/20, batch: 175/256 (68.4%), time:139.3s, remaining:1.1min, loss:0.21396, acc:0.9170
+epoch: 19/20, batch: 200/256 (78.1%), time:159.5s, remaining:0.7min, loss:0.21370, acc:0.9177
+epoch: 19/20, batch: 225/256 (87.9%), time:178.4s, remaining:0.4min, loss:0.21435, acc:0.9172
+epoch: 19/20, batch: 250/256 (97.7%), time:202.9s, remaining:0.1min, loss:0.21240, acc:0.9177
+epoch: 19/20, batch: 256/256 (100.0%), time:211.7s, remaining:0.0min, loss:0.21229, acc:0.9178
+epoch: 19, loss: 0.21229, acc:0.9178, time:211.70s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:5.0s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:9.3s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.2s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:17.3s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:21.2s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:24.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:28.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:29.9s, remaining:0.0min
+Acc: 0.8918, AUROC: 0.929009, AUPRC(����): 0.453148, AP: 0.455940
+�����ٻ���: 79.58%, �����: 89.50%, TP:152 TN:5064 FP:594 FN:39
+����δ���������֤AUROC:0.930010, ������Ѳ���
+��ʼѵ�� densenet121 epoch: 20/20, lr:1.00e-06
+epoch: 20/20, batch: 1/256 (0.4%), time:0.7s, remaining:3.1min, loss:0.15913, acc:0.9688
+epoch: 20/20, batch: 25/256 (9.8%), time:19.4s, remaining:3.0min, loss:0.18399, acc:0.9325
+epoch: 20/20, batch: 50/256 (19.5%), time:39.9s, remaining:2.7min, loss:0.19802, acc:0.9225
+epoch: 20/20, batch: 75/256 (29.3%), time:60.1s, remaining:2.4min, loss:0.19693, acc:0.9242
+epoch: 20/20, batch: 100/256 (39.1%), time:79.7s, remaining:2.1min, loss:0.19699, acc:0.9241
+epoch: 20/20, batch: 125/256 (48.8%), time:98.2s, remaining:1.7min, loss:0.19622, acc:0.9243
+epoch: 20/20, batch: 150/256 (58.6%), time:117.7s, remaining:1.4min, loss:0.20039, acc:0.9231
+epoch: 20/20, batch: 175/256 (68.4%), time:136.0s, remaining:1.0min, loss:0.20038, acc:0.9221
+epoch: 20/20, batch: 200/256 (78.1%), time:150.5s, remaining:0.7min, loss:0.20083, acc:0.9223
+epoch: 20/20, batch: 225/256 (87.9%), time:165.8s, remaining:0.4min, loss:0.20900, acc:0.9190
+epoch: 20/20, batch: 250/256 (97.7%), time:182.3s, remaining:0.1min, loss:0.21539, acc:0.9171
+epoch: 20/20, batch: 256/256 (100.0%), time:186.4s, remaining:0.0min, loss:0.21415, acc:0.9174
+epoch: 20, loss: 0.21415, acc:0.9174, time:186.37s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.6s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.7s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:11.5s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:16.3s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:21.4s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:26.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:30.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:32.0s, remaining:0.0min
+Acc: 0.8966, AUROC: 0.927399, AUPRC(����): 0.451528, AP: 0.454371
+�����ٻ���: 76.96%, �����: 90.08%, TP:147 TN:5097 FP:561 FN:44
+����δ���������֤AUROC:0.930010, ������Ѳ���
+densenet121ѵ������, ������֤AUROC:0.930010, ѵ����¼:C:\Users\LENOVO\Desktop\�����������ս��������������ս��\��Ŀ�ĵ�\ѵ����¼\03\20261018_122814_627866_densenet121
+��ģ����֤: densenet121
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:5.2s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:10.2s, remaining:0.5min
+valid, batch: 75/183 (41.0%), time:14.6s, remaining:0.4min
+valid, batch: 100/183 (54.6%), time:19.2s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:23.3s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:27.4s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:32.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:34.3s, remaining:0.0min
+Acc: 0.8947, AUROC: 0.930010, AUPRC(����): 0.467024, AP: 0.468973
+�����ٻ���: 81.15%, �����: 89.75%, TP:155 TN:5078 FP:580 FN:36
+˫ģ�͵�Ȩƽ����֤: resnet18 + densenet121
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.3s, remaining:0.8min
+valid, batch: 25/183 (13.7%), time:6.9s, remaining:0.7min
+valid, batch: 50/183 (27.3%), time:13.6s, remaining:0.6min
+valid, batch: 75/183 (41.0%), time:19.1s, remaining:0.5min
+valid, batch: 100/183 (54.6%), time:25.2s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:31.1s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:37.2s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:44.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:46.0s, remaining:0.0min
+Acc: 0.9089, AUROC: 0.943116, AUPRC(����): 0.506486, AP: 0.508349
+�����ٻ���: 83.25%, �����: 91.15%, TP:159 TN:5157 FP:501 FN:32
+˫ģ����֤AUROC:0.943116, AUPRC:0.506486
+ѵ������֤��������Ҫ�����ύ��ʱ, �뵥������predict.py��

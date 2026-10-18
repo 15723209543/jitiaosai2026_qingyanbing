@@ -1,0 +1,6 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+ģ��:resnet18, ѵ����:51396��, ��֤��:5849��, ��30��, ÿ��1607��, CPU�߳�:8
+��ʼѵ�� resnet18 epoch: 1/30, lr:3.00e-05
+epoch: 1/30, batch: 1/1607 (0.1%), time:2.0s, remaining:54.9min, loss:0.72273, acc:0.5312
+epoch: 1/30, batch: 25/1607 (1.6%), time:44.7s, remaining:47.2min, loss:0.68248, acc:0.5825

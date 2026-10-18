@@ -1,0 +1,12 @@
+Ԥ�����������, ���ڼ���PyTorch...
+��ʼ��ȡtest�ļ��У����Լ�û����ʵ��ǩ, �˽׶������ύCSV, ������׼ȷ��.
+test, batch: 1/183 (0.5%), time:0.6s, remaining:1.8min
+test, batch: 25/183 (13.7%), time:10.8s, remaining:1.1min
+test, batch: 50/183 (27.3%), time:21.2s, remaining:0.9min
+test, batch: 75/183 (41.0%), time:31.8s, remaining:0.8min
+test, batch: 100/183 (54.6%), time:42.2s, remaining:0.6min
+test, batch: 125/183 (68.3%), time:53.1s, remaining:0.4min
+test, batch: 150/183 (82.0%), time:70.1s, remaining:0.3min
+test, batch: 175/183 (95.6%), time:113.2s, remaining:0.1min
+test, batch: 183/183 (100.0%), time:117.1s, remaining:0.0min
+������: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\03\results\submission.csv, ��5855��ͼƬ, Ԥ������666��

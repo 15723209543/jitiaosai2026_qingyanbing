@@ -1,0 +1,23 @@
+{
+  "variant": "03",
+  "model_name": "densenet121",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\03\\model\\densenet121.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb64_balanced8192_adamw_v2",
+  "best_validation": {
+    "epoch": 15,
+    "train_loss": 0.2583978460752405,
+    "train_accuracy": 0.8968505859375,
+    "learning_rate": 5.4403252351862355e-05,
+    "accuracy": 0.8946828517695332,
+    "auroc": 0.9300096791088558,
+    "auprc": 0.46702361728766434,
+    "ap": 0.46897347979747767,
+    "recall": 0.8115183246073299,
+    "specificity": 0.8974902792506186,
+    "tp": 155,
+    "tn": 5078,
+    "fp": 580,
+    "fn": 36
+  }
+}

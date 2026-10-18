@@ -1,0 +1,1128 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+ģ��:resnet18, ѵ����:51396��, ��֤��:5849��, ��20��, ÿ��256��, CPU�߳�:8
+��ʼѵ�� resnet18 epoch: 1/20, lr:3.00e-05
+epoch: 1/20, batch: 1/256 (0.4%), time:1.3s, remaining:5.7min, loss:0.64773, acc:0.5000
+epoch: 1/20, batch: 25/256 (9.8%), time:32.9s, remaining:5.1min, loss:0.69839, acc:0.5625
+epoch: 1/20, batch: 50/256 (19.5%), time:64.2s, remaining:4.4min, loss:0.68222, acc:0.5913
+epoch: 1/20, batch: 75/256 (29.3%), time:95.9s, remaining:3.9min, loss:0.67201, acc:0.6058
+epoch: 1/20, batch: 100/256 (39.1%), time:125.6s, remaining:3.3min, loss:0.67048, acc:0.6050
+epoch: 1/20, batch: 125/256 (48.8%), time:154.2s, remaining:2.7min, loss:0.66037, acc:0.6158
+epoch: 1/20, batch: 150/256 (58.6%), time:181.4s, remaining:2.1min, loss:0.65906, acc:0.6185
+epoch: 1/20, batch: 175/256 (68.4%), time:208.4s, remaining:1.6min, loss:0.65647, acc:0.6241
+epoch: 1/20, batch: 200/256 (78.1%), time:235.7s, remaining:1.1min, loss:0.65209, acc:0.6288
+epoch: 1/20, batch: 225/256 (87.9%), time:262.0s, remaining:0.6min, loss:0.65054, acc:0.6310
+epoch: 1/20, batch: 250/256 (97.7%), time:287.6s, remaining:0.1min, loss:0.64868, acc:0.6340
+epoch: 1/20, batch: 256/256 (100.0%), time:293.7s, remaining:0.0min, loss:0.64763, acc:0.6349
+epoch: 1, loss: 0.64763, acc:0.6349, time:293.74s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:1.2s, remaining:3.6min
+valid, batch: 25/183 (13.7%), time:24.2s, remaining:2.5min
+valid, batch: 50/183 (27.3%), time:54.3s, remaining:2.4min
+valid, batch: 75/183 (41.0%), time:78.8s, remaining:1.9min
+valid, batch: 100/183 (54.6%), time:103.0s, remaining:1.4min
+valid, batch: 125/183 (68.3%), time:127.3s, remaining:1.0min
+valid, batch: 150/183 (82.0%), time:151.6s, remaining:0.6min
+valid, batch: 175/183 (95.6%), time:175.7s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:182.9s, remaining:0.0min
+Acc: 0.6136, AUROC: 0.700181, AUPRC(����): 0.088676, AP: 0.090464
+�����ٻ���: 68.59%, �����: 61.12%, TP:131 TN:3458 FP:2200 FN:60
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.700181
+��ʼѵ�� resnet18 epoch: 2/20, lr:3.00e-04
+epoch: 2/20, batch: 1/256 (0.4%), time:1.1s, remaining:4.7min, loss:0.56211, acc:0.7188
+epoch: 2/20, batch: 25/256 (9.8%), time:24.9s, remaining:3.8min, loss:0.74215, acc:0.5737
+epoch: 2/20, batch: 50/256 (19.5%), time:50.6s, remaining:3.5min, loss:0.75944, acc:0.5750
+epoch: 2/20, batch: 75/256 (29.3%), time:69.2s, remaining:2.8min, loss:0.74300, acc:0.5754
+epoch: 2/20, batch: 100/256 (39.1%), time:87.6s, remaining:2.3min, loss:0.72697, acc:0.5906
+epoch: 2/20, batch: 125/256 (48.8%), time:106.4s, remaining:1.9min, loss:0.71005, acc:0.5988
+epoch: 2/20, batch: 150/256 (58.6%), time:123.6s, remaining:1.5min, loss:0.69767, acc:0.6102
+epoch: 2/20, batch: 175/256 (68.4%), time:139.4s, remaining:1.1min, loss:0.68804, acc:0.6168
+epoch: 2/20, batch: 200/256 (78.1%), time:155.9s, remaining:0.7min, loss:0.68054, acc:0.6216
+epoch: 2/20, batch: 225/256 (87.9%), time:172.3s, remaining:0.4min, loss:0.66994, acc:0.6283
+epoch: 2/20, batch: 250/256 (97.7%), time:189.2s, remaining:0.1min, loss:0.66208, acc:0.6331
+epoch: 2/20, batch: 256/256 (100.0%), time:193.6s, remaining:0.0min, loss:0.65977, acc:0.6345
+epoch: 2, loss: 0.65977, acc:0.6345, time:193.57s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.6s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:8.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:13.3s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:15.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:16.2s, remaining:0.0min
+Acc: 0.8234, AUROC: 0.771666, AUPRC(����): 0.129752, AP: 0.131751
+�����ٻ���: 51.31%, �����: 83.39%, TP:98 TN:4718 FP:940 FN:93
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.771666
+��ʼѵ�� resnet18 epoch: 3/20, lr:2.98e-04
+epoch: 3/20, batch: 1/256 (0.4%), time:0.6s, remaining:2.7min, loss:0.78656, acc:0.4688
+epoch: 3/20, batch: 25/256 (9.8%), time:16.8s, remaining:2.6min, loss:0.61347, acc:0.6538
+epoch: 3/20, batch: 50/256 (19.5%), time:33.4s, remaining:2.3min, loss:0.57560, acc:0.6975
+epoch: 3/20, batch: 75/256 (29.3%), time:49.7s, remaining:2.0min, loss:0.57018, acc:0.7071
+epoch: 3/20, batch: 100/256 (39.1%), time:67.1s, remaining:1.7min, loss:0.56599, acc:0.7103
+epoch: 3/20, batch: 125/256 (48.8%), time:82.8s, remaining:1.4min, loss:0.56027, acc:0.7135
+epoch: 3/20, batch: 150/256 (58.6%), time:102.8s, remaining:1.2min, loss:0.55425, acc:0.7144
+epoch: 3/20, batch: 175/256 (68.4%), time:127.7s, remaining:1.0min, loss:0.55154, acc:0.7164
+epoch: 3/20, batch: 200/256 (78.1%), time:151.7s, remaining:0.7min, loss:0.54679, acc:0.7188
+epoch: 3/20, batch: 225/256 (87.9%), time:175.8s, remaining:0.4min, loss:0.53849, acc:0.7258
+epoch: 3/20, batch: 250/256 (97.7%), time:199.1s, remaining:0.1min, loss:0.53766, acc:0.7271
+epoch: 3/20, batch: 256/256 (100.0%), time:204.8s, remaining:0.0min, loss:0.53588, acc:0.7283
+epoch: 3, loss: 0.53588, acc:0.7283, time:204.81s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.8s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.5s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:11.2s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:15.0s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:22.5s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:26.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.4s, remaining:0.0min
+Acc: 0.6193, AUROC: 0.787244, AUPRC(����): 0.163349, AP: 0.166856
+�����ٻ���: 79.58%, �����: 61.33%, TP:152 TN:3470 FP:2188 FN:39
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.787244
+��ʼѵ�� resnet18 epoch: 4/20, lr:2.91e-04
+epoch: 4/20, batch: 1/256 (0.4%), time:1.0s, remaining:4.2min, loss:0.68236, acc:0.6562
+epoch: 4/20, batch: 25/256 (9.8%), time:24.9s, remaining:3.8min, loss:0.52425, acc:0.7350
+epoch: 4/20, batch: 50/256 (19.5%), time:49.3s, remaining:3.4min, loss:0.51092, acc:0.7444
+epoch: 4/20, batch: 75/256 (29.3%), time:72.9s, remaining:2.9min, loss:0.50362, acc:0.7533
+epoch: 4/20, batch: 100/256 (39.1%), time:97.4s, remaining:2.5min, loss:0.50207, acc:0.7519
+epoch: 4/20, batch: 125/256 (48.8%), time:120.8s, remaining:2.1min, loss:0.49636, acc:0.7582
+epoch: 4/20, batch: 150/256 (58.6%), time:145.0s, remaining:1.7min, loss:0.49391, acc:0.7604
+epoch: 4/20, batch: 175/256 (68.4%), time:164.2s, remaining:1.3min, loss:0.48681, acc:0.7623
+epoch: 4/20, batch: 200/256 (78.1%), time:180.2s, remaining:0.8min, loss:0.49027, acc:0.7636
+epoch: 4/20, batch: 225/256 (87.9%), time:198.1s, remaining:0.5min, loss:0.49142, acc:0.7635
+epoch: 4/20, batch: 250/256 (97.7%), time:224.0s, remaining:0.1min, loss:0.49010, acc:0.7642
+epoch: 4/20, batch: 256/256 (100.0%), time:230.5s, remaining:0.0min, loss:0.48943, acc:0.7651
+epoch: 4, loss: 0.48943, acc:0.7651, time:230.50s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:4.9s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:9.6s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:14.6s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:19.8s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:24.6s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:29.7s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:34.4s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:35.8s, remaining:0.0min
+Acc: 0.7182, AUROC: 0.840005, AUPRC(����): 0.262592, AP: 0.264633
+�����ٻ���: 78.53%, �����: 71.60%, TP:150 TN:4051 FP:1607 FN:41
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.840005
+��ʼѵ�� resnet18 epoch: 5/20, lr:2.80e-04
+epoch: 5/20, batch: 1/256 (0.4%), time:1.1s, remaining:4.5min, loss:0.47684, acc:0.7812
+epoch: 5/20, batch: 25/256 (9.8%), time:25.5s, remaining:3.9min, loss:0.46683, acc:0.7837
+epoch: 5/20, batch: 50/256 (19.5%), time:53.4s, remaining:3.7min, loss:0.44163, acc:0.8013
+epoch: 5/20, batch: 75/256 (29.3%), time:83.4s, remaining:3.4min, loss:0.46016, acc:0.7858
+epoch: 5/20, batch: 100/256 (39.1%), time:110.7s, remaining:2.9min, loss:0.45246, acc:0.7931
+epoch: 5/20, batch: 125/256 (48.8%), time:137.6s, remaining:2.4min, loss:0.45520, acc:0.7927
+epoch: 5/20, batch: 150/256 (58.6%), time:161.9s, remaining:1.9min, loss:0.44957, acc:0.7940
+epoch: 5/20, batch: 175/256 (68.4%), time:187.9s, remaining:1.4min, loss:0.45062, acc:0.7909
+epoch: 5/20, batch: 200/256 (78.1%), time:212.6s, remaining:1.0min, loss:0.44969, acc:0.7903
+epoch: 5/20, batch: 225/256 (87.9%), time:237.0s, remaining:0.5min, loss:0.44807, acc:0.7910
+epoch: 5/20, batch: 250/256 (97.7%), time:261.9s, remaining:0.1min, loss:0.45176, acc:0.7886
+epoch: 5/20, batch: 256/256 (100.0%), time:268.3s, remaining:0.0min, loss:0.45034, acc:0.7893
+epoch: 5, loss: 0.45034, acc:0.7893, time:268.31s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:4.8s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:9.5s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:14.2s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:19.3s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:24.2s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:28.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:33.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:35.3s, remaining:0.0min
+Acc: 0.7707, AUROC: 0.866462, AUPRC(����): 0.318072, AP: 0.322118
+�����ٻ���: 79.58%, �����: 76.99%, TP:152 TN:4356 FP:1302 FN:39
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.866462
+��ʼѵ�� resnet18 epoch: 6/20, lr:2.65e-04
+epoch: 6/20, batch: 1/256 (0.4%), time:1.1s, remaining:4.8min, loss:0.39022, acc:0.8125
+epoch: 6/20, batch: 25/256 (9.8%), time:23.6s, remaining:3.6min, loss:0.41320, acc:0.8163
+epoch: 6/20, batch: 50/256 (19.5%), time:48.8s, remaining:3.4min, loss:0.43226, acc:0.8013
+epoch: 6/20, batch: 75/256 (29.3%), time:73.7s, remaining:3.0min, loss:0.43545, acc:0.8054
+epoch: 6/20, batch: 100/256 (39.1%), time:98.3s, remaining:2.6min, loss:0.42560, acc:0.8075
+epoch: 6/20, batch: 125/256 (48.8%), time:122.5s, remaining:2.1min, loss:0.42135, acc:0.8087
+epoch: 6/20, batch: 150/256 (58.6%), time:146.3s, remaining:1.7min, loss:0.42829, acc:0.8050
+epoch: 6/20, batch: 175/256 (68.4%), time:169.9s, remaining:1.3min, loss:0.42635, acc:0.8063
+epoch: 6/20, batch: 200/256 (78.1%), time:195.7s, remaining:0.9min, loss:0.42609, acc:0.8047
+epoch: 6/20, batch: 225/256 (87.9%), time:220.5s, remaining:0.5min, loss:0.42480, acc:0.8057
+epoch: 6/20, batch: 250/256 (97.7%), time:243.7s, remaining:0.1min, loss:0.42131, acc:0.8077
+epoch: 6/20, batch: 256/256 (100.0%), time:251.4s, remaining:0.0min, loss:0.42113, acc:0.8081
+epoch: 6, loss: 0.42113, acc:0.8081, time:251.42s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.3s, remaining:0.9min
+valid, batch: 25/183 (13.7%), time:12.0s, remaining:1.3min
+valid, batch: 50/183 (27.3%), time:38.2s, remaining:1.7min
+valid, batch: 75/183 (41.0%), time:48.7s, remaining:1.2min
+valid, batch: 100/183 (54.6%), time:55.9s, remaining:0.8min
+valid, batch: 125/183 (68.3%), time:66.5s, remaining:0.5min
+valid, batch: 150/183 (82.0%), time:70.9s, remaining:0.3min
+valid, batch: 175/183 (95.6%), time:73.7s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:74.6s, remaining:0.0min
+Acc: 0.5551, AUROC: 0.856917, AUPRC(����): 0.282736, AP: 0.285675
+�����ٻ���: 92.15%, �����: 54.28%, TP:176 TN:3071 FP:2587 FN:15
+����δ���������֤AUROC:0.866462, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 7/20, lr:2.47e-04
+epoch: 7/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.3min, loss:0.34176, acc:0.8750
+epoch: 7/20, batch: 25/256 (9.8%), time:13.9s, remaining:2.1min, loss:0.45511, acc:0.7775
+epoch: 7/20, batch: 50/256 (19.5%), time:34.0s, remaining:2.3min, loss:0.42609, acc:0.7994
+epoch: 7/20, batch: 75/256 (29.3%), time:49.6s, remaining:2.0min, loss:0.43120, acc:0.7967
+epoch: 7/20, batch: 100/256 (39.1%), time:73.1s, remaining:1.9min, loss:0.42561, acc:0.7994
+epoch: 7/20, batch: 125/256 (48.8%), time:94.4s, remaining:1.6min, loss:0.42330, acc:0.8005
+epoch: 7/20, batch: 150/256 (58.6%), time:116.4s, remaining:1.4min, loss:0.41478, acc:0.8042
+epoch: 7/20, batch: 175/256 (68.4%), time:138.8s, remaining:1.1min, loss:0.40948, acc:0.8096
+epoch: 7/20, batch: 200/256 (78.1%), time:163.0s, remaining:0.8min, loss:0.41433, acc:0.8072
+epoch: 7/20, batch: 225/256 (87.9%), time:188.0s, remaining:0.4min, loss:0.41248, acc:0.8089
+epoch: 7/20, batch: 250/256 (97.7%), time:211.7s, remaining:0.1min, loss:0.41126, acc:0.8110
+epoch: 7/20, batch: 256/256 (100.0%), time:217.3s, remaining:0.0min, loss:0.41002, acc:0.8120
+epoch: 7, loss: 0.41002, acc:0.8120, time:217.32s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.3s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:8.5s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.0s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:17.8s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:21.7s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:26.2s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:30.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:31.5s, remaining:0.0min
+Acc: 0.8448, AUROC: 0.900237, AUPRC(����): 0.328654, AP: 0.332337
+�����ٻ���: 78.01%, �����: 84.69%, TP:149 TN:4792 FP:866 FN:42
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.900237
+��ʼѵ�� resnet18 epoch: 8/20, lr:2.25e-04
+epoch: 8/20, batch: 1/256 (0.4%), time:0.9s, remaining:3.7min, loss:0.30210, acc:0.8750
+epoch: 8/20, batch: 25/256 (9.8%), time:24.6s, remaining:3.8min, loss:0.39470, acc:0.8163
+epoch: 8/20, batch: 50/256 (19.5%), time:45.6s, remaining:3.1min, loss:0.40395, acc:0.8119
+epoch: 8/20, batch: 75/256 (29.3%), time:67.4s, remaining:2.7min, loss:0.40456, acc:0.8117
+epoch: 8/20, batch: 100/256 (39.1%), time:91.7s, remaining:2.4min, loss:0.40116, acc:0.8153
+epoch: 8/20, batch: 125/256 (48.8%), time:108.2s, remaining:1.9min, loss:0.40193, acc:0.8167
+epoch: 8/20, batch: 150/256 (58.6%), time:121.6s, remaining:1.4min, loss:0.40160, acc:0.8181
+epoch: 8/20, batch: 175/256 (68.4%), time:134.6s, remaining:1.0min, loss:0.40458, acc:0.8180
+epoch: 8/20, batch: 200/256 (78.1%), time:148.0s, remaining:0.7min, loss:0.40122, acc:0.8197
+epoch: 8/20, batch: 225/256 (87.9%), time:160.5s, remaining:0.4min, loss:0.40117, acc:0.8196
+epoch: 8/20, batch: 250/256 (97.7%), time:172.8s, remaining:0.1min, loss:0.39921, acc:0.8209
+epoch: 8/20, batch: 256/256 (100.0%), time:176.4s, remaining:0.0min, loss:0.39845, acc:0.8207
+epoch: 8, loss: 0.39845, acc:0.8207, time:176.40s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.2s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.7s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:8.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.1s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.3s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.0s, remaining:0.0min
+Acc: 0.8458, AUROC: 0.909760, AUPRC(����): 0.372350, AP: 0.376178
+�����ٻ���: 78.53%, �����: 84.78%, TP:150 TN:4797 FP:861 FN:41
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.909760
+��ʼѵ�� resnet18 epoch: 9/20, lr:2.02e-04
+epoch: 9/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.3min, loss:0.26579, acc:0.9062
+epoch: 9/20, batch: 25/256 (9.8%), time:13.1s, remaining:2.0min, loss:0.34109, acc:0.8588
+epoch: 9/20, batch: 50/256 (19.5%), time:26.3s, remaining:1.8min, loss:0.35188, acc:0.8500
+epoch: 9/20, batch: 75/256 (29.3%), time:38.2s, remaining:1.5min, loss:0.34886, acc:0.8483
+epoch: 9/20, batch: 100/256 (39.1%), time:51.2s, remaining:1.3min, loss:0.35276, acc:0.8488
+epoch: 9/20, batch: 125/256 (48.8%), time:64.0s, remaining:1.1min, loss:0.35914, acc:0.8458
+epoch: 9/20, batch: 150/256 (58.6%), time:76.3s, remaining:0.9min, loss:0.36309, acc:0.8446
+epoch: 9/20, batch: 175/256 (68.4%), time:90.9s, remaining:0.7min, loss:0.36335, acc:0.8445
+epoch: 9/20, batch: 200/256 (78.1%), time:105.1s, remaining:0.5min, loss:0.36823, acc:0.8413
+epoch: 9/20, batch: 225/256 (87.9%), time:120.7s, remaining:0.3min, loss:0.36282, acc:0.8439
+epoch: 9/20, batch: 250/256 (97.7%), time:133.4s, remaining:0.1min, loss:0.36438, acc:0.8420
+epoch: 9/20, batch: 256/256 (100.0%), time:136.7s, remaining:0.0min, loss:0.36478, acc:0.8411
+epoch: 9, loss: 0.36478, acc:0.8411, time:136.74s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.5s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.8s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:13.6s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:15.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:16.4s, remaining:0.0min
+Acc: 0.8629, AUROC: 0.914418, AUPRC(����): 0.388341, AP: 0.390148
+�����ٻ���: 76.96%, �����: 86.60%, TP:147 TN:4900 FP:758 FN:44
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.914418
+��ʼѵ�� resnet18 epoch: 10/20, lr:1.76e-04
+epoch: 10/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.8min, loss:0.25103, acc:0.9062
+epoch: 10/20, batch: 25/256 (9.8%), time:12.6s, remaining:1.9min, loss:0.35370, acc:0.8413
+epoch: 10/20, batch: 50/256 (19.5%), time:25.3s, remaining:1.7min, loss:0.35351, acc:0.8381
+epoch: 10/20, batch: 75/256 (29.3%), time:37.3s, remaining:1.5min, loss:0.36122, acc:0.8342
+epoch: 10/20, batch: 100/256 (39.1%), time:49.0s, remaining:1.3min, loss:0.35829, acc:0.8331
+epoch: 10/20, batch: 125/256 (48.8%), time:61.4s, remaining:1.1min, loss:0.34823, acc:0.8420
+epoch: 10/20, batch: 150/256 (58.6%), time:73.8s, remaining:0.9min, loss:0.34677, acc:0.8440
+epoch: 10/20, batch: 175/256 (68.4%), time:86.6s, remaining:0.7min, loss:0.34397, acc:0.8457
+epoch: 10/20, batch: 200/256 (78.1%), time:98.3s, remaining:0.5min, loss:0.34443, acc:0.8477
+epoch: 10/20, batch: 225/256 (87.9%), time:109.8s, remaining:0.3min, loss:0.34369, acc:0.8482
+epoch: 10/20, batch: 250/256 (97.7%), time:122.0s, remaining:0.0min, loss:0.34417, acc:0.8484
+epoch: 10/20, batch: 256/256 (100.0%), time:124.9s, remaining:0.0min, loss:0.34283, acc:0.8484
+epoch: 10, loss: 0.34283, acc:0.8484, time:124.95s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:5.2s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.4s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.3s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.7s, remaining:0.0min
+Acc: 0.8509, AUROC: 0.921125, AUPRC(����): 0.408964, AP: 0.410913
+�����ٻ���: 83.77%, �����: 85.14%, TP:160 TN:4817 FP:841 FN:31
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.921125
+��ʼѵ�� resnet18 epoch: 11/20, lr:1.50e-04
+epoch: 11/20, batch: 1/256 (0.4%), time:0.5s, remaining:1.9min, loss:0.34188, acc:0.9375
+epoch: 11/20, batch: 25/256 (9.8%), time:12.2s, remaining:1.9min, loss:0.29262, acc:0.8725
+epoch: 11/20, batch: 50/256 (19.5%), time:23.9s, remaining:1.6min, loss:0.29699, acc:0.8744
+epoch: 11/20, batch: 75/256 (29.3%), time:37.5s, remaining:1.5min, loss:0.30171, acc:0.8700
+epoch: 11/20, batch: 100/256 (39.1%), time:49.8s, remaining:1.3min, loss:0.31755, acc:0.8659
+epoch: 11/20, batch: 125/256 (48.8%), time:61.4s, remaining:1.1min, loss:0.31817, acc:0.8620
+epoch: 11/20, batch: 150/256 (58.6%), time:73.9s, remaining:0.9min, loss:0.32356, acc:0.8596
+epoch: 11/20, batch: 175/256 (68.4%), time:86.6s, remaining:0.7min, loss:0.32067, acc:0.8612
+epoch: 11/20, batch: 200/256 (78.1%), time:98.7s, remaining:0.5min, loss:0.31729, acc:0.8644
+epoch: 11/20, batch: 225/256 (87.9%), time:111.1s, remaining:0.3min, loss:0.31297, acc:0.8665
+epoch: 11/20, batch: 250/256 (97.7%), time:123.7s, remaining:0.0min, loss:0.31398, acc:0.8660
+epoch: 11/20, batch: 256/256 (100.0%), time:127.0s, remaining:0.0min, loss:0.31448, acc:0.8658
+epoch: 11, loss: 0.31448, acc:0.8658, time:126.96s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.8s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:5.2s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.4s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.9s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.6s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.4s, remaining:0.0min
+Acc: 0.7735, AUROC: 0.904859, AUPRC(����): 0.395429, AP: 0.396942
+�����ٻ���: 85.86%, �����: 77.06%, TP:164 TN:4360 FP:1298 FN:27
+����δ���������֤AUROC:0.921125, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 12/20, lr:1.25e-04
+epoch: 12/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.3min, loss:0.26391, acc:0.9062
+epoch: 12/20, batch: 25/256 (9.8%), time:12.1s, remaining:1.9min, loss:0.29530, acc:0.8712
+epoch: 12/20, batch: 50/256 (19.5%), time:24.6s, remaining:1.7min, loss:0.31312, acc:0.8650
+epoch: 12/20, batch: 75/256 (29.3%), time:36.7s, remaining:1.5min, loss:0.31159, acc:0.8625
+epoch: 12/20, batch: 100/256 (39.1%), time:48.5s, remaining:1.3min, loss:0.31184, acc:0.8650
+epoch: 12/20, batch: 125/256 (48.8%), time:60.8s, remaining:1.1min, loss:0.30378, acc:0.8685
+epoch: 12/20, batch: 150/256 (58.6%), time:72.2s, remaining:0.9min, loss:0.29731, acc:0.8725
+epoch: 12/20, batch: 175/256 (68.4%), time:84.1s, remaining:0.6min, loss:0.29658, acc:0.8732
+epoch: 12/20, batch: 200/256 (78.1%), time:95.8s, remaining:0.4min, loss:0.29903, acc:0.8719
+epoch: 12/20, batch: 225/256 (87.9%), time:107.5s, remaining:0.2min, loss:0.29862, acc:0.8726
+epoch: 12/20, batch: 250/256 (97.7%), time:118.8s, remaining:0.0min, loss:0.29957, acc:0.8718
+epoch: 12/20, batch: 256/256 (100.0%), time:121.5s, remaining:0.0min, loss:0.29966, acc:0.8717
+epoch: 12, loss: 0.29966, acc:0.8717, time:121.53s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:5.0s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.2s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.6s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.8s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.2s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.5s, remaining:0.0min
+Acc: 0.7907, AUROC: 0.922455, AUPRC(����): 0.425688, AP: 0.428071
+�����ٻ���: 90.05%, �����: 78.70%, TP:172 TN:4453 FP:1205 FN:19
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.922455
+��ʼѵ�� resnet18 epoch: 13/20, lr:9.94e-05
+epoch: 13/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.9min, loss:0.16049, acc:0.9375
+epoch: 13/20, batch: 25/256 (9.8%), time:11.8s, remaining:1.8min, loss:0.27601, acc:0.8888
+epoch: 13/20, batch: 50/256 (19.5%), time:23.9s, remaining:1.6min, loss:0.27961, acc:0.8869
+epoch: 13/20, batch: 75/256 (29.3%), time:35.6s, remaining:1.4min, loss:0.27627, acc:0.8846
+epoch: 13/20, batch: 100/256 (39.1%), time:48.7s, remaining:1.3min, loss:0.28167, acc:0.8847
+epoch: 13/20, batch: 125/256 (48.8%), time:60.5s, remaining:1.1min, loss:0.28204, acc:0.8832
+epoch: 13/20, batch: 150/256 (58.6%), time:72.7s, remaining:0.9min, loss:0.28625, acc:0.8817
+epoch: 13/20, batch: 175/256 (68.4%), time:84.5s, remaining:0.7min, loss:0.28761, acc:0.8814
+epoch: 13/20, batch: 200/256 (78.1%), time:96.7s, remaining:0.5min, loss:0.28486, acc:0.8811
+epoch: 13/20, batch: 225/256 (87.9%), time:108.0s, remaining:0.2min, loss:0.28073, acc:0.8831
+epoch: 13/20, batch: 250/256 (97.7%), time:119.4s, remaining:0.0min, loss:0.27819, acc:0.8829
+epoch: 13/20, batch: 256/256 (100.0%), time:122.5s, remaining:0.0min, loss:0.27835, acc:0.8826
+epoch: 13, loss: 0.27835, acc:0.8826, time:122.53s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.6s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:5.0s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.5s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.1s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.5s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.6s, remaining:0.0min
+Acc: 0.8133, AUROC: 0.921059, AUPRC(����): 0.429457, AP: 0.431232
+�����ٻ���: 87.43%, �����: 81.12%, TP:167 TN:4590 FP:1068 FN:24
+����δ���������֤AUROC:0.922455, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 14/20, lr:7.58e-05
+epoch: 14/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.0min, loss:0.49246, acc:0.7812
+epoch: 14/20, batch: 25/256 (9.8%), time:12.1s, remaining:1.9min, loss:0.28454, acc:0.8775
+epoch: 14/20, batch: 50/256 (19.5%), time:24.0s, remaining:1.6min, loss:0.26414, acc:0.8900
+epoch: 14/20, batch: 75/256 (29.3%), time:36.0s, remaining:1.4min, loss:0.26478, acc:0.8879
+epoch: 14/20, batch: 100/256 (39.1%), time:47.7s, remaining:1.2min, loss:0.26117, acc:0.8922
+epoch: 14/20, batch: 125/256 (48.8%), time:59.8s, remaining:1.0min, loss:0.25923, acc:0.8945
+epoch: 14/20, batch: 150/256 (58.6%), time:71.7s, remaining:0.8min, loss:0.26768, acc:0.8906
+epoch: 14/20, batch: 175/256 (68.4%), time:84.9s, remaining:0.7min, loss:0.26382, acc:0.8930
+epoch: 14/20, batch: 200/256 (78.1%), time:96.5s, remaining:0.5min, loss:0.26136, acc:0.8936
+epoch: 14/20, batch: 225/256 (87.9%), time:108.8s, remaining:0.2min, loss:0.26436, acc:0.8921
+epoch: 14/20, batch: 250/256 (97.7%), time:121.9s, remaining:0.0min, loss:0.26189, acc:0.8926
+epoch: 14/20, batch: 256/256 (100.0%), time:125.3s, remaining:0.0min, loss:0.25976, acc:0.8937
+epoch: 14, loss: 0.25976, acc:0.8937, time:125.33s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:3.2s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:6.7s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:9.6s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:12.3s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:15.2s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:17.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:20.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:21.5s, remaining:0.0min
+Acc: 0.9010, AUROC: 0.940166, AUPRC(����): 0.458639, AP: 0.460936
+�����ٻ���: 81.15%, �����: 90.40%, TP:155 TN:5115 FP:543 FN:36
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth, ��֤AUROC:0.940166
+��ʼѵ�� resnet18 epoch: 15/20, lr:5.44e-05
+epoch: 15/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.1min, loss:0.32795, acc:0.8750
+epoch: 15/20, batch: 25/256 (9.8%), time:14.0s, remaining:2.2min, loss:0.26090, acc:0.8962
+epoch: 15/20, batch: 50/256 (19.5%), time:27.5s, remaining:1.9min, loss:0.24133, acc:0.9062
+epoch: 15/20, batch: 75/256 (29.3%), time:39.5s, remaining:1.6min, loss:0.23240, acc:0.9121
+epoch: 15/20, batch: 100/256 (39.1%), time:51.6s, remaining:1.3min, loss:0.23360, acc:0.9116
+epoch: 15/20, batch: 125/256 (48.8%), time:66.2s, remaining:1.2min, loss:0.23366, acc:0.9123
+epoch: 15/20, batch: 150/256 (58.6%), time:78.9s, remaining:0.9min, loss:0.23340, acc:0.9117
+epoch: 15/20, batch: 175/256 (68.4%), time:91.5s, remaining:0.7min, loss:0.23660, acc:0.9091
+epoch: 15/20, batch: 200/256 (78.1%), time:103.6s, remaining:0.5min, loss:0.23567, acc:0.9097
+epoch: 15/20, batch: 225/256 (87.9%), time:115.0s, remaining:0.3min, loss:0.23371, acc:0.9087
+epoch: 15/20, batch: 250/256 (97.7%), time:126.8s, remaining:0.1min, loss:0.23281, acc:0.9081
+epoch: 15/20, batch: 256/256 (100.0%), time:129.5s, remaining:0.0min, loss:0.23371, acc:0.9072
+epoch: 15, loss: 0.23371, acc:0.9072, time:129.51s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.3s, remaining:0.9min
+valid, batch: 25/183 (13.7%), time:2.6s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:4.8s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.1s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:13.7s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:16.7s, remaining:0.0min
+Acc: 0.8677, AUROC: 0.929692, AUPRC(����): 0.441212, AP: 0.443257
+�����ٻ���: 81.68%, �����: 86.94%, TP:156 TN:4919 FP:739 FN:35
+����δ���������֤AUROC:0.940166, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 16/20, lr:3.60e-05
+epoch: 16/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.0min, loss:0.09802, acc:1.0000
+epoch: 16/20, batch: 25/256 (9.8%), time:11.8s, remaining:1.8min, loss:0.20083, acc:0.9200
+epoch: 16/20, batch: 50/256 (19.5%), time:22.6s, remaining:1.6min, loss:0.21822, acc:0.9131
+epoch: 16/20, batch: 75/256 (29.3%), time:33.8s, remaining:1.4min, loss:0.21833, acc:0.9117
+epoch: 16/20, batch: 100/256 (39.1%), time:45.9s, remaining:1.2min, loss:0.20966, acc:0.9141
+epoch: 16/20, batch: 125/256 (48.8%), time:57.2s, remaining:1.0min, loss:0.21062, acc:0.9140
+epoch: 16/20, batch: 150/256 (58.6%), time:68.1s, remaining:0.8min, loss:0.21392, acc:0.9154
+epoch: 16/20, batch: 175/256 (68.4%), time:78.4s, remaining:0.6min, loss:0.21696, acc:0.9146
+epoch: 16/20, batch: 200/256 (78.1%), time:89.8s, remaining:0.4min, loss:0.21645, acc:0.9158
+epoch: 16/20, batch: 225/256 (87.9%), time:101.5s, remaining:0.2min, loss:0.21564, acc:0.9149
+epoch: 16/20, batch: 250/256 (97.7%), time:112.0s, remaining:0.0min, loss:0.21998, acc:0.9127
+epoch: 16/20, batch: 256/256 (100.0%), time:114.6s, remaining:0.0min, loss:0.22055, acc:0.9125
+epoch: 16, loss: 0.22055, acc:0.9125, time:114.63s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.4s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:5.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.7s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:10.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:17.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.9s, remaining:0.0min
+Acc: 0.8706, AUROC: 0.932776, AUPRC(����): 0.431768, AP: 0.434159
+�����ٻ���: 84.29%, �����: 87.15%, TP:161 TN:4931 FP:727 FN:30
+����δ���������֤AUROC:0.940166, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 17/20, lr:2.10e-05
+epoch: 17/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.9min, loss:0.13421, acc:0.9375
+epoch: 17/20, batch: 25/256 (9.8%), time:12.0s, remaining:1.9min, loss:0.22524, acc:0.9137
+epoch: 17/20, batch: 50/256 (19.5%), time:23.1s, remaining:1.6min, loss:0.21889, acc:0.9163
+epoch: 17/20, batch: 75/256 (29.3%), time:34.1s, remaining:1.4min, loss:0.20289, acc:0.9229
+epoch: 17/20, batch: 100/256 (39.1%), time:45.5s, remaining:1.2min, loss:0.20462, acc:0.9209
+epoch: 17/20, batch: 125/256 (48.8%), time:56.2s, remaining:1.0min, loss:0.20029, acc:0.9243
+epoch: 17/20, batch: 150/256 (58.6%), time:68.7s, remaining:0.8min, loss:0.19815, acc:0.9244
+epoch: 17/20, batch: 175/256 (68.4%), time:80.6s, remaining:0.6min, loss:0.19853, acc:0.9234
+epoch: 17/20, batch: 200/256 (78.1%), time:91.9s, remaining:0.4min, loss:0.19667, acc:0.9236
+epoch: 17/20, batch: 225/256 (87.9%), time:103.3s, remaining:0.2min, loss:0.19693, acc:0.9237
+epoch: 17/20, batch: 250/256 (97.7%), time:114.2s, remaining:0.0min, loss:0.19798, acc:0.9237
+epoch: 17/20, batch: 256/256 (100.0%), time:116.7s, remaining:0.0min, loss:0.19766, acc:0.9240
+epoch: 17, loss: 0.19766, acc:0.9240, time:116.67s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.4s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:4.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.0s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:15.3s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:18.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:19.5s, remaining:0.0min
+Acc: 0.8771, AUROC: 0.928847, AUPRC(����): 0.448676, AP: 0.450460
+�����ٻ���: 84.29%, �����: 87.82%, TP:161 TN:4969 FP:689 FN:30
+����δ���������֤AUROC:0.940166, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 18/20, lr:1.00e-05
+epoch: 18/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.0min, loss:0.13497, acc:0.9688
+epoch: 18/20, batch: 25/256 (9.8%), time:12.3s, remaining:1.9min, loss:0.19949, acc:0.9250
+epoch: 18/20, batch: 50/256 (19.5%), time:23.4s, remaining:1.6min, loss:0.20395, acc:0.9225
+epoch: 18/20, batch: 75/256 (29.3%), time:34.8s, remaining:1.4min, loss:0.19244, acc:0.9254
+epoch: 18/20, batch: 100/256 (39.1%), time:46.4s, remaining:1.2min, loss:0.18993, acc:0.9275
+epoch: 18/20, batch: 125/256 (48.8%), time:57.9s, remaining:1.0min, loss:0.18457, acc:0.9310
+epoch: 18/20, batch: 150/256 (58.6%), time:69.4s, remaining:0.8min, loss:0.18238, acc:0.9313
+epoch: 18/20, batch: 175/256 (68.4%), time:80.7s, remaining:0.6min, loss:0.17853, acc:0.9325
+epoch: 18/20, batch: 200/256 (78.1%), time:92.9s, remaining:0.4min, loss:0.18031, acc:0.9313
+epoch: 18/20, batch: 225/256 (87.9%), time:105.9s, remaining:0.2min, loss:0.18292, acc:0.9307
+epoch: 18/20, batch: 250/256 (97.7%), time:117.8s, remaining:0.0min, loss:0.18324, acc:0.9313
+epoch: 18/20, batch: 256/256 (100.0%), time:120.7s, remaining:0.0min, loss:0.18411, acc:0.9309
+epoch: 18, loss: 0.18411, acc:0.9309, time:120.67s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.4s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:4.6s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.0s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:11.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:13.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:16.9s, remaining:0.0min
+Acc: 0.8962, AUROC: 0.926168, AUPRC(����): 0.444271, AP: 0.446136
+�����ٻ���: 78.01%, �����: 90.01%, TP:149 TN:5093 FP:565 FN:42
+����δ���������֤AUROC:0.940166, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 19/20, lr:3.27e-06
+epoch: 19/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.0min, loss:0.20539, acc:0.9375
+epoch: 19/20, batch: 25/256 (9.8%), time:11.8s, remaining:1.8min, loss:0.16929, acc:0.9387
+epoch: 19/20, batch: 50/256 (19.5%), time:22.8s, remaining:1.6min, loss:0.18154, acc:0.9369
+epoch: 19/20, batch: 75/256 (29.3%), time:33.7s, remaining:1.4min, loss:0.19091, acc:0.9333
+epoch: 19/20, batch: 100/256 (39.1%), time:44.8s, remaining:1.2min, loss:0.18253, acc:0.9359
+epoch: 19/20, batch: 125/256 (48.8%), time:56.2s, remaining:1.0min, loss:0.17846, acc:0.9380
+epoch: 19/20, batch: 150/256 (58.6%), time:67.1s, remaining:0.8min, loss:0.18433, acc:0.9350
+epoch: 19/20, batch: 175/256 (68.4%), time:79.0s, remaining:0.6min, loss:0.18954, acc:0.9330
+epoch: 19/20, batch: 200/256 (78.1%), time:90.8s, remaining:0.4min, loss:0.18726, acc:0.9330
+epoch: 19/20, batch: 225/256 (87.9%), time:102.6s, remaining:0.2min, loss:0.18703, acc:0.9326
+epoch: 19/20, batch: 250/256 (97.7%), time:113.4s, remaining:0.0min, loss:0.18681, acc:0.9321
+epoch: 19/20, batch: 256/256 (100.0%), time:116.2s, remaining:0.0min, loss:0.18657, acc:0.9321
+epoch: 19, loss: 0.18657, acc:0.9321, time:116.19s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.4s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.4s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.9s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:15.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:17.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:18.5s, remaining:0.0min
+Acc: 0.8988, AUROC: 0.927661, AUPRC(����): 0.446212, AP: 0.448174
+�����ٻ���: 78.53%, �����: 90.26%, TP:150 TN:5107 FP:551 FN:41
+����δ���������֤AUROC:0.940166, ������Ѳ���
+��ʼѵ�� resnet18 epoch: 20/20, lr:1.00e-06
+epoch: 20/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.8min, loss:0.25582, acc:0.8750
+epoch: 20/20, batch: 25/256 (9.8%), time:10.9s, remaining:1.7min, loss:0.23462, acc:0.9038
+epoch: 20/20, batch: 50/256 (19.5%), time:22.0s, remaining:1.5min, loss:0.21930, acc:0.9163
+epoch: 20/20, batch: 75/256 (29.3%), time:33.1s, remaining:1.3min, loss:0.20657, acc:0.9246
+epoch: 20/20, batch: 100/256 (39.1%), time:43.9s, remaining:1.1min, loss:0.21187, acc:0.9213
+epoch: 20/20, batch: 125/256 (48.8%), time:54.3s, remaining:0.9min, loss:0.20313, acc:0.9240
+epoch: 20/20, batch: 150/256 (58.6%), time:65.8s, remaining:0.8min, loss:0.20131, acc:0.9244
+epoch: 20/20, batch: 175/256 (68.4%), time:76.8s, remaining:0.6min, loss:0.20015, acc:0.9250
+epoch: 20/20, batch: 200/256 (78.1%), time:87.9s, remaining:0.4min, loss:0.19842, acc:0.9259
+epoch: 20/20, batch: 225/256 (87.9%), time:99.0s, remaining:0.2min, loss:0.19815, acc:0.9256
+epoch: 20/20, batch: 250/256 (97.7%), time:109.4s, remaining:0.0min, loss:0.19731, acc:0.9261
+epoch: 20/20, batch: 256/256 (100.0%), time:112.0s, remaining:0.0min, loss:0.19656, acc:0.9263
+epoch: 20, loss: 0.19656, acc:0.9263, time:112.02s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.2s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:10.0s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.9s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:17.3s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:18.0s, remaining:0.0min
+Acc: 0.8991, AUROC: 0.926355, AUPRC(����): 0.445855, AP: 0.447657
+�����ٻ���: 78.53%, �����: 90.30%, TP:150 TN:5109 FP:549 FN:41
+����δ���������֤AUROC:0.940166, ������Ѳ���
+resnet18����6��AUROCδ���, ��ǰ����ѵ��
+resnet18ѵ������, ������֤AUROC:0.940166, ѵ����¼:C:\Users\LENOVO\Desktop\�����������ս��������������ս��\��Ŀ�ĵ�\ѵ����¼\01\20261018_095126_892500_resnet18
+��ģ����֤: resnet18
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.5s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:4.9s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:7.5s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:9.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:12.1s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:14.3s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:16.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:17.2s, remaining:0.0min
+Acc: 0.9010, AUROC: 0.940166, AUPRC(����): 0.458639, AP: 0.460936
+�����ٻ���: 81.15%, �����: 90.40%, TP:155 TN:5115 FP:543 FN:36
+ģ��:mobilenet_v3_large, ѵ����:51396��, ��֤��:5849��, ��20��, ÿ��256��, CPU�߳�:8
+��ʼѵ�� mobilenet_v3_large epoch: 1/20, lr:3.00e-05
+epoch: 1/20, batch: 1/256 (0.4%), time:0.5s, remaining:1.9min, loss:0.70289, acc:0.5312
+epoch: 1/20, batch: 25/256 (9.8%), time:9.5s, remaining:1.5min, loss:0.69417, acc:0.4988
+epoch: 1/20, batch: 50/256 (19.5%), time:18.2s, remaining:1.2min, loss:0.69410, acc:0.5119
+epoch: 1/20, batch: 75/256 (29.3%), time:26.7s, remaining:1.1min, loss:0.69291, acc:0.5204
+epoch: 1/20, batch: 100/256 (39.1%), time:34.9s, remaining:0.9min, loss:0.69243, acc:0.5194
+epoch: 1/20, batch: 125/256 (48.8%), time:43.0s, remaining:0.8min, loss:0.69139, acc:0.5252
+epoch: 1/20, batch: 150/256 (58.6%), time:51.6s, remaining:0.6min, loss:0.69133, acc:0.5273
+epoch: 1/20, batch: 175/256 (68.4%), time:60.0s, remaining:0.5min, loss:0.69169, acc:0.5289
+epoch: 1/20, batch: 200/256 (78.1%), time:68.8s, remaining:0.3min, loss:0.69176, acc:0.5284
+epoch: 1/20, batch: 225/256 (87.9%), time:76.8s, remaining:0.2min, loss:0.69046, acc:0.5358
+epoch: 1/20, batch: 250/256 (97.7%), time:85.8s, remaining:0.0min, loss:0.68991, acc:0.5389
+epoch: 1/20, batch: 256/256 (100.0%), time:87.9s, remaining:0.0min, loss:0.68949, acc:0.5397
+epoch: 1, loss: 0.68949, acc:0.5397, time:87.90s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.1min
+valid, batch: 50/183 (27.3%), time:2.7s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.0s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:6.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:7.8s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:9.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:9.5s, remaining:0.0min
+Acc: 0.0327, AUROC: 0.512197, AUPRC(����): 0.033052, AP: 0.033698
+�����ٻ���: 100.00%, �����: 0.00%, TP:191 TN:0 FP:5658 FN:0
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.512197
+��ʼѵ�� mobilenet_v3_large epoch: 2/20, lr:3.00e-04
+epoch: 2/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.5min, loss:0.71759, acc:0.4375
+epoch: 2/20, batch: 25/256 (9.8%), time:8.2s, remaining:1.3min, loss:0.73023, acc:0.5600
+epoch: 2/20, batch: 50/256 (19.5%), time:16.6s, remaining:1.1min, loss:0.70498, acc:0.5763
+epoch: 2/20, batch: 75/256 (29.3%), time:25.2s, remaining:1.0min, loss:0.69470, acc:0.5829
+epoch: 2/20, batch: 100/256 (39.1%), time:34.2s, remaining:0.9min, loss:0.68875, acc:0.5863
+epoch: 2/20, batch: 125/256 (48.8%), time:42.5s, remaining:0.7min, loss:0.68399, acc:0.5900
+epoch: 2/20, batch: 150/256 (58.6%), time:51.2s, remaining:0.6min, loss:0.68003, acc:0.5931
+epoch: 2/20, batch: 175/256 (68.4%), time:59.6s, remaining:0.5min, loss:0.67360, acc:0.6012
+epoch: 2/20, batch: 200/256 (78.1%), time:68.6s, remaining:0.3min, loss:0.66956, acc:0.6041
+epoch: 2/20, batch: 225/256 (87.9%), time:76.9s, remaining:0.2min, loss:0.66659, acc:0.6093
+epoch: 2/20, batch: 250/256 (97.7%), time:86.7s, remaining:0.0min, loss:0.66500, acc:0.6102
+epoch: 2/20, batch: 256/256 (100.0%), time:89.0s, remaining:0.0min, loss:0.66400, acc:0.6123
+epoch: 2, loss: 0.66400, acc:0.6123, time:89.03s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.7s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.3s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:10.7s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:13.2s, remaining:0.0min
+Acc: 0.9673, AUROC: 0.647610, AUPRC(����): 0.050889, AP: 0.051588
+�����ٻ���: 0.00%, �����: 100.00%, TP:0 TN:5658 FP:0 FN:191
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.647610
+��ʼѵ�� mobilenet_v3_large epoch: 3/20, lr:2.98e-04
+epoch: 3/20, batch: 1/256 (0.4%), time:0.6s, remaining:2.6min, loss:0.61929, acc:0.6875
+epoch: 3/20, batch: 25/256 (9.8%), time:9.9s, remaining:1.5min, loss:0.63906, acc:0.6312
+epoch: 3/20, batch: 50/256 (19.5%), time:18.8s, remaining:1.3min, loss:0.63613, acc:0.6375
+epoch: 3/20, batch: 75/256 (29.3%), time:27.3s, remaining:1.1min, loss:0.63816, acc:0.6383
+epoch: 3/20, batch: 100/256 (39.1%), time:35.7s, remaining:0.9min, loss:0.63222, acc:0.6425
+epoch: 3/20, batch: 125/256 (48.8%), time:43.9s, remaining:0.8min, loss:0.62820, acc:0.6478
+epoch: 3/20, batch: 150/256 (58.6%), time:52.5s, remaining:0.6min, loss:0.63043, acc:0.6483
+epoch: 3/20, batch: 175/256 (68.4%), time:60.5s, remaining:0.5min, loss:0.63079, acc:0.6488
+epoch: 3/20, batch: 200/256 (78.1%), time:69.3s, remaining:0.3min, loss:0.62927, acc:0.6506
+epoch: 3/20, batch: 225/256 (87.9%), time:77.6s, remaining:0.2min, loss:0.62750, acc:0.6525
+epoch: 3/20, batch: 250/256 (97.7%), time:86.5s, remaining:0.0min, loss:0.62299, acc:0.6558
+epoch: 3/20, batch: 256/256 (100.0%), time:88.4s, remaining:0.0min, loss:0.62335, acc:0.6552
+epoch: 3, loss: 0.62335, acc:0.6552, time:88.41s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.1min
+valid, batch: 50/183 (27.3%), time:2.7s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.1s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.4s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:6.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:7.9s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:9.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:9.5s, remaining:0.0min
+Acc: 0.5517, AUROC: 0.705066, AUPRC(����): 0.092515, AP: 0.095227
+�����ٻ���: 76.44%, �����: 54.45%, TP:146 TN:3081 FP:2577 FN:45
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.705066
+��ʼѵ�� mobilenet_v3_large epoch: 4/20, lr:2.91e-04
+epoch: 4/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.4min, loss:0.50026, acc:0.7188
+epoch: 4/20, batch: 25/256 (9.8%), time:9.2s, remaining:1.4min, loss:0.58226, acc:0.6987
+epoch: 4/20, batch: 50/256 (19.5%), time:17.4s, remaining:1.2min, loss:0.58081, acc:0.6994
+epoch: 4/20, batch: 75/256 (29.3%), time:25.9s, remaining:1.0min, loss:0.58367, acc:0.6867
+epoch: 4/20, batch: 100/256 (39.1%), time:34.8s, remaining:0.9min, loss:0.58617, acc:0.6878
+epoch: 4/20, batch: 125/256 (48.8%), time:43.5s, remaining:0.8min, loss:0.58980, acc:0.6913
+epoch: 4/20, batch: 150/256 (58.6%), time:51.9s, remaining:0.6min, loss:0.58617, acc:0.6975
+epoch: 4/20, batch: 175/256 (68.4%), time:60.4s, remaining:0.5min, loss:0.58193, acc:0.6984
+epoch: 4/20, batch: 200/256 (78.1%), time:68.8s, remaining:0.3min, loss:0.58276, acc:0.6987
+epoch: 4/20, batch: 225/256 (87.9%), time:76.8s, remaining:0.2min, loss:0.57875, acc:0.7008
+epoch: 4/20, batch: 250/256 (97.7%), time:84.8s, remaining:0.0min, loss:0.57652, acc:0.7029
+epoch: 4/20, batch: 256/256 (100.0%), time:86.8s, remaining:0.0min, loss:0.57672, acc:0.7030
+epoch: 4, loss: 0.57672, acc:0.7030, time:86.82s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.1min
+valid, batch: 50/183 (27.3%), time:2.7s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:3.9s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.5s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:6.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:8.4s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:9.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:10.1s, remaining:0.0min
+Acc: 0.7574, AUROC: 0.742637, AUPRC(����): 0.092421, AP: 0.094519
+�����ٻ���: 60.73%, �����: 76.25%, TP:116 TN:4314 FP:1344 FN:75
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.742637
+��ʼѵ�� mobilenet_v3_large epoch: 5/20, lr:2.80e-04
+epoch: 5/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.3min, loss:0.64062, acc:0.6562
+epoch: 5/20, batch: 25/256 (9.8%), time:8.1s, remaining:1.3min, loss:0.58171, acc:0.6925
+epoch: 5/20, batch: 50/256 (19.5%), time:17.1s, remaining:1.2min, loss:0.56958, acc:0.6950
+epoch: 5/20, batch: 75/256 (29.3%), time:25.5s, remaining:1.0min, loss:0.56964, acc:0.7013
+epoch: 5/20, batch: 100/256 (39.1%), time:33.6s, remaining:0.9min, loss:0.56582, acc:0.7034
+epoch: 5/20, batch: 125/256 (48.8%), time:41.6s, remaining:0.7min, loss:0.55493, acc:0.7135
+epoch: 5/20, batch: 150/256 (58.6%), time:49.4s, remaining:0.6min, loss:0.54911, acc:0.7173
+epoch: 5/20, batch: 175/256 (68.4%), time:58.0s, remaining:0.4min, loss:0.54978, acc:0.7184
+epoch: 5/20, batch: 200/256 (78.1%), time:66.0s, remaining:0.3min, loss:0.54887, acc:0.7209
+epoch: 5/20, batch: 225/256 (87.9%), time:74.2s, remaining:0.2min, loss:0.54519, acc:0.7222
+epoch: 5/20, batch: 250/256 (97.7%), time:83.1s, remaining:0.0min, loss:0.54341, acc:0.7249
+epoch: 5/20, batch: 256/256 (100.0%), time:84.9s, remaining:0.0min, loss:0.54307, acc:0.7246
+epoch: 5, loss: 0.54307, acc:0.7246, time:84.93s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.2s, remaining:0.1min
+valid, batch: 50/183 (27.3%), time:2.6s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:3.9s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:6.4s, remaining:0.0min
+valid, batch: 150/183 (82.0%), time:7.6s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:8.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:9.2s, remaining:0.0min
+Acc: 0.6883, AUROC: 0.725336, AUPRC(����): 0.136131, AP: 0.140045
+�����ٻ���: 61.78%, �����: 69.07%, TP:118 TN:3908 FP:1750 FN:73
+����δ���������֤AUROC:0.742637, ������Ѳ���
+��ʼѵ�� mobilenet_v3_large epoch: 6/20, lr:2.65e-04
+epoch: 6/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.4min, loss:0.48563, acc:0.8125
+epoch: 6/20, batch: 25/256 (9.8%), time:9.1s, remaining:1.4min, loss:0.54442, acc:0.7275
+epoch: 6/20, batch: 50/256 (19.5%), time:17.0s, remaining:1.2min, loss:0.54435, acc:0.7238
+epoch: 6/20, batch: 75/256 (29.3%), time:25.0s, remaining:1.0min, loss:0.54245, acc:0.7275
+epoch: 6/20, batch: 100/256 (39.1%), time:33.3s, remaining:0.9min, loss:0.54335, acc:0.7259
+epoch: 6/20, batch: 125/256 (48.8%), time:41.9s, remaining:0.7min, loss:0.53754, acc:0.7278
+epoch: 6/20, batch: 150/256 (58.6%), time:49.6s, remaining:0.6min, loss:0.53729, acc:0.7294
+epoch: 6/20, batch: 175/256 (68.4%), time:57.6s, remaining:0.4min, loss:0.53327, acc:0.7320
+epoch: 6/20, batch: 200/256 (78.1%), time:65.7s, remaining:0.3min, loss:0.53240, acc:0.7331
+epoch: 6/20, batch: 225/256 (87.9%), time:73.4s, remaining:0.2min, loss:0.53318, acc:0.7322
+epoch: 6/20, batch: 250/256 (97.7%), time:81.4s, remaining:0.0min, loss:0.53283, acc:0.7329
+epoch: 6/20, batch: 256/256 (100.0%), time:83.4s, remaining:0.0min, loss:0.53238, acc:0.7327
+epoch: 6, loss: 0.53238, acc:0.7327, time:83.43s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:2.7s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.6s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:6.8s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:8.1s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:9.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:9.9s, remaining:0.0min
+Acc: 0.7087, AUROC: 0.783224, AUPRC(����): 0.130423, AP: 0.131845
+�����ٻ���: 71.20%, �����: 70.86%, TP:136 TN:4009 FP:1649 FN:55
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.783224
+��ʼѵ�� mobilenet_v3_large epoch: 7/20, lr:2.47e-04
+epoch: 7/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.3min, loss:0.66762, acc:0.5625
+epoch: 7/20, batch: 25/256 (9.8%), time:8.6s, remaining:1.3min, loss:0.49443, acc:0.7538
+epoch: 7/20, batch: 50/256 (19.5%), time:16.9s, remaining:1.2min, loss:0.50841, acc:0.7425
+epoch: 7/20, batch: 75/256 (29.3%), time:24.8s, remaining:1.0min, loss:0.49852, acc:0.7512
+epoch: 7/20, batch: 100/256 (39.1%), time:34.4s, remaining:0.9min, loss:0.49306, acc:0.7547
+epoch: 7/20, batch: 125/256 (48.8%), time:47.1s, remaining:0.8min, loss:0.49427, acc:0.7540
+epoch: 7/20, batch: 150/256 (58.6%), time:55.4s, remaining:0.7min, loss:0.49372, acc:0.7567
+epoch: 7/20, batch: 175/256 (68.4%), time:63.0s, remaining:0.5min, loss:0.49745, acc:0.7557
+epoch: 7/20, batch: 200/256 (78.1%), time:71.6s, remaining:0.3min, loss:0.49693, acc:0.7561
+epoch: 7/20, batch: 225/256 (87.9%), time:82.3s, remaining:0.2min, loss:0.49592, acc:0.7543
+epoch: 7/20, batch: 250/256 (97.7%), time:92.0s, remaining:0.0min, loss:0.49766, acc:0.7556
+epoch: 7/20, batch: 256/256 (100.0%), time:94.0s, remaining:0.0min, loss:0.49593, acc:0.7570
+epoch: 7, loss: 0.49593, acc:0.7570, time:94.02s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.0s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.4s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.4s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.2s, remaining:0.0min
+Acc: 0.6752, AUROC: 0.801128, AUPRC(����): 0.161612, AP: 0.165595
+�����ٻ���: 71.20%, �����: 67.39%, TP:136 TN:3813 FP:1845 FN:55
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.801128
+��ʼѵ�� mobilenet_v3_large epoch: 8/20, lr:2.25e-04
+epoch: 8/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.1min, loss:0.53089, acc:0.6875
+epoch: 8/20, batch: 25/256 (9.8%), time:12.1s, remaining:1.9min, loss:0.48358, acc:0.7625
+epoch: 8/20, batch: 50/256 (19.5%), time:19.8s, remaining:1.4min, loss:0.48481, acc:0.7706
+epoch: 8/20, batch: 75/256 (29.3%), time:28.1s, remaining:1.1min, loss:0.47774, acc:0.7775
+epoch: 8/20, batch: 100/256 (39.1%), time:35.8s, remaining:0.9min, loss:0.47749, acc:0.7766
+epoch: 8/20, batch: 125/256 (48.8%), time:43.5s, remaining:0.8min, loss:0.47369, acc:0.7755
+epoch: 8/20, batch: 150/256 (58.6%), time:51.2s, remaining:0.6min, loss:0.47036, acc:0.7775
+epoch: 8/20, batch: 175/256 (68.4%), time:59.9s, remaining:0.5min, loss:0.47044, acc:0.7755
+epoch: 8/20, batch: 200/256 (78.1%), time:68.7s, remaining:0.3min, loss:0.47267, acc:0.7734
+epoch: 8/20, batch: 225/256 (87.9%), time:77.3s, remaining:0.2min, loss:0.47118, acc:0.7721
+epoch: 8/20, batch: 250/256 (97.7%), time:85.7s, remaining:0.0min, loss:0.47047, acc:0.7719
+epoch: 8/20, batch: 256/256 (100.0%), time:90.0s, remaining:0.0min, loss:0.47100, acc:0.7723
+epoch: 8, loss: 0.47100, acc:0.7723, time:90.00s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.4s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:8.4s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:12.0s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:16.1s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:20.5s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:24.1s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:29.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:30.8s, remaining:0.0min
+Acc: 0.7589, AUROC: 0.802347, AUPRC(����): 0.172004, AP: 0.174248
+�����ٻ���: 68.06%, �����: 76.16%, TP:130 TN:4309 FP:1349 FN:61
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.802347
+��ʼѵ�� mobilenet_v3_large epoch: 9/20, lr:2.02e-04
+epoch: 9/20, batch: 1/256 (0.4%), time:1.5s, remaining:6.3min, loss:0.53057, acc:0.7500
+epoch: 9/20, batch: 25/256 (9.8%), time:30.5s, remaining:4.7min, loss:0.45493, acc:0.7937
+epoch: 9/20, batch: 50/256 (19.5%), time:63.7s, remaining:4.4min, loss:0.47008, acc:0.7788
+epoch: 9/20, batch: 75/256 (29.3%), time:86.8s, remaining:3.5min, loss:0.46310, acc:0.7858
+epoch: 9/20, batch: 100/256 (39.1%), time:109.1s, remaining:2.8min, loss:0.45889, acc:0.7906
+epoch: 9/20, batch: 125/256 (48.8%), time:131.1s, remaining:2.3min, loss:0.46089, acc:0.7870
+epoch: 9/20, batch: 150/256 (58.6%), time:157.4s, remaining:1.9min, loss:0.45779, acc:0.7887
+epoch: 9/20, batch: 175/256 (68.4%), time:192.1s, remaining:1.5min, loss:0.45856, acc:0.7877
+epoch: 9/20, batch: 200/256 (78.1%), time:220.3s, remaining:1.0min, loss:0.45995, acc:0.7870
+epoch: 9/20, batch: 225/256 (87.9%), time:248.5s, remaining:0.6min, loss:0.45878, acc:0.7864
+epoch: 9/20, batch: 250/256 (97.7%), time:275.7s, remaining:0.1min, loss:0.45949, acc:0.7866
+epoch: 9/20, batch: 256/256 (100.0%), time:282.6s, remaining:0.0min, loss:0.46004, acc:0.7863
+epoch: 9, loss: 0.46004, acc:0.7863, time:282.57s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:4.8s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:9.2s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:13.4s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:19.3s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:24.0s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:29.5s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:34.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:35.4s, remaining:0.0min
+Acc: 0.7878, AUROC: 0.813966, AUPRC(����): 0.201504, AP: 0.204345
+�����ٻ���: 67.02%, �����: 79.18%, TP:128 TN:4480 FP:1178 FN:63
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.813966
+��ʼѵ�� mobilenet_v3_large epoch: 10/20, lr:1.76e-04
+epoch: 10/20, batch: 1/256 (0.4%), time:1.4s, remaining:6.0min, loss:0.50609, acc:0.6875
+epoch: 10/20, batch: 25/256 (9.8%), time:26.0s, remaining:4.0min, loss:0.47360, acc:0.7712
+epoch: 10/20, batch: 50/256 (19.5%), time:52.7s, remaining:3.6min, loss:0.46231, acc:0.7812
+epoch: 10/20, batch: 75/256 (29.3%), time:83.5s, remaining:3.4min, loss:0.45702, acc:0.7854
+epoch: 10/20, batch: 100/256 (39.1%), time:119.1s, remaining:3.1min, loss:0.45135, acc:0.7884
+epoch: 10/20, batch: 125/256 (48.8%), time:155.7s, remaining:2.7min, loss:0.44778, acc:0.7910
+epoch: 10/20, batch: 150/256 (58.6%), time:191.9s, remaining:2.3min, loss:0.44535, acc:0.7933
+epoch: 10/20, batch: 175/256 (68.4%), time:227.2s, remaining:1.8min, loss:0.44650, acc:0.7941
+epoch: 10/20, batch: 200/256 (78.1%), time:262.3s, remaining:1.2min, loss:0.44858, acc:0.7923
+epoch: 10/20, batch: 225/256 (87.9%), time:299.7s, remaining:0.7min, loss:0.44677, acc:0.7925
+epoch: 10/20, batch: 250/256 (97.7%), time:335.2s, remaining:0.1min, loss:0.44810, acc:0.7913
+epoch: 10/20, batch: 256/256 (100.0%), time:342.4s, remaining:0.0min, loss:0.44806, acc:0.7911
+epoch: 10, loss: 0.44806, acc:0.7911, time:342.37s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.6s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:6.7s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.4s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.3s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.8s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:26.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.5s, remaining:0.0min
+Acc: 0.7699, AUROC: 0.833671, AUPRC(����): 0.206693, AP: 0.209152
+�����ٻ���: 71.73%, �����: 77.17%, TP:137 TN:4366 FP:1292 FN:54
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.833671
+��ʼѵ�� mobilenet_v3_large epoch: 11/20, lr:1.50e-04
+epoch: 11/20, batch: 1/256 (0.4%), time:1.3s, remaining:5.5min, loss:0.32931, acc:0.8438
+epoch: 11/20, batch: 25/256 (9.8%), time:32.4s, remaining:5.0min, loss:0.45885, acc:0.7750
+epoch: 11/20, batch: 50/256 (19.5%), time:63.4s, remaining:4.4min, loss:0.47015, acc:0.7694
+epoch: 11/20, batch: 75/256 (29.3%), time:96.6s, remaining:3.9min, loss:0.45969, acc:0.7800
+epoch: 11/20, batch: 100/256 (39.1%), time:127.5s, remaining:3.3min, loss:0.44578, acc:0.7913
+epoch: 11/20, batch: 125/256 (48.8%), time:160.4s, remaining:2.8min, loss:0.45045, acc:0.7893
+epoch: 11/20, batch: 150/256 (58.6%), time:191.3s, remaining:2.3min, loss:0.44510, acc:0.7921
+epoch: 11/20, batch: 175/256 (68.4%), time:224.0s, remaining:1.7min, loss:0.44060, acc:0.7966
+epoch: 11/20, batch: 200/256 (78.1%), time:255.9s, remaining:1.2min, loss:0.43688, acc:0.7989
+epoch: 11/20, batch: 225/256 (87.9%), time:287.5s, remaining:0.7min, loss:0.43314, acc:0.8013
+epoch: 11/20, batch: 250/256 (97.7%), time:323.0s, remaining:0.1min, loss:0.43390, acc:0.8000
+epoch: 11/20, batch: 256/256 (100.0%), time:331.7s, remaining:0.0min, loss:0.43536, acc:0.7988
+epoch: 11, loss: 0.43536, acc:0.7988, time:331.68s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:2.3s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.2s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.3s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:8.7s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:10.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:13.1s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:15.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:15.7s, remaining:0.0min
+Acc: 0.7608, AUROC: 0.846682, AUPRC(����): 0.195044, AP: 0.197868
+�����ٻ���: 78.53%, �����: 76.00%, TP:150 TN:4300 FP:1358 FN:41
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.846682
+��ʼѵ�� mobilenet_v3_large epoch: 12/20, lr:1.25e-04
+epoch: 12/20, batch: 1/256 (0.4%), time:1.7s, remaining:7.1min, loss:0.36434, acc:0.7500
+epoch: 12/20, batch: 25/256 (9.8%), time:37.5s, remaining:5.8min, loss:0.42805, acc:0.8025
+epoch: 12/20, batch: 50/256 (19.5%), time:77.5s, remaining:5.3min, loss:0.44414, acc:0.7931
+epoch: 12/20, batch: 75/256 (29.3%), time:114.1s, remaining:4.6min, loss:0.43279, acc:0.7987
+epoch: 12/20, batch: 100/256 (39.1%), time:148.7s, remaining:3.9min, loss:0.44222, acc:0.7959
+epoch: 12/20, batch: 125/256 (48.8%), time:184.9s, remaining:3.2min, loss:0.43504, acc:0.8000
+epoch: 12/20, batch: 150/256 (58.6%), time:224.3s, remaining:2.6min, loss:0.43304, acc:0.8042
+epoch: 12/20, batch: 175/256 (68.4%), time:260.5s, remaining:2.0min, loss:0.43612, acc:0.8045
+epoch: 12/20, batch: 200/256 (78.1%), time:296.3s, remaining:1.4min, loss:0.43436, acc:0.8048
+epoch: 12/20, batch: 225/256 (87.9%), time:327.6s, remaining:0.8min, loss:0.43343, acc:0.8044
+epoch: 12/20, batch: 250/256 (97.7%), time:358.9s, remaining:0.1min, loss:0.43283, acc:0.8046
+epoch: 12/20, batch: 256/256 (100.0%), time:367.0s, remaining:0.0min, loss:0.43316, acc:0.8046
+epoch: 12, loss: 0.43316, acc:0.8046, time:367.05s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.6s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:6.8s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.6s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.2s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:22.1s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:25.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:26.7s, remaining:0.0min
+Acc: 0.8395, AUROC: 0.847623, AUPRC(����): 0.218698, AP: 0.221413
+�����ٻ���: 65.97%, �����: 84.55%, TP:126 TN:4784 FP:874 FN:65
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.847623
+��ʼѵ�� mobilenet_v3_large epoch: 13/20, lr:9.94e-05
+epoch: 13/20, batch: 1/256 (0.4%), time:1.1s, remaining:4.9min, loss:0.30770, acc:0.9062
+epoch: 13/20, batch: 25/256 (9.8%), time:30.8s, remaining:4.7min, loss:0.42272, acc:0.8063
+epoch: 13/20, batch: 50/256 (19.5%), time:62.3s, remaining:4.3min, loss:0.41809, acc:0.8044
+epoch: 13/20, batch: 75/256 (29.3%), time:91.8s, remaining:3.7min, loss:0.41390, acc:0.8042
+epoch: 13/20, batch: 100/256 (39.1%), time:124.1s, remaining:3.2min, loss:0.40439, acc:0.8137
+epoch: 13/20, batch: 125/256 (48.8%), time:155.6s, remaining:2.7min, loss:0.40386, acc:0.8147
+epoch: 13/20, batch: 150/256 (58.6%), time:187.8s, remaining:2.2min, loss:0.40240, acc:0.8146
+epoch: 13/20, batch: 175/256 (68.4%), time:219.7s, remaining:1.7min, loss:0.40337, acc:0.8154
+epoch: 13/20, batch: 200/256 (78.1%), time:252.2s, remaining:1.2min, loss:0.40242, acc:0.8177
+epoch: 13/20, batch: 225/256 (87.9%), time:286.2s, remaining:0.7min, loss:0.40161, acc:0.8190
+epoch: 13/20, batch: 250/256 (97.7%), time:319.5s, remaining:0.1min, loss:0.40270, acc:0.8179
+epoch: 13/20, batch: 256/256 (100.0%), time:328.2s, remaining:0.0min, loss:0.40164, acc:0.8187
+epoch: 13, loss: 0.40164, acc:0.8187, time:328.15s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.3s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:11.6s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:16.0s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:19.7s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:24.2s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:28.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:29.5s, remaining:0.0min
+Acc: 0.7820, AUROC: 0.836352, AUPRC(����): 0.212369, AP: 0.215098
+�����ٻ���: 76.44%, �����: 78.26%, TP:146 TN:4428 FP:1230 FN:45
+����δ���������֤AUROC:0.847623, ������Ѳ���
+��ʼѵ�� mobilenet_v3_large epoch: 14/20, lr:7.58e-05
+epoch: 14/20, batch: 1/256 (0.4%), time:1.2s, remaining:5.0min, loss:0.45717, acc:0.7500
+epoch: 14/20, batch: 25/256 (9.8%), time:31.0s, remaining:4.8min, loss:0.36071, acc:0.8387
+epoch: 14/20, batch: 50/256 (19.5%), time:60.5s, remaining:4.2min, loss:0.40787, acc:0.8150
+epoch: 14/20, batch: 75/256 (29.3%), time:90.2s, remaining:3.6min, loss:0.40228, acc:0.8133
+epoch: 14/20, batch: 100/256 (39.1%), time:120.2s, remaining:3.1min, loss:0.40484, acc:0.8166
+epoch: 14/20, batch: 125/256 (48.8%), time:149.3s, remaining:2.6min, loss:0.41285, acc:0.8133
+epoch: 14/20, batch: 150/256 (58.6%), time:178.8s, remaining:2.1min, loss:0.41019, acc:0.8129
+epoch: 14/20, batch: 175/256 (68.4%), time:208.7s, remaining:1.6min, loss:0.40598, acc:0.8155
+epoch: 14/20, batch: 200/256 (78.1%), time:238.3s, remaining:1.1min, loss:0.40385, acc:0.8156
+epoch: 14/20, batch: 225/256 (87.9%), time:266.9s, remaining:0.6min, loss:0.40380, acc:0.8139
+epoch: 14/20, batch: 250/256 (97.7%), time:296.7s, remaining:0.1min, loss:0.40105, acc:0.8177
+epoch: 14/20, batch: 256/256 (100.0%), time:304.0s, remaining:0.0min, loss:0.39980, acc:0.8187
+epoch: 14, loss: 0.39980, acc:0.8187, time:304.02s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.6min
+valid, batch: 25/183 (13.7%), time:3.5s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.2s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.5s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.6s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.6s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:24.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:26.0s, remaining:0.0min
+Acc: 0.7759, AUROC: 0.847883, AUPRC(����): 0.214008, AP: 0.218202
+�����ٻ���: 78.01%, �����: 77.57%, TP:149 TN:4389 FP:1269 FN:42
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.847883
+��ʼѵ�� mobilenet_v3_large epoch: 15/20, lr:5.44e-05
+epoch: 15/20, batch: 1/256 (0.4%), time:1.2s, remaining:5.0min, loss:0.22076, acc:0.9375
+epoch: 15/20, batch: 25/256 (9.8%), time:29.9s, remaining:4.6min, loss:0.38420, acc:0.8350
+epoch: 15/20, batch: 50/256 (19.5%), time:58.2s, remaining:4.0min, loss:0.40799, acc:0.8219
+epoch: 15/20, batch: 75/256 (29.3%), time:88.1s, remaining:3.5min, loss:0.40041, acc:0.8267
+epoch: 15/20, batch: 100/256 (39.1%), time:117.1s, remaining:3.0min, loss:0.39378, acc:0.8253
+epoch: 15/20, batch: 125/256 (48.8%), time:146.0s, remaining:2.5min, loss:0.40095, acc:0.8210
+epoch: 15/20, batch: 150/256 (58.6%), time:174.3s, remaining:2.1min, loss:0.39712, acc:0.8231
+epoch: 15/20, batch: 175/256 (68.4%), time:202.9s, remaining:1.6min, loss:0.40065, acc:0.8214
+epoch: 15/20, batch: 200/256 (78.1%), time:231.8s, remaining:1.1min, loss:0.39770, acc:0.8223
+epoch: 15/20, batch: 225/256 (87.9%), time:263.2s, remaining:0.6min, loss:0.39948, acc:0.8211
+epoch: 15/20, batch: 250/256 (97.7%), time:293.0s, remaining:0.1min, loss:0.40017, acc:0.8215
+epoch: 15/20, batch: 256/256 (100.0%), time:299.9s, remaining:0.0min, loss:0.39949, acc:0.8212
+epoch: 15, loss: 0.39949, acc:0.8212, time:299.86s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.1s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:6.5s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:9.5s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:12.9s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:16.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:20.1s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:23.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:24.2s, remaining:0.0min
+Acc: 0.8196, AUROC: 0.847978, AUPRC(����): 0.213323, AP: 0.217128
+�����ٻ���: 72.25%, �����: 82.29%, TP:138 TN:4656 FP:1002 FN:53
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.847978
+��ʼѵ�� mobilenet_v3_large epoch: 16/20, lr:3.60e-05
+epoch: 16/20, batch: 1/256 (0.4%), time:1.2s, remaining:5.1min, loss:0.51993, acc:0.8438
+epoch: 16/20, batch: 25/256 (9.8%), time:30.5s, remaining:4.7min, loss:0.35569, acc:0.8438
+epoch: 16/20, batch: 50/256 (19.5%), time:60.6s, remaining:4.2min, loss:0.36562, acc:0.8337
+epoch: 16/20, batch: 75/256 (29.3%), time:91.7s, remaining:3.7min, loss:0.37183, acc:0.8271
+epoch: 16/20, batch: 100/256 (39.1%), time:121.1s, remaining:3.1min, loss:0.38180, acc:0.8244
+epoch: 16/20, batch: 125/256 (48.8%), time:150.6s, remaining:2.6min, loss:0.38550, acc:0.8227
+epoch: 16/20, batch: 150/256 (58.6%), time:179.4s, remaining:2.1min, loss:0.38449, acc:0.8246
+epoch: 16/20, batch: 175/256 (68.4%), time:212.6s, remaining:1.6min, loss:0.38260, acc:0.8270
+epoch: 16/20, batch: 200/256 (78.1%), time:241.6s, remaining:1.1min, loss:0.37752, acc:0.8302
+epoch: 16/20, batch: 225/256 (87.9%), time:270.9s, remaining:0.6min, loss:0.37824, acc:0.8310
+epoch: 16/20, batch: 250/256 (97.7%), time:299.3s, remaining:0.1min, loss:0.37979, acc:0.8295
+epoch: 16/20, batch: 256/256 (100.0%), time:306.8s, remaining:0.0min, loss:0.37982, acc:0.8290
+epoch: 16, loss: 0.37982, acc:0.8290, time:306.75s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.4s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.9s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.9s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:22.8s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:27.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:28.3s, remaining:0.0min
+Acc: 0.8056, AUROC: 0.848078, AUPRC(����): 0.211487, AP: 0.215685
+�����ٻ���: 73.82%, �����: 80.79%, TP:141 TN:4571 FP:1087 FN:50
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.848078
+��ʼѵ�� mobilenet_v3_large epoch: 17/20, lr:2.10e-05
+epoch: 17/20, batch: 1/256 (0.4%), time:1.6s, remaining:6.8min, loss:0.42444, acc:0.7500
+epoch: 17/20, batch: 25/256 (9.8%), time:31.9s, remaining:4.9min, loss:0.38042, acc:0.8313
+epoch: 17/20, batch: 50/256 (19.5%), time:62.8s, remaining:4.3min, loss:0.36541, acc:0.8400
+epoch: 17/20, batch: 75/256 (29.3%), time:92.6s, remaining:3.7min, loss:0.37146, acc:0.8383
+epoch: 17/20, batch: 100/256 (39.1%), time:121.7s, remaining:3.2min, loss:0.36534, acc:0.8406
+epoch: 17/20, batch: 125/256 (48.8%), time:150.6s, remaining:2.6min, loss:0.37133, acc:0.8367
+epoch: 17/20, batch: 150/256 (58.6%), time:182.3s, remaining:2.1min, loss:0.36762, acc:0.8392
+epoch: 17/20, batch: 175/256 (68.4%), time:214.9s, remaining:1.7min, loss:0.37282, acc:0.8364
+epoch: 17/20, batch: 200/256 (78.1%), time:245.5s, remaining:1.1min, loss:0.37407, acc:0.8353
+epoch: 17/20, batch: 225/256 (87.9%), time:274.1s, remaining:0.6min, loss:0.37060, acc:0.8374
+epoch: 17/20, batch: 250/256 (97.7%), time:303.9s, remaining:0.1min, loss:0.37056, acc:0.8376
+epoch: 17/20, batch: 256/256 (100.0%), time:311.1s, remaining:0.0min, loss:0.36932, acc:0.8381
+epoch: 17, loss: 0.36932, acc:0.8381, time:311.09s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.4min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:6.8s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:9.7s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:13.6s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:20.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:23.4s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:24.7s, remaining:0.0min
+Acc: 0.8336, AUROC: 0.846341, AUPRC(����): 0.214928, AP: 0.219183
+�����ٻ���: 68.06%, �����: 83.88%, TP:130 TN:4746 FP:912 FN:61
+����δ���������֤AUROC:0.848078, ������Ѳ���
+��ʼѵ�� mobilenet_v3_large epoch: 18/20, lr:1.00e-05
+epoch: 18/20, batch: 1/256 (0.4%), time:1.0s, remaining:4.4min, loss:0.30582, acc:0.8438
+epoch: 18/20, batch: 25/256 (9.8%), time:31.3s, remaining:4.8min, loss:0.39998, acc:0.8113
+epoch: 18/20, batch: 50/256 (19.5%), time:60.0s, remaining:4.1min, loss:0.38071, acc:0.8213
+epoch: 18/20, batch: 75/256 (29.3%), time:90.1s, remaining:3.6min, loss:0.36759, acc:0.8296
+epoch: 18/20, batch: 100/256 (39.1%), time:118.9s, remaining:3.1min, loss:0.37183, acc:0.8281
+epoch: 18/20, batch: 125/256 (48.8%), time:147.8s, remaining:2.6min, loss:0.37269, acc:0.8285
+epoch: 18/20, batch: 150/256 (58.6%), time:177.1s, remaining:2.1min, loss:0.37087, acc:0.8313
+epoch: 18/20, batch: 175/256 (68.4%), time:206.7s, remaining:1.6min, loss:0.36663, acc:0.8336
+epoch: 18/20, batch: 200/256 (78.1%), time:236.2s, remaining:1.1min, loss:0.36507, acc:0.8348
+epoch: 18/20, batch: 225/256 (87.9%), time:265.6s, remaining:0.6min, loss:0.36812, acc:0.8328
+epoch: 18/20, batch: 250/256 (97.7%), time:294.7s, remaining:0.1min, loss:0.36821, acc:0.8336
+epoch: 18/20, batch: 256/256 (100.0%), time:302.2s, remaining:0.0min, loss:0.36748, acc:0.8344
+epoch: 18, loss: 0.36748, acc:0.8344, time:302.15s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.4s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:6.8s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.0s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:13.7s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:20.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:23.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:25.1s, remaining:0.0min
+Acc: 0.8203, AUROC: 0.849994, AUPRC(����): 0.221762, AP: 0.225921
+�����ٻ���: 71.20%, �����: 82.40%, TP:136 TN:4662 FP:996 FN:55
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.849994
+��ʼѵ�� mobilenet_v3_large epoch: 19/20, lr:3.27e-06
+epoch: 19/20, batch: 1/256 (0.4%), time:1.1s, remaining:4.8min, loss:0.36523, acc:0.8438
+epoch: 19/20, batch: 25/256 (9.8%), time:31.4s, remaining:4.8min, loss:0.37100, acc:0.8363
+epoch: 19/20, batch: 50/256 (19.5%), time:60.2s, remaining:4.1min, loss:0.36022, acc:0.8350
+epoch: 19/20, batch: 75/256 (29.3%), time:89.1s, remaining:3.6min, loss:0.35858, acc:0.8421
+epoch: 19/20, batch: 100/256 (39.1%), time:123.0s, remaining:3.2min, loss:0.36298, acc:0.8413
+epoch: 19/20, batch: 125/256 (48.8%), time:153.6s, remaining:2.7min, loss:0.36128, acc:0.8425
+epoch: 19/20, batch: 150/256 (58.6%), time:184.3s, remaining:2.2min, loss:0.35805, acc:0.8446
+epoch: 19/20, batch: 175/256 (68.4%), time:215.0s, remaining:1.7min, loss:0.35699, acc:0.8446
+epoch: 19/20, batch: 200/256 (78.1%), time:246.7s, remaining:1.2min, loss:0.35675, acc:0.8445
+epoch: 19/20, batch: 225/256 (87.9%), time:276.9s, remaining:0.6min, loss:0.35467, acc:0.8433
+epoch: 19/20, batch: 250/256 (97.7%), time:308.2s, remaining:0.1min, loss:0.35837, acc:0.8427
+epoch: 19/20, batch: 256/256 (100.0%), time:316.2s, remaining:0.0min, loss:0.35657, acc:0.8436
+epoch: 19, loss: 0.35657, acc:0.8436, time:316.17s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:4.0s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:8.3s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:11.9s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:15.4s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:22.5s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:26.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.8s, remaining:0.0min
+Acc: 0.8225, AUROC: 0.850245, AUPRC(����): 0.221839, AP: 0.226001
+�����ٻ���: 71.73%, �����: 82.61%, TP:137 TN:4674 FP:984 FN:54
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth, ��֤AUROC:0.850245
+��ʼѵ�� mobilenet_v3_large epoch: 20/20, lr:1.00e-06
+epoch: 20/20, batch: 1/256 (0.4%), time:1.2s, remaining:5.1min, loss:0.52659, acc:0.7500
+epoch: 20/20, batch: 25/256 (9.8%), time:30.2s, remaining:4.7min, loss:0.42117, acc:0.8100
+epoch: 20/20, batch: 50/256 (19.5%), time:60.3s, remaining:4.1min, loss:0.38286, acc:0.8231
+epoch: 20/20, batch: 75/256 (29.3%), time:90.2s, remaining:3.6min, loss:0.36736, acc:0.8296
+epoch: 20/20, batch: 100/256 (39.1%), time:120.2s, remaining:3.1min, loss:0.37180, acc:0.8316
+epoch: 20/20, batch: 125/256 (48.8%), time:151.0s, remaining:2.6min, loss:0.36811, acc:0.8357
+epoch: 20/20, batch: 150/256 (58.6%), time:181.5s, remaining:2.1min, loss:0.36773, acc:0.8371
+epoch: 20/20, batch: 175/256 (68.4%), time:212.0s, remaining:1.6min, loss:0.37311, acc:0.8355
+epoch: 20/20, batch: 200/256 (78.1%), time:242.2s, remaining:1.1min, loss:0.36814, acc:0.8381
+epoch: 20/20, batch: 225/256 (87.9%), time:272.2s, remaining:0.6min, loss:0.37081, acc:0.8363
+epoch: 20/20, batch: 250/256 (97.7%), time:303.1s, remaining:0.1min, loss:0.37546, acc:0.8345
+epoch: 20/20, batch: 256/256 (100.0%), time:310.1s, remaining:0.0min, loss:0.37667, acc:0.8342
+epoch: 20, loss: 0.37667, acc:0.8342, time:310.14s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.3s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:6.9s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.5s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:13.8s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.4s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:24.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:26.0s, remaining:0.0min
+Acc: 0.8251, AUROC: 0.849826, AUPRC(����): 0.221292, AP: 0.225451
+�����ٻ���: 70.68%, �����: 82.91%, TP:135 TN:4691 FP:967 FN:56
+����δ���������֤AUROC:0.850245, ������Ѳ���
+mobilenet_v3_largeѵ������, ������֤AUROC:0.850245, ѵ����¼:C:\Users\LENOVO\Desktop\�����������ս��������������ս��\��Ŀ�ĵ�\ѵ����¼\01\20261018_105727_249349_mobilenet_v3_large
+��ģ����֤: mobilenet_v3_large
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.5s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.0s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.3s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:14.3s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:18.3s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.6s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:25.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:27.1s, remaining:0.0min
+Acc: 0.8225, AUROC: 0.850245, AUPRC(����): 0.221839, AP: 0.226001
+�����ٻ���: 71.73%, �����: 82.61%, TP:137 TN:4674 FP:984 FN:54
+˫ģ�͵�Ȩƽ����֤: resnet18 + mobilenet_v3_large
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.4s, remaining:1.1min
+valid, batch: 25/183 (13.7%), time:9.3s, remaining:1.0min
+valid, batch: 50/183 (27.3%), time:18.4s, remaining:0.8min
+valid, batch: 75/183 (41.0%), time:27.3s, remaining:0.7min
+valid, batch: 100/183 (54.6%), time:36.5s, remaining:0.5min
+valid, batch: 125/183 (68.3%), time:46.1s, remaining:0.4min
+valid, batch: 150/183 (82.0%), time:55.8s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:64.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:68.0s, remaining:0.0min
+Acc: 0.8969, AUROC: 0.920445, AUPRC(����): 0.399521, AP: 0.402550
+�����ٻ���: 78.01%, �����: 90.08%, TP:149 TN:5097 FP:561 FN:42
+˫ģ����֤AUROC:0.920445, AUPRC:0.399521
+ѵ������֤��������Ҫ�����ύ��ʱ, �뵥������predict.py��

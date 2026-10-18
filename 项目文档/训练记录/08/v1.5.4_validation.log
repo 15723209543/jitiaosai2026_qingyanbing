@@ -1,0 +1,45 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+����ͬ�ܹ�����: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\mobilenet_v3_large.pth -> C:\Users\LENOVO\Desktop\�����������ս��������������ս��\08\model\mobilenet_v3_large.pth
+��ģ����֤: mobilenet_v3_large
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.5s, remaining:1.4min
+valid, batch: 25/183 (13.7%), time:8.7s, remaining:0.9min
+valid, batch: 50/183 (27.3%), time:17.9s, remaining:0.8min
+valid, batch: 75/183 (41.0%), time:26.2s, remaining:0.6min
+valid, batch: 100/183 (54.6%), time:34.9s, remaining:0.5min
+valid, batch: 125/183 (68.3%), time:43.3s, remaining:0.3min
+valid, batch: 150/183 (82.0%), time:52.1s, remaining:0.2min
+valid, batch: 175/183 (95.6%), time:60.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:63.4s, remaining:0.0min
+Acc: 0.8225, AUROC: 0.850245, AUPRC(����): 0.221839, AP: 0.226001
+�����ٻ���: 71.73%, �����: 82.61%, TP:137 TN:4674 FP:984 FN:54
+����ͬ�ܹ�����: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth -> C:\Users\LENOVO\Desktop\�����������ս��������������ս��\08\model\regnet_y_400mf.pth
+��ģ����֤: regnet_y_400mf
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:2.9s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.3s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:5.9s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.1s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.2s, remaining:0.0min
+Acc: 0.8201, AUROC: 0.852225, AUPRC(����): 0.166126, AP: 0.168594
+�����ٻ���: 70.68%, �����: 82.40%, TP:135 TN:4662 FP:996 FN:56
+˫ģ�͵�Ȩƽ����֤: mobilenet_v3_large + regnet_y_400mf
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.8s, remaining:0.3min
+valid, batch: 50/183 (27.3%), time:8.9s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:16.5s, remaining:0.4min
+valid, batch: 100/183 (54.6%), time:24.1s, remaining:0.3min
+valid, batch: 125/183 (68.3%), time:31.4s, remaining:0.2min
+valid, batch: 150/183 (82.0%), time:34.7s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:37.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:37.9s, remaining:0.0min
+Acc: 0.8458, AUROC: 0.880106, AUPRC(����): 0.250872, AP: 0.254929
+�����ٻ���: 70.16%, �����: 85.07%, TP:134 TN:4813 FP:845 FN:57
+˫ģ����֤AUROC:0.880106, AUPRC:0.250872
+ѵ������֤��������Ҫ�����ύ��ʱ, �뵥������predict.py��

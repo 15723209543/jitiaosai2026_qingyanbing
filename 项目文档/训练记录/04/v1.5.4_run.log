@@ -1,0 +1,11 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+����ͬ�ܹ�����: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\01\model\resnet18.pth -> C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\resnet18.pth
+��ģ����֤: resnet18
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:2.2s, remaining:6.8min
+valid, batch: 25/183 (13.7%), time:37.4s, remaining:3.9min
+valid, batch: 50/183 (27.3%), time:86.2s, remaining:3.8min
+valid, batch: 75/183 (41.0%), time:114.2s, remaining:2.7min
+valid, batch: 100/183 (54.6%), time:144.3s, remaining:2.0min
+valid, batch: 125/183 (68.3%), time:173.5s, remaining:1.3min
