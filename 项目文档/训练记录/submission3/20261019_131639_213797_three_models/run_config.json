@@ -1,0 +1,43 @@
+{
+  "recipe": "official_rgb64_independent_three_median_v1",
+  "selection_metric": "individual_validation_auroc",
+  "best_metrics": {
+    "resnet18": {
+      "accuracy": 0.938451017267909,
+      "auroc": 0.7869939056777319,
+      "auprc": 0.18197508195987036,
+      "ap": 0.1841950268597611,
+      "recall": 0.39267015706806285,
+      "specificity": 0.9568752209261223,
+      "tp": 75,
+      "tn": 5414,
+      "fp": 244,
+      "fn": 116
+    },
+    "densenet121": {
+      "accuracy": 0.9230637715848863,
+      "auroc": 0.7123352191864736,
+      "auprc": 0.12834533268307413,
+      "ap": 0.1317072529493043,
+      "recall": 0.2931937172774869,
+      "specificity": 0.9443266171792153,
+      "tp": 56,
+      "tn": 5343,
+      "fp": 315,
+      "fn": 135
+    },
+    "efficientnet_b0": {
+      "accuracy": 0.9673448452726962,
+      "auroc": 0.6021257025682026,
+      "auprc": 0.05592211109002612,
+      "ap": 0.05704253589837458,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "tp": 0,
+      "tn": 5658,
+      "fp": 0,
+      "fn": 191
+    }
+  },
+  "complete": false
+}

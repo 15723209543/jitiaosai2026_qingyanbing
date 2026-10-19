@@ -1,0 +1,56 @@
+{
+  "recipe": "official_rgb64_independent_three_median_v1",
+  "selection_metric": "individual_validation_auroc",
+  "best_metrics": {
+    "resnet18": {
+      "accuracy": 0.9640964267396136,
+      "auroc": 0.9295423798763368,
+      "auprc": 0.4990906393062812,
+      "ap": 0.5007493321655687,
+      "recall": 0.5445026178010471,
+      "specificity": 0.9782608695652174,
+      "tp": 104,
+      "tn": 5535,
+      "fp": 123,
+      "fn": 87
+    },
+    "densenet121": {
+      "accuracy": 0.9416994358009916,
+      "auroc": 0.9246750650980218,
+      "auprc": 0.4807549532972169,
+      "ap": 0.4824055261547383,
+      "recall": 0.675392670157068,
+      "specificity": 0.9506892895015907,
+      "tp": 129,
+      "tn": 5379,
+      "fp": 279,
+      "fn": 62
+    },
+    "efficientnet_b0": {
+      "accuracy": 0.9423833133869037,
+      "auroc": 0.8644323285937162,
+      "auprc": 0.28406336826522266,
+      "ap": 0.2881788410007803,
+      "recall": 0.41361256544502617,
+      "specificity": 0.9602332979851538,
+      "tp": 79,
+      "tn": 5433,
+      "fp": 225,
+      "fn": 112
+    }
+  },
+  "combined_validation": {
+    "accuracy": 0.9642673961360917,
+    "auroc": 0.9294942619355627,
+    "auprc": 0.504645274647396,
+    "ap": 0.5070220416798494,
+    "recall": 0.5602094240837696,
+    "specificity": 0.9779073877695299,
+    "tp": 107,
+    "tn": 5533,
+    "fp": 125,
+    "fn": 84
+  },
+  "model_file": "C:\\Users\\27616\\Desktop\\青眼病题\\submission3\\model\\best_model.pth",
+  "complete": true
+}

@@ -1,0 +1,6 @@
+glaucoma_first/
+.idea/
+__pycache__/
+*.py[cod]
+submission/model/*.tmp
+项目文档/.pdf检查/

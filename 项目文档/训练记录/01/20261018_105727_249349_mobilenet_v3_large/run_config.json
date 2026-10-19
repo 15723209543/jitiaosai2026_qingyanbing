@@ -1,0 +1,23 @@
+{
+  "variant": "01",
+  "model_name": "mobilenet_v3_large",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\01\\model\\mobilenet_v3_large.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb64_balanced8192_adamw_v2",
+  "best_validation": {
+    "epoch": 19,
+    "train_loss": 0.3565720829064958,
+    "train_accuracy": 0.8436279296875,
+    "learning_rate": 3.2712409246749005e-06,
+    "accuracy": 0.8225337664558044,
+    "auroc": 0.850244938825441,
+    "auprc": 0.2218388517921191,
+    "ap": 0.2260005021096187,
+    "recall": 0.7172774869109948,
+    "specificity": 0.8260869565217391,
+    "tp": 137,
+    "tn": 4674,
+    "fp": 984,
+    "fn": 54
+  }
+}

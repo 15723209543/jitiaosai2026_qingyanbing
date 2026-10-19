@@ -1,0 +1,23 @@
+{
+  "variant": "04",
+  "model_name": "regnet_y_400mf",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\04\\model\\regnet_y_400mf.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb64_balanced8192_adamw_v2",
+  "best_validation": {
+    "epoch": 15,
+    "train_loss": 0.40625930030364543,
+    "train_accuracy": 0.81689453125,
+    "learning_rate": 5.4403252351862355e-05,
+    "accuracy": 0.820140194905112,
+    "auroc": 0.8522247144847956,
+    "auprc": 0.16612615087953875,
+    "ap": 0.16859357772234773,
+    "recall": 0.7068062827225131,
+    "specificity": 0.823966065747614,
+    "tp": 135,
+    "tn": 4662,
+    "fp": 996,
+    "fn": 56
+  }
+}

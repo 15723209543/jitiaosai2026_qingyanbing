@@ -1,0 +1,23 @@
+{
+  "variant": "02",
+  "model_name": "efficientnet_b0",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\02\\model\\efficientnet_b0.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb64_balanced8192_adamw_v2",
+  "best_validation": {
+    "epoch": 12,
+    "train_loss": 0.3804047115263529,
+    "train_accuracy": 0.836181640625,
+    "learning_rate": 0.0001245395974387939,
+    "accuracy": 0.8466404513592067,
+    "auroc": 0.877232626184673,
+    "auprc": 0.3346725501460282,
+    "ap": 0.33724309218478593,
+    "recall": 0.7329842931937173,
+    "specificity": 0.8504772004241782,
+    "tp": 140,
+    "tn": 4812,
+    "fp": 846,
+    "fn": 51
+  }
+}

@@ -1,0 +1,586 @@
+ѵ������������, ���ڼ���PyTorch�����ݶ�ȡģ��...
+���ڶ�ȡglaucoma_first��ѵ�����͹ٷ���֤��...
+���в���, �����ظ�ѵ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\resnet18.pth
+��ģ����֤: resnet18
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:1.5s, remaining:4.7min
+valid, batch: 25/183 (13.7%), time:36.2s, remaining:3.8min
+valid, batch: 50/183 (27.3%), time:58.6s, remaining:2.6min
+valid, batch: 75/183 (41.0%), time:77.4s, remaining:1.9min
+valid, batch: 100/183 (54.6%), time:95.1s, remaining:1.3min
+valid, batch: 125/183 (68.3%), time:112.2s, remaining:0.9min
+valid, batch: 150/183 (82.0%), time:130.2s, remaining:0.5min
+valid, batch: 175/183 (95.6%), time:147.6s, remaining:0.1min
+valid, batch: 183/183 (100.0%), time:153.5s, remaining:0.0min
+Acc: 0.9010, AUROC: 0.940166, AUPRC(����): 0.458639, AP: 0.460936
+�����ٻ���: 81.15%, �����: 90.40%, TP:155 TN:5115 FP:543 FN:36
+ģ��:regnet_y_400mf, ѵ����:51396��, ��֤��:5849��, ��20��, ÿ��256��, CPU�߳�:8
+��ʼѵ�� regnet_y_400mf epoch: 1/20, lr:3.00e-05
+epoch: 1/20, batch: 1/256 (0.4%), time:3.2s, remaining:13.8min, loss:0.88448, acc:0.5312
+epoch: 1/20, batch: 25/256 (9.8%), time:55.3s, remaining:8.5min, loss:0.86455, acc:0.5125
+epoch: 1/20, batch: 50/256 (19.5%), time:110.8s, remaining:7.6min, loss:0.80788, acc:0.5181
+epoch: 1/20, batch: 75/256 (29.3%), time:165.1s, remaining:6.6min, loss:0.78892, acc:0.5142
+epoch: 1/20, batch: 100/256 (39.1%), time:216.6s, remaining:5.6min, loss:0.78525, acc:0.5053
+epoch: 1/20, batch: 125/256 (48.8%), time:270.9s, remaining:4.7min, loss:0.78394, acc:0.5058
+epoch: 1/20, batch: 150/256 (58.6%), time:325.9s, remaining:3.8min, loss:0.77956, acc:0.5106
+epoch: 1/20, batch: 175/256 (68.4%), time:397.1s, remaining:3.1min, loss:0.77862, acc:0.5141
+epoch: 1/20, batch: 200/256 (78.1%), time:457.6s, remaining:2.1min, loss:0.78058, acc:0.5105
+epoch: 1/20, batch: 225/256 (87.9%), time:510.3s, remaining:1.2min, loss:0.77793, acc:0.5100
+epoch: 1/20, batch: 250/256 (97.7%), time:666.4s, remaining:0.3min, loss:0.77587, acc:0.5112
+epoch: 1/20, batch: 256/256 (100.0%), time:718.5s, remaining:0.0min, loss:0.77601, acc:0.5109
+epoch: 1, loss: 0.77601, acc:0.5109, time:718.55s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.9s, remaining:2.8min
+valid, batch: 25/183 (13.7%), time:47.0s, remaining:5.0min
+valid, batch: 50/183 (27.3%), time:89.9s, remaining:4.0min
+valid, batch: 75/183 (41.0%), time:137.0s, remaining:3.3min
+valid, batch: 100/183 (54.6%), time:174.4s, remaining:2.4min
+valid, batch: 125/183 (68.3%), time:208.4s, remaining:1.6min
+valid, batch: 150/183 (82.0%), time:216.7s, remaining:0.8min
+valid, batch: 175/183 (95.6%), time:221.2s, remaining:0.2min
+valid, batch: 183/183 (100.0%), time:224.3s, remaining:0.0min
+Acc: 0.6415, AUROC: 0.526415, AUPRC(����): 0.040198, AP: 0.038649
+�����ٻ���: 38.22%, �����: 65.02%, TP:73 TN:3679 FP:1979 FN:118
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.526415
+��ʼѵ�� regnet_y_400mf epoch: 2/20, lr:3.00e-04
+epoch: 2/20, batch: 1/256 (0.4%), time:3.0s, remaining:12.7min, loss:0.73749, acc:0.5000
+epoch: 2/20, batch: 25/256 (9.8%), time:33.5s, remaining:5.2min, loss:0.77918, acc:0.5125
+epoch: 2/20, batch: 50/256 (19.5%), time:57.5s, remaining:4.0min, loss:0.77285, acc:0.5188
+epoch: 2/20, batch: 75/256 (29.3%), time:77.1s, remaining:3.1min, loss:0.78681, acc:0.5262
+epoch: 2/20, batch: 100/256 (39.1%), time:96.9s, remaining:2.5min, loss:0.80732, acc:0.5353
+epoch: 2/20, batch: 125/256 (48.8%), time:116.0s, remaining:2.0min, loss:0.79303, acc:0.5315
+epoch: 2/20, batch: 150/256 (58.6%), time:128.5s, remaining:1.5min, loss:0.79033, acc:0.5323
+epoch: 2/20, batch: 175/256 (68.4%), time:150.7s, remaining:1.2min, loss:0.78733, acc:0.5368
+epoch: 2/20, batch: 200/256 (78.1%), time:167.7s, remaining:0.8min, loss:0.78560, acc:0.5391
+epoch: 2/20, batch: 225/256 (87.9%), time:251.5s, remaining:0.6min, loss:0.78600, acc:0.5399
+epoch: 2/20, batch: 250/256 (97.7%), time:316.4s, remaining:0.1min, loss:0.77845, acc:0.5453
+epoch: 2/20, batch: 256/256 (100.0%), time:319.6s, remaining:0.0min, loss:0.77844, acc:0.5460
+epoch: 2, loss: 0.77844, acc:0.5460, time:319.65s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.1s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.2s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:8.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:9.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:12.1s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:14.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:14.6s, remaining:0.0min
+Acc: 0.5204, AUROC: 0.633608, AUPRC(����): 0.051773, AP: 0.050013
+�����ٻ���: 70.68%, �����: 51.41%, TP:135 TN:2909 FP:2749 FN:56
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.633608
+��ʼѵ�� regnet_y_400mf epoch: 3/20, lr:2.98e-04
+epoch: 3/20, batch: 1/256 (0.4%), time:0.6s, remaining:2.6min, loss:0.64811, acc:0.5625
+epoch: 3/20, batch: 25/256 (9.8%), time:14.6s, remaining:2.2min, loss:0.77252, acc:0.5513
+epoch: 3/20, batch: 50/256 (19.5%), time:29.0s, remaining:2.0min, loss:0.75452, acc:0.5613
+epoch: 3/20, batch: 75/256 (29.3%), time:45.1s, remaining:1.8min, loss:0.74025, acc:0.5817
+epoch: 3/20, batch: 100/256 (39.1%), time:61.5s, remaining:1.6min, loss:0.73557, acc:0.5803
+epoch: 3/20, batch: 125/256 (48.8%), time:84.1s, remaining:1.5min, loss:0.72468, acc:0.5835
+epoch: 3/20, batch: 150/256 (58.6%), time:97.5s, remaining:1.1min, loss:0.72660, acc:0.5840
+epoch: 3/20, batch: 175/256 (68.4%), time:111.9s, remaining:0.9min, loss:0.72122, acc:0.5852
+epoch: 3/20, batch: 200/256 (78.1%), time:127.3s, remaining:0.6min, loss:0.71790, acc:0.5906
+epoch: 3/20, batch: 225/256 (87.9%), time:160.2s, remaining:0.4min, loss:0.71415, acc:0.5939
+epoch: 3/20, batch: 250/256 (97.7%), time:173.1s, remaining:0.1min, loss:0.70902, acc:0.5969
+epoch: 3/20, batch: 256/256 (100.0%), time:176.3s, remaining:0.0min, loss:0.70798, acc:0.5980
+epoch: 3, loss: 0.70798, acc:0.5980, time:176.33s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:2.0s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.0s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:8.4s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:10.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:12.7s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:15.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:15.9s, remaining:0.0min
+Acc: 0.5187, AUROC: 0.675105, AUPRC(����): 0.058970, AP: 0.060000
+�����ٻ���: 75.39%, �����: 51.08%, TP:144 TN:2890 FP:2768 FN:47
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.675105
+��ʼѵ�� regnet_y_400mf epoch: 4/20, lr:2.91e-04
+epoch: 4/20, batch: 1/256 (0.4%), time:0.7s, remaining:2.8min, loss:0.48786, acc:0.7500
+epoch: 4/20, batch: 25/256 (9.8%), time:15.7s, remaining:2.4min, loss:0.67611, acc:0.6062
+epoch: 4/20, batch: 50/256 (19.5%), time:30.8s, remaining:2.1min, loss:0.68528, acc:0.6012
+epoch: 4/20, batch: 75/256 (29.3%), time:68.0s, remaining:2.7min, loss:0.67871, acc:0.6071
+epoch: 4/20, batch: 100/256 (39.1%), time:81.5s, remaining:2.1min, loss:0.68153, acc:0.6106
+epoch: 4/20, batch: 125/256 (48.8%), time:95.5s, remaining:1.7min, loss:0.68165, acc:0.6145
+epoch: 4/20, batch: 150/256 (58.6%), time:108.0s, remaining:1.3min, loss:0.67785, acc:0.6173
+epoch: 4/20, batch: 175/256 (68.4%), time:120.9s, remaining:0.9min, loss:0.67386, acc:0.6220
+epoch: 4/20, batch: 200/256 (78.1%), time:133.6s, remaining:0.6min, loss:0.67231, acc:0.6214
+epoch: 4/20, batch: 225/256 (87.9%), time:146.7s, remaining:0.3min, loss:0.67033, acc:0.6239
+epoch: 4/20, batch: 250/256 (97.7%), time:159.8s, remaining:0.1min, loss:0.66981, acc:0.6235
+epoch: 4/20, batch: 256/256 (100.0%), time:162.8s, remaining:0.0min, loss:0.66961, acc:0.6241
+epoch: 4, loss: 0.66961, acc:0.6241, time:162.78s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:2.0s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.5s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:9.2s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:11.0s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:13.5s, remaining:0.0min
+Acc: 0.8024, AUROC: 0.685394, AUPRC(����): 0.067767, AP: 0.069029
+�����ٻ���: 42.93%, �����: 81.50%, TP:82 TN:4611 FP:1047 FN:109
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.685394
+��ʼѵ�� regnet_y_400mf epoch: 5/20, lr:2.80e-04
+epoch: 5/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.0min, loss:0.54924, acc:0.7500
+epoch: 5/20, batch: 25/256 (9.8%), time:13.8s, remaining:2.1min, loss:0.66300, acc:0.6587
+epoch: 5/20, batch: 50/256 (19.5%), time:31.1s, remaining:2.1min, loss:0.65430, acc:0.6556
+epoch: 5/20, batch: 75/256 (29.3%), time:47.2s, remaining:1.9min, loss:0.65672, acc:0.6483
+epoch: 5/20, batch: 100/256 (39.1%), time:59.8s, remaining:1.6min, loss:0.64796, acc:0.6494
+epoch: 5/20, batch: 125/256 (48.8%), time:72.9s, remaining:1.3min, loss:0.64512, acc:0.6495
+epoch: 5/20, batch: 150/256 (58.6%), time:86.0s, remaining:1.0min, loss:0.64406, acc:0.6471
+epoch: 5/20, batch: 175/256 (68.4%), time:135.2s, remaining:1.0min, loss:0.64401, acc:0.6496
+epoch: 5/20, batch: 200/256 (78.1%), time:147.3s, remaining:0.7min, loss:0.63867, acc:0.6538
+epoch: 5/20, batch: 225/256 (87.9%), time:159.8s, remaining:0.4min, loss:0.63477, acc:0.6569
+epoch: 5/20, batch: 250/256 (97.7%), time:174.1s, remaining:0.1min, loss:0.63195, acc:0.6581
+epoch: 5/20, batch: 256/256 (100.0%), time:177.3s, remaining:0.0min, loss:0.63126, acc:0.6584
+epoch: 5, loss: 0.63126, acc:0.6584, time:177.31s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:4.1s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:6.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:8.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:10.2s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:12.5s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:14.6s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:15.2s, remaining:0.0min
+Acc: 0.7969, AUROC: 0.647483, AUPRC(����): 0.094309, AP: 0.097884
+�����ٻ���: 41.88%, �����: 80.97%, TP:80 TN:4581 FP:1077 FN:111
+����δ���������֤AUROC:0.685394, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 6/20, lr:2.65e-04
+epoch: 6/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.3min, loss:0.67734, acc:0.5938
+epoch: 6/20, batch: 25/256 (9.8%), time:12.6s, remaining:1.9min, loss:0.61755, acc:0.6675
+epoch: 6/20, batch: 50/256 (19.5%), time:23.7s, remaining:1.6min, loss:0.61651, acc:0.6725
+epoch: 6/20, batch: 75/256 (29.3%), time:35.4s, remaining:1.4min, loss:0.61447, acc:0.6717
+epoch: 6/20, batch: 100/256 (39.1%), time:47.2s, remaining:1.2min, loss:0.60411, acc:0.6809
+epoch: 6/20, batch: 125/256 (48.8%), time:60.6s, remaining:1.1min, loss:0.60266, acc:0.6803
+epoch: 6/20, batch: 150/256 (58.6%), time:72.8s, remaining:0.9min, loss:0.60382, acc:0.6800
+epoch: 6/20, batch: 175/256 (68.4%), time:86.0s, remaining:0.7min, loss:0.60190, acc:0.6780
+epoch: 6/20, batch: 200/256 (78.1%), time:111.7s, remaining:0.5min, loss:0.59879, acc:0.6816
+epoch: 6/20, batch: 225/256 (87.9%), time:122.8s, remaining:0.3min, loss:0.59288, acc:0.6881
+epoch: 6/20, batch: 250/256 (97.7%), time:133.9s, remaining:0.1min, loss:0.59118, acc:0.6891
+epoch: 6/20, batch: 256/256 (100.0%), time:136.7s, remaining:0.0min, loss:0.59257, acc:0.6887
+epoch: 6, loss: 0.59257, acc:0.6887, time:136.74s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.7s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.5s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.6s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.7s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:10.1s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:12.4s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:14.3s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:14.8s, remaining:0.0min
+Acc: 0.7075, AUROC: 0.727457, AUPRC(����): 0.104730, AP: 0.107805
+�����ٻ���: 61.78%, �����: 71.05%, TP:118 TN:4020 FP:1638 FN:73
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.727457
+��ʼѵ�� regnet_y_400mf epoch: 7/20, lr:2.47e-04
+epoch: 7/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.1min, loss:0.50791, acc:0.7188
+epoch: 7/20, batch: 25/256 (9.8%), time:11.9s, remaining:1.8min, loss:0.56894, acc:0.7050
+epoch: 7/20, batch: 50/256 (19.5%), time:22.3s, remaining:1.5min, loss:0.59212, acc:0.7013
+epoch: 7/20, batch: 75/256 (29.3%), time:33.8s, remaining:1.4min, loss:0.58306, acc:0.7013
+epoch: 7/20, batch: 100/256 (39.1%), time:45.1s, remaining:1.2min, loss:0.57907, acc:0.7075
+epoch: 7/20, batch: 125/256 (48.8%), time:57.4s, remaining:1.0min, loss:0.57382, acc:0.7117
+epoch: 7/20, batch: 150/256 (58.6%), time:69.0s, remaining:0.8min, loss:0.57143, acc:0.7135
+epoch: 7/20, batch: 175/256 (68.4%), time:83.0s, remaining:0.6min, loss:0.57170, acc:0.7111
+epoch: 7/20, batch: 200/256 (78.1%), time:94.5s, remaining:0.4min, loss:0.56735, acc:0.7113
+epoch: 7/20, batch: 225/256 (87.9%), time:106.6s, remaining:0.2min, loss:0.56636, acc:0.7129
+epoch: 7/20, batch: 250/256 (97.7%), time:118.9s, remaining:0.0min, loss:0.56609, acc:0.7139
+epoch: 7/20, batch: 256/256 (100.0%), time:121.4s, remaining:0.0min, loss:0.56697, acc:0.7131
+epoch: 7, loss: 0.56697, acc:0.7131, time:121.43s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.8s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.3s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.2s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:9.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:11.2s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:13.4s, remaining:0.0min
+Acc: 0.7365, AUROC: 0.746582, AUPRC(����): 0.131742, AP: 0.134163
+�����ٻ���: 63.87%, �����: 73.98%, TP:122 TN:4186 FP:1472 FN:69
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.746582
+��ʼѵ�� regnet_y_400mf epoch: 8/20, lr:2.25e-04
+epoch: 8/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.9min, loss:0.66108, acc:0.6875
+epoch: 8/20, batch: 25/256 (9.8%), time:11.1s, remaining:1.7min, loss:0.56551, acc:0.7063
+epoch: 8/20, batch: 50/256 (19.5%), time:22.7s, remaining:1.6min, loss:0.55258, acc:0.7244
+epoch: 8/20, batch: 75/256 (29.3%), time:35.3s, remaining:1.4min, loss:0.55407, acc:0.7254
+epoch: 8/20, batch: 100/256 (39.1%), time:46.0s, remaining:1.2min, loss:0.55593, acc:0.7203
+epoch: 8/20, batch: 125/256 (48.8%), time:56.0s, remaining:1.0min, loss:0.54596, acc:0.7298
+epoch: 8/20, batch: 150/256 (58.6%), time:66.2s, remaining:0.8min, loss:0.54353, acc:0.7279
+epoch: 8/20, batch: 175/256 (68.4%), time:76.0s, remaining:0.6min, loss:0.54034, acc:0.7296
+epoch: 8/20, batch: 200/256 (78.1%), time:86.0s, remaining:0.4min, loss:0.53799, acc:0.7317
+epoch: 8/20, batch: 225/256 (87.9%), time:96.2s, remaining:0.2min, loss:0.53936, acc:0.7318
+epoch: 8/20, batch: 250/256 (97.7%), time:106.4s, remaining:0.0min, loss:0.54185, acc:0.7301
+epoch: 8/20, batch: 256/256 (100.0%), time:109.0s, remaining:0.0min, loss:0.54333, acc:0.7292
+epoch: 8, loss: 0.54333, acc:0.7292, time:109.00s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.2s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.0s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:10.7s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.4s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:13.0s, remaining:0.0min
+Acc: 0.6953, AUROC: 0.779446, AUPRC(����): 0.119000, AP: 0.121344
+�����ٻ���: 72.25%, �����: 69.44%, TP:138 TN:3929 FP:1729 FN:53
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.779446
+��ʼѵ�� regnet_y_400mf epoch: 9/20, lr:2.02e-04
+epoch: 9/20, batch: 1/256 (0.4%), time:0.5s, remaining:2.1min, loss:0.50500, acc:0.7500
+epoch: 9/20, batch: 25/256 (9.8%), time:10.4s, remaining:1.6min, loss:0.50201, acc:0.7575
+epoch: 9/20, batch: 50/256 (19.5%), time:20.7s, remaining:1.4min, loss:0.51947, acc:0.7475
+epoch: 9/20, batch: 75/256 (29.3%), time:30.6s, remaining:1.2min, loss:0.52098, acc:0.7479
+epoch: 9/20, batch: 100/256 (39.1%), time:40.4s, remaining:1.1min, loss:0.52555, acc:0.7438
+epoch: 9/20, batch: 125/256 (48.8%), time:50.2s, remaining:0.9min, loss:0.52680, acc:0.7390
+epoch: 9/20, batch: 150/256 (58.6%), time:64.1s, remaining:0.8min, loss:0.52086, acc:0.7438
+epoch: 9/20, batch: 175/256 (68.4%), time:76.2s, remaining:0.6min, loss:0.52197, acc:0.7425
+epoch: 9/20, batch: 200/256 (78.1%), time:86.6s, remaining:0.4min, loss:0.51889, acc:0.7444
+epoch: 9/20, batch: 225/256 (87.9%), time:97.0s, remaining:0.2min, loss:0.51935, acc:0.7429
+epoch: 9/20, batch: 250/256 (97.7%), time:107.4s, remaining:0.0min, loss:0.51956, acc:0.7424
+epoch: 9/20, batch: 256/256 (100.0%), time:110.0s, remaining:0.0min, loss:0.52025, acc:0.7427
+epoch: 9, loss: 0.52025, acc:0.7427, time:109.99s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.7s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.2s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.8s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.4s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.2s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.3s, remaining:0.0min
+Acc: 0.8159, AUROC: 0.801417, AUPRC(����): 0.139597, AP: 0.143378
+�����ٻ���: 59.69%, �����: 82.33%, TP:114 TN:4658 FP:1000 FN:77
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.801417
+��ʼѵ�� regnet_y_400mf epoch: 10/20, lr:1.76e-04
+epoch: 10/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.7min, loss:0.32484, acc:0.9375
+epoch: 10/20, batch: 25/256 (9.8%), time:10.5s, remaining:1.6min, loss:0.50990, acc:0.7538
+epoch: 10/20, batch: 50/256 (19.5%), time:21.8s, remaining:1.5min, loss:0.51132, acc:0.7431
+epoch: 10/20, batch: 75/256 (29.3%), time:32.3s, remaining:1.3min, loss:0.50917, acc:0.7483
+epoch: 10/20, batch: 100/256 (39.1%), time:43.0s, remaining:1.1min, loss:0.51138, acc:0.7472
+epoch: 10/20, batch: 125/256 (48.8%), time:53.4s, remaining:0.9min, loss:0.50613, acc:0.7532
+epoch: 10/20, batch: 150/256 (58.6%), time:63.3s, remaining:0.7min, loss:0.50808, acc:0.7485
+epoch: 10/20, batch: 175/256 (68.4%), time:73.8s, remaining:0.6min, loss:0.50717, acc:0.7489
+epoch: 10/20, batch: 200/256 (78.1%), time:83.7s, remaining:0.4min, loss:0.50910, acc:0.7469
+epoch: 10/20, batch: 225/256 (87.9%), time:93.5s, remaining:0.2min, loss:0.50805, acc:0.7464
+epoch: 10/20, batch: 250/256 (97.7%), time:104.1s, remaining:0.0min, loss:0.50371, acc:0.7492
+epoch: 10/20, batch: 256/256 (100.0%), time:106.5s, remaining:0.0min, loss:0.50269, acc:0.7496
+epoch: 10, loss: 0.50269, acc:0.7496, time:106.49s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.7s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.3s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.7s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.2s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.5s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:11.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.5s, remaining:0.0min
+Acc: 0.7996, AUROC: 0.808574, AUPRC(����): 0.166537, AP: 0.170557
+�����ٻ���: 65.45%, �����: 80.45%, TP:125 TN:4552 FP:1106 FN:66
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.808574
+��ʼѵ�� regnet_y_400mf epoch: 11/20, lr:1.50e-04
+epoch: 11/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.8min, loss:0.49138, acc:0.7812
+epoch: 11/20, batch: 25/256 (9.8%), time:10.0s, remaining:1.5min, loss:0.46761, acc:0.7800
+epoch: 11/20, batch: 50/256 (19.5%), time:20.3s, remaining:1.4min, loss:0.47772, acc:0.7700
+epoch: 11/20, batch: 75/256 (29.3%), time:31.2s, remaining:1.3min, loss:0.47889, acc:0.7708
+epoch: 11/20, batch: 100/256 (39.1%), time:41.2s, remaining:1.1min, loss:0.48034, acc:0.7691
+epoch: 11/20, batch: 125/256 (48.8%), time:51.2s, remaining:0.9min, loss:0.47955, acc:0.7715
+epoch: 11/20, batch: 150/256 (58.6%), time:61.3s, remaining:0.7min, loss:0.47852, acc:0.7712
+epoch: 11/20, batch: 175/256 (68.4%), time:71.5s, remaining:0.6min, loss:0.47720, acc:0.7729
+epoch: 11/20, batch: 200/256 (78.1%), time:82.6s, remaining:0.4min, loss:0.47555, acc:0.7730
+epoch: 11/20, batch: 225/256 (87.9%), time:92.4s, remaining:0.2min, loss:0.47270, acc:0.7743
+epoch: 11/20, batch: 250/256 (97.7%), time:102.5s, remaining:0.0min, loss:0.47515, acc:0.7728
+epoch: 11/20, batch: 256/256 (100.0%), time:105.1s, remaining:0.0min, loss:0.47509, acc:0.7731
+epoch: 11, loss: 0.47509, acc:0.7731, time:105.09s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.7s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.0s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.5s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.0s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.5s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.4s, remaining:0.0min
+Acc: 0.7753, AUROC: 0.824558, AUPRC(����): 0.143523, AP: 0.145737
+�����ٻ���: 71.20%, �����: 77.75%, TP:136 TN:4399 FP:1259 FN:55
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.824558
+��ʼѵ�� regnet_y_400mf epoch: 12/20, lr:1.25e-04
+epoch: 12/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.6min, loss:0.31997, acc:0.9062
+epoch: 12/20, batch: 25/256 (9.8%), time:9.8s, remaining:1.5min, loss:0.47064, acc:0.7913
+epoch: 12/20, batch: 50/256 (19.5%), time:19.1s, remaining:1.3min, loss:0.44471, acc:0.7994
+epoch: 12/20, batch: 75/256 (29.3%), time:28.6s, remaining:1.1min, loss:0.44892, acc:0.7950
+epoch: 12/20, batch: 100/256 (39.1%), time:38.2s, remaining:1.0min, loss:0.45981, acc:0.7844
+epoch: 12/20, batch: 125/256 (48.8%), time:47.9s, remaining:0.8min, loss:0.45523, acc:0.7880
+epoch: 12/20, batch: 150/256 (58.6%), time:57.9s, remaining:0.7min, loss:0.45837, acc:0.7871
+epoch: 12/20, batch: 175/256 (68.4%), time:67.5s, remaining:0.5min, loss:0.45527, acc:0.7877
+epoch: 12/20, batch: 200/256 (78.1%), time:78.0s, remaining:0.4min, loss:0.45768, acc:0.7848
+epoch: 12/20, batch: 225/256 (87.9%), time:88.1s, remaining:0.2min, loss:0.45662, acc:0.7843
+epoch: 12/20, batch: 250/256 (97.7%), time:98.4s, remaining:0.0min, loss:0.45198, acc:0.7865
+epoch: 12/20, batch: 256/256 (100.0%), time:100.9s, remaining:0.0min, loss:0.44974, acc:0.7883
+epoch: 12, loss: 0.44974, acc:0.7883, time:100.86s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.5s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.1s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.8s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:10.3s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:12.6s, remaining:0.0min
+Acc: 0.7668, AUROC: 0.830969, AUPRC(����): 0.160649, AP: 0.163180
+�����ٻ���: 74.35%, �����: 76.76%, TP:142 TN:4343 FP:1315 FN:49
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.830969
+��ʼѵ�� regnet_y_400mf epoch: 13/20, lr:9.94e-05
+epoch: 13/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.6min, loss:0.29550, acc:0.8125
+epoch: 13/20, batch: 25/256 (9.8%), time:11.1s, remaining:1.7min, loss:0.42841, acc:0.8000
+epoch: 13/20, batch: 50/256 (19.5%), time:21.2s, remaining:1.5min, loss:0.41872, acc:0.8037
+epoch: 13/20, batch: 75/256 (29.3%), time:34.3s, remaining:1.4min, loss:0.43802, acc:0.7917
+epoch: 13/20, batch: 100/256 (39.1%), time:45.5s, remaining:1.2min, loss:0.44499, acc:0.7884
+epoch: 13/20, batch: 125/256 (48.8%), time:55.1s, remaining:1.0min, loss:0.44847, acc:0.7830
+epoch: 13/20, batch: 150/256 (58.6%), time:64.1s, remaining:0.8min, loss:0.44627, acc:0.7844
+epoch: 13/20, batch: 175/256 (68.4%), time:73.6s, remaining:0.6min, loss:0.44598, acc:0.7882
+epoch: 13/20, batch: 200/256 (78.1%), time:83.0s, remaining:0.4min, loss:0.44172, acc:0.7930
+epoch: 13/20, batch: 225/256 (87.9%), time:92.7s, remaining:0.2min, loss:0.44035, acc:0.7965
+epoch: 13/20, batch: 250/256 (97.7%), time:102.1s, remaining:0.0min, loss:0.43792, acc:0.7979
+epoch: 13/20, batch: 256/256 (100.0%), time:104.4s, remaining:0.0min, loss:0.43704, acc:0.7988
+epoch: 13, loss: 0.43704, acc:0.7988, time:104.43s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.3min
+valid, batch: 25/183 (13.7%), time:1.5s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.1s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.6s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.2s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.8s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.2s, remaining:0.0min
+Acc: 0.7851, AUROC: 0.826852, AUPRC(����): 0.176143, AP: 0.178847
+�����ٻ���: 72.25%, �����: 78.72%, TP:138 TN:4454 FP:1204 FN:53
+����δ���������֤AUROC:0.830969, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 14/20, lr:7.58e-05
+epoch: 14/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.6min, loss:0.51579, acc:0.7188
+epoch: 14/20, batch: 25/256 (9.8%), time:9.2s, remaining:1.4min, loss:0.44179, acc:0.8087
+epoch: 14/20, batch: 50/256 (19.5%), time:18.3s, remaining:1.3min, loss:0.41359, acc:0.8287
+epoch: 14/20, batch: 75/256 (29.3%), time:28.5s, remaining:1.1min, loss:0.41676, acc:0.8204
+epoch: 14/20, batch: 100/256 (39.1%), time:37.9s, remaining:1.0min, loss:0.41514, acc:0.8181
+epoch: 14/20, batch: 125/256 (48.8%), time:47.1s, remaining:0.8min, loss:0.41767, acc:0.8150
+epoch: 14/20, batch: 150/256 (58.6%), time:56.5s, remaining:0.7min, loss:0.41427, acc:0.8146
+epoch: 14/20, batch: 175/256 (68.4%), time:65.8s, remaining:0.5min, loss:0.41148, acc:0.8161
+epoch: 14/20, batch: 200/256 (78.1%), time:75.3s, remaining:0.4min, loss:0.41539, acc:0.8137
+epoch: 14/20, batch: 225/256 (87.9%), time:84.7s, remaining:0.2min, loss:0.41420, acc:0.8154
+epoch: 14/20, batch: 250/256 (97.7%), time:93.8s, remaining:0.0min, loss:0.41648, acc:0.8137
+epoch: 14/20, batch: 256/256 (100.0%), time:96.1s, remaining:0.0min, loss:0.41757, acc:0.8129
+epoch: 14, loss: 0.41757, acc:0.8129, time:96.07s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.6s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.2s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.7s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.3s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.9s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.4s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.4s, remaining:0.0min
+Acc: 0.8224, AUROC: 0.839709, AUPRC(����): 0.186783, AP: 0.189599
+�����ٻ���: 69.63%, �����: 82.66%, TP:133 TN:4677 FP:981 FN:58
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.839709
+��ʼѵ�� regnet_y_400mf epoch: 15/20, lr:5.44e-05
+epoch: 15/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.6min, loss:0.41738, acc:0.7812
+epoch: 15/20, batch: 25/256 (9.8%), time:9.3s, remaining:1.4min, loss:0.35639, acc:0.8462
+epoch: 15/20, batch: 50/256 (19.5%), time:18.4s, remaining:1.3min, loss:0.38183, acc:0.8294
+epoch: 15/20, batch: 75/256 (29.3%), time:27.6s, remaining:1.1min, loss:0.39119, acc:0.8237
+epoch: 15/20, batch: 100/256 (39.1%), time:36.5s, remaining:0.9min, loss:0.39263, acc:0.8219
+epoch: 15/20, batch: 125/256 (48.8%), time:46.0s, remaining:0.8min, loss:0.40209, acc:0.8183
+epoch: 15/20, batch: 150/256 (58.6%), time:55.2s, remaining:0.7min, loss:0.40161, acc:0.8213
+epoch: 15/20, batch: 175/256 (68.4%), time:64.8s, remaining:0.5min, loss:0.40528, acc:0.8191
+epoch: 15/20, batch: 200/256 (78.1%), time:74.7s, remaining:0.3min, loss:0.40581, acc:0.8183
+epoch: 15/20, batch: 225/256 (87.9%), time:84.0s, remaining:0.2min, loss:0.40704, acc:0.8168
+epoch: 15/20, batch: 250/256 (97.7%), time:93.3s, remaining:0.0min, loss:0.40535, acc:0.8171
+epoch: 15/20, batch: 256/256 (100.0%), time:95.5s, remaining:0.0min, loss:0.40626, acc:0.8169
+epoch: 15, loss: 0.40626, acc:0.8169, time:95.46s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.5s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.0s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.5s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.0s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:10.5s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:10.9s, remaining:0.0min
+Acc: 0.8201, AUROC: 0.852225, AUPRC(����): 0.166126, AP: 0.168594
+�����ٻ���: 70.68%, �����: 82.40%, TP:135 TN:4662 FP:996 FN:56
+�ѱ������ģ��: C:\Users\LENOVO\Desktop\�����������ս��������������ս��\04\model\regnet_y_400mf.pth, ��֤AUROC:0.852225
+��ʼѵ�� regnet_y_400mf epoch: 16/20, lr:3.60e-05
+epoch: 16/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.6min, loss:0.40561, acc:0.8750
+epoch: 16/20, batch: 25/256 (9.8%), time:8.9s, remaining:1.4min, loss:0.40683, acc:0.8137
+epoch: 16/20, batch: 50/256 (19.5%), time:18.9s, remaining:1.3min, loss:0.37754, acc:0.8306
+epoch: 16/20, batch: 75/256 (29.3%), time:28.0s, remaining:1.1min, loss:0.39272, acc:0.8254
+epoch: 16/20, batch: 100/256 (39.1%), time:37.3s, remaining:1.0min, loss:0.37942, acc:0.8316
+epoch: 16/20, batch: 125/256 (48.8%), time:46.6s, remaining:0.8min, loss:0.38047, acc:0.8303
+epoch: 16/20, batch: 150/256 (58.6%), time:56.1s, remaining:0.7min, loss:0.38340, acc:0.8290
+epoch: 16/20, batch: 175/256 (68.4%), time:65.3s, remaining:0.5min, loss:0.38373, acc:0.8282
+epoch: 16/20, batch: 200/256 (78.1%), time:73.8s, remaining:0.3min, loss:0.38687, acc:0.8280
+epoch: 16/20, batch: 225/256 (87.9%), time:82.8s, remaining:0.2min, loss:0.38942, acc:0.8257
+epoch: 16/20, batch: 250/256 (97.7%), time:91.7s, remaining:0.0min, loss:0.38836, acc:0.8263
+epoch: 16/20, batch: 256/256 (100.0%), time:94.0s, remaining:0.0min, loss:0.38776, acc:0.8264
+epoch: 16, loss: 0.38776, acc:0.8264, time:93.96s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.6s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.4s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.1s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.6s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.2s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.6s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:11.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.6s, remaining:0.0min
+Acc: 0.8008, AUROC: 0.848336, AUPRC(����): 0.180195, AP: 0.182807
+�����ٻ���: 71.73%, �����: 80.36%, TP:137 TN:4547 FP:1111 FN:54
+����δ���������֤AUROC:0.852225, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 17/20, lr:2.10e-05
+epoch: 17/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.7min, loss:0.55725, acc:0.6875
+epoch: 17/20, batch: 25/256 (9.8%), time:12.1s, remaining:1.9min, loss:0.36036, acc:0.8363
+epoch: 17/20, batch: 50/256 (19.5%), time:21.5s, remaining:1.5min, loss:0.37739, acc:0.8306
+epoch: 17/20, batch: 75/256 (29.3%), time:32.2s, remaining:1.3min, loss:0.38310, acc:0.8308
+epoch: 17/20, batch: 100/256 (39.1%), time:42.5s, remaining:1.1min, loss:0.37392, acc:0.8325
+epoch: 17/20, batch: 125/256 (48.8%), time:51.9s, remaining:0.9min, loss:0.37396, acc:0.8343
+epoch: 17/20, batch: 150/256 (58.6%), time:61.3s, remaining:0.7min, loss:0.37750, acc:0.8337
+epoch: 17/20, batch: 175/256 (68.4%), time:71.5s, remaining:0.6min, loss:0.37810, acc:0.8339
+epoch: 17/20, batch: 200/256 (78.1%), time:80.8s, remaining:0.4min, loss:0.37723, acc:0.8334
+epoch: 17/20, batch: 225/256 (87.9%), time:89.8s, remaining:0.2min, loss:0.38327, acc:0.8301
+epoch: 17/20, batch: 250/256 (97.7%), time:98.8s, remaining:0.0min, loss:0.38490, acc:0.8281
+epoch: 17/20, batch: 256/256 (100.0%), time:101.0s, remaining:0.0min, loss:0.38579, acc:0.8274
+epoch: 17, loss: 0.38579, acc:0.8274, time:100.98s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.5s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:2.9s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.6s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.6s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.1s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.6s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:11.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.6s, remaining:0.0min
+Acc: 0.8311, AUROC: 0.844133, AUPRC(����): 0.181883, AP: 0.184594
+�����ٻ���: 68.06%, �����: 83.62%, TP:130 TN:4731 FP:927 FN:61
+����δ���������֤AUROC:0.852225, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 18/20, lr:1.00e-05
+epoch: 18/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.5min, loss:0.41255, acc:0.8438
+epoch: 18/20, batch: 25/256 (9.8%), time:8.8s, remaining:1.4min, loss:0.40665, acc:0.8275
+epoch: 18/20, batch: 50/256 (19.5%), time:18.5s, remaining:1.3min, loss:0.39248, acc:0.8256
+epoch: 18/20, batch: 75/256 (29.3%), time:27.2s, remaining:1.1min, loss:0.37726, acc:0.8296
+epoch: 18/20, batch: 100/256 (39.1%), time:35.9s, remaining:0.9min, loss:0.37872, acc:0.8331
+epoch: 18/20, batch: 125/256 (48.8%), time:45.2s, remaining:0.8min, loss:0.37763, acc:0.8327
+epoch: 18/20, batch: 150/256 (58.6%), time:54.2s, remaining:0.6min, loss:0.38395, acc:0.8313
+epoch: 18/20, batch: 175/256 (68.4%), time:63.1s, remaining:0.5min, loss:0.38839, acc:0.8293
+epoch: 18/20, batch: 200/256 (78.1%), time:72.1s, remaining:0.3min, loss:0.39042, acc:0.8287
+epoch: 18/20, batch: 225/256 (87.9%), time:81.9s, remaining:0.2min, loss:0.38913, acc:0.8290
+epoch: 18/20, batch: 250/256 (97.7%), time:92.5s, remaining:0.0min, loss:0.39402, acc:0.8274
+epoch: 18/20, batch: 256/256 (100.0%), time:94.7s, remaining:0.0min, loss:0.39315, acc:0.8282
+epoch: 18, loss: 0.39315, acc:0.8282, time:94.75s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.5s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.0s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.5s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.1s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:7.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:9.2s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:11.0s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:11.6s, remaining:0.0min
+Acc: 0.8193, AUROC: 0.840857, AUPRC(����): 0.185733, AP: 0.188732
+�����ٻ���: 69.63%, �����: 82.34%, TP:133 TN:4659 FP:999 FN:58
+����δ���������֤AUROC:0.852225, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 19/20, lr:3.27e-06
+epoch: 19/20, batch: 1/256 (0.4%), time:0.3s, remaining:1.5min, loss:0.51481, acc:0.7500
+epoch: 19/20, batch: 25/256 (9.8%), time:9.8s, remaining:1.5min, loss:0.39200, acc:0.8200
+epoch: 19/20, batch: 50/256 (19.5%), time:21.6s, remaining:1.5min, loss:0.38189, acc:0.8287
+epoch: 19/20, batch: 75/256 (29.3%), time:33.7s, remaining:1.4min, loss:0.38215, acc:0.8258
+epoch: 19/20, batch: 100/256 (39.1%), time:46.2s, remaining:1.2min, loss:0.37551, acc:0.8297
+epoch: 19/20, batch: 125/256 (48.8%), time:57.0s, remaining:1.0min, loss:0.37583, acc:0.8300
+epoch: 19/20, batch: 150/256 (58.6%), time:66.7s, remaining:0.8min, loss:0.37484, acc:0.8298
+epoch: 19/20, batch: 175/256 (68.4%), time:75.9s, remaining:0.6min, loss:0.37573, acc:0.8302
+epoch: 19/20, batch: 200/256 (78.1%), time:85.3s, remaining:0.4min, loss:0.37762, acc:0.8303
+epoch: 19/20, batch: 225/256 (87.9%), time:95.1s, remaining:0.2min, loss:0.37903, acc:0.8301
+epoch: 19/20, batch: 250/256 (97.7%), time:109.3s, remaining:0.0min, loss:0.37910, acc:0.8300
+epoch: 19/20, batch: 256/256 (100.0%), time:112.5s, remaining:0.0min, loss:0.37797, acc:0.8304
+epoch: 19, loss: 0.37797, acc:0.8304, time:112.45s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:5.0s, remaining:0.5min
+valid, batch: 50/183 (27.3%), time:8.0s, remaining:0.4min
+valid, batch: 75/183 (41.0%), time:10.4s, remaining:0.2min
+valid, batch: 100/183 (54.6%), time:12.6s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:14.6s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:16.4s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:18.1s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:18.6s, remaining:0.0min
+Acc: 0.8212, AUROC: 0.842959, AUPRC(����): 0.182181, AP: 0.185044
+�����ٻ���: 69.63%, �����: 82.54%, TP:133 TN:4670 FP:988 FN:58
+����δ���������֤AUROC:0.852225, ������Ѳ���
+��ʼѵ�� regnet_y_400mf epoch: 20/20, lr:1.00e-06
+epoch: 20/20, batch: 1/256 (0.4%), time:0.4s, remaining:1.7min, loss:0.34399, acc:0.7812
+epoch: 20/20, batch: 25/256 (9.8%), time:9.1s, remaining:1.4min, loss:0.37780, acc:0.8400
+epoch: 20/20, batch: 50/256 (19.5%), time:17.7s, remaining:1.2min, loss:0.38222, acc:0.8363
+epoch: 20/20, batch: 75/256 (29.3%), time:27.3s, remaining:1.1min, loss:0.37440, acc:0.8383
+epoch: 20/20, batch: 100/256 (39.1%), time:37.2s, remaining:1.0min, loss:0.37101, acc:0.8381
+epoch: 20/20, batch: 125/256 (48.8%), time:46.9s, remaining:0.8min, loss:0.37177, acc:0.8357
+epoch: 20/20, batch: 150/256 (58.6%), time:56.9s, remaining:0.7min, loss:0.37326, acc:0.8327
+epoch: 20/20, batch: 175/256 (68.4%), time:68.2s, remaining:0.5min, loss:0.37271, acc:0.8336
+epoch: 20/20, batch: 200/256 (78.1%), time:77.8s, remaining:0.4min, loss:0.37639, acc:0.8313
+epoch: 20/20, batch: 225/256 (87.9%), time:88.1s, remaining:0.2min, loss:0.37357, acc:0.8314
+epoch: 20/20, batch: 250/256 (97.7%), time:97.7s, remaining:0.0min, loss:0.37527, acc:0.8300
+epoch: 20/20, batch: 256/256 (100.0%), time:99.9s, remaining:0.0min, loss:0.37556, acc:0.8302
+epoch: 20, loss: 0.37556, acc:0.8302, time:99.92s
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.8s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.7s, remaining:0.2min
+valid, batch: 75/183 (41.0%), time:5.8s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:7.6s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:9.4s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:11.1s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.9s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:13.4s, remaining:0.0min
+Acc: 0.8075, AUROC: 0.843513, AUPRC(����): 0.185642, AP: 0.188780
+�����ٻ���: 73.30%, �����: 81.00%, TP:140 TN:4583 FP:1075 FN:51
+����δ���������֤AUROC:0.852225, ������Ѳ���
+regnet_y_400mfѵ������, ������֤AUROC:0.852225, ѵ����¼:C:\Users\LENOVO\Desktop\�����������ս��������������ս��\��Ŀ�ĵ�\ѵ����¼\04\20261018_134847_252856_regnet_y_400mf
+��ģ����֤: regnet_y_400mf
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.1s, remaining:0.2min
+valid, batch: 25/183 (13.7%), time:1.4s, remaining:0.2min
+valid, batch: 50/183 (27.3%), time:3.1s, remaining:0.1min
+valid, batch: 75/183 (41.0%), time:4.9s, remaining:0.1min
+valid, batch: 100/183 (54.6%), time:6.9s, remaining:0.1min
+valid, batch: 125/183 (68.3%), time:8.7s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:10.5s, remaining:0.0min
+valid, batch: 175/183 (95.6%), time:12.2s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:12.6s, remaining:0.0min
+Acc: 0.8201, AUROC: 0.852225, AUPRC(����): 0.166126, AP: 0.168594
+�����ٻ���: 70.68%, �����: 82.40%, TP:135 TN:4662 FP:996 FN:56
+˫ģ�͵�Ȩƽ����֤: resnet18 + regnet_y_400mf
+��ʼ��֤: 5849���б�ǩͼƬ
+valid, batch: 1/183 (0.5%), time:0.2s, remaining:0.5min
+valid, batch: 25/183 (13.7%), time:3.7s, remaining:0.4min
+valid, batch: 50/183 (27.3%), time:7.2s, remaining:0.3min
+valid, batch: 75/183 (41.0%), time:10.7s, remaining:0.3min
+valid, batch: 100/183 (54.6%), time:14.1s, remaining:0.2min
+valid, batch: 125/183 (68.3%), time:17.5s, remaining:0.1min
+valid, batch: 150/183 (82.0%), time:21.0s, remaining:0.1min
+valid, batch: 175/183 (95.6%), time:24.7s, remaining:0.0min
+valid, batch: 183/183 (100.0%), time:25.8s, remaining:0.0min
+Acc: 0.8978, AUROC: 0.926270, AUPRC(����): 0.410718, AP: 0.413514
+�����ٻ���: 78.53%, �����: 90.16%, TP:150 TN:5101 FP:557 FN:41
+˫ģ����֤AUROC:0.926270, AUPRC:0.410718
+ѵ������֤��������Ҫ�����ύ��ʱ, �뵥������predict.py��
