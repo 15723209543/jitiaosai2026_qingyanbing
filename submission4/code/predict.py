@@ -71,6 +71,7 @@ def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
     # 【修改】五模型预测优先使用GPU；无CUDA时自动回退CPU，不更改训练权重。
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     for model in models.values():
+        # 【修改】将模型移动到预测设备，不更改训练权重。
         model.to(device)
     print("预测设备:", device, flush=True)
     print("开始读取test文件夹；测试集没有真实标签, 不计算准确率.", flush=True)
