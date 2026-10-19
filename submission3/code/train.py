@@ -29,6 +29,31 @@ SEED = 0
 TRAIN_BATCH_SIZE = 64
 
 
+# 【来源】参考用户提供的CUDA检测代码；有CUDA时优先使用第一块显卡。
+def choose_device():
+    return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+# 【来源】参考用户提供的终端输出；训练开始前只打印一次实际设备。
+def print_device_info(device):
+    if device.type == "cuda":
+        print("=" * 50)
+        print("GPU训练已启用")
+        print("GPU型号:", torch.cuda.get_device_name(0))
+        print("PyTorch版本:", torch.__version__)
+        print("CUDA版本:", torch.version.cuda)
+        print("GPU显存: %.2f GB" % (
+            torch.cuda.get_device_properties(0).total_memory / 1024**3))
+        print("=" * 50, flush=True)
+    else:
+        print("当前使用CPU训练")
+        print("PyTorch版本:", torch.__version__)
+        print("CUDA是否可用:", torch.cuda.is_available(), flush=True)
+
+
+DEVICE = choose_device()
+
+
 # 【来源】本项目自写；各模型只比较自己的验证AUROC，严格提高才更新该模型参数。
 def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
@@ -48,7 +73,8 @@ def training_order(best_metrics, rounds_by_model):
 
 # 【来源】复用课堂CNN的DataLoader洗牌；修改：每轮遍历官方训练集全部图片一次。
 def create_train_loader(train_dataset):
-    return DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
+    return DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True,
+                      pin_memory=DEVICE.type == "cuda")
 
 
 # 【来源】由原25%阳性抽样改成等效类别加权；每张图片仍在每轮恰好使用一次。
@@ -102,6 +128,7 @@ def train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
     total_loss, total_correct, total_samples, start = 0.0, 0, 0, time.time()
     print(f"开始训练 {name} epoch: {epoch}/{EPOCHS[name]}, lr:{lr:.2e}", flush=True)
     for batch_idx, (x, y) in enumerate(dataloader, 1):
+        x, y = x.to(DEVICE, non_blocking=True), y.to(DEVICE, non_blocking=True)
         loss, correct = train_step(model, x, y, optimizer, criterion)
         total_loss += loss * len(y)
         total_correct += correct
@@ -152,13 +179,16 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
         else:
             print("无历史参数, 三种CNN均从随机初始化开始训练.", flush=True)
         best_models = copy.deepcopy(models)
+    for model in models.values():
+        model.to(DEVICE)
     print("并行预读取完整训练集与验证集图片...", flush=True)
     train_dataset.preload()
     valid_dataset.preload()
     dataloaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
     optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
                   for name in MODEL_NAMES}
-    criterion = nn.CrossEntropyLoss(weight=create_class_weights(train_dataset.labels))
+    criterion = nn.CrossEntropyLoss(
+        weight=create_class_weights(train_dataset.labels).to(DEVICE))
     for epoch, name in training_order(best_metrics, EPOCHS):
         train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
                   best_metrics, run_dir, history, optimizers[name], dataloaders[name], criterion)
@@ -184,5 +214,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--bootstrap-dir", type=Path, default=None)
     args = parser.parse_args()
+    print_device_info(DEVICE)
     print("正在读取glaucoma_first的训练集和官方验证集...", flush=True)
     train(*create_dataset(), bootstrap_dir=args.bootstrap_dir)

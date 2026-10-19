@@ -16,14 +16,17 @@ from utils import (BATCH_SIZE, CPU_THREADS, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
                    write_submission)
 
 
-# 【来源】沿用旧03的DataLoader/无梯度预测；修改：三路概率取中位数而非平均。
+# 【来源】沿用旧03的DataLoader/无梯度预测；修改：验证输入跟随模型设备，三路概率取中位数。
 def collect_probabilities(dataset, models, stage):
     if not models or len(models) not in (1, 3):
         raise ValueError("验证须传入一个模型，三模型预测须传入全部三个模型")
     if len(models) == 3 and set(models) != set(MODEL_NAMES):
         raise ValueError("三模型名称不完整")
     torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+    devices = {name: next(model.parameters(), torch.empty(0)).device
+               for name, model in models.items()}
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
+                            pin_memory=any(device.type == "cuda" for device in devices.values()))
     labels, scores, start = [], {name: [] for name in models}, time.time()
     for model in models.values():
         model.eval()
@@ -35,7 +38,8 @@ def collect_probabilities(dataset, models, stage):
                 x, y = batch
                 labels.extend(y.tolist())
             for name, model in models.items():
-                scores[name].extend(torch.softmax(model(x), dim=1)[:, 1].tolist())
+                inputs = x.to(devices[name], non_blocking=True)
+                scores[name].extend(torch.softmax(model(inputs), dim=1)[:, 1].cpu().tolist())
             print_progress(stage, batch_idx, len(dataloader), start)
     if len(models) == 1:
         return labels, next(iter(scores.values()))

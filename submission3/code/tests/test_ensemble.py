@@ -3,6 +3,8 @@
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -13,7 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from utils import ImageDataset, median_probabilities, save_ensemble  # noqa: E402
 from predict import collect_probabilities  # noqa: E402
-from train import create_class_weights, create_train_loader, is_better, training_order  # noqa: E402
+from train import (choose_device, create_class_weights, create_train_loader,
+                   is_better, print_device_info, training_order)  # noqa: E402
 
 
 class TinyDataset(torch.utils.data.Dataset):
@@ -37,6 +40,19 @@ class FixedModel(torch.nn.Module):
 
 
 class EnsembleTests(unittest.TestCase):
+    def test_training_device_prefers_cuda_when_available(self):
+        with patch("train.torch.cuda.is_available", return_value=True):
+            self.assertEqual(str(choose_device()), "cuda:0")
+        with patch("train.torch.cuda.is_available", return_value=False):
+            self.assertEqual(str(choose_device()), "cpu")
+
+    def test_cpu_device_banner_reports_actual_environment(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            print_device_info(torch.device("cpu"))
+        self.assertIn("当前使用CPU训练", output.getvalue())
+        self.assertIn(torch.__version__, output.getvalue())
+
     def test_median_keeps_probability_and_matches_two_of_three_votes(self):
         scores = median_probabilities([0.1, 0.8, 0.7],
                                       [0.9, 0.6, 0.2],
@@ -70,6 +86,22 @@ class EnsembleTests(unittest.TestCase):
         self.assertEqual(labels, [0, 1])
         self.assertAlmostEqual(scores[0], 0.8, places=5)
         self.assertAlmostEqual(scores[1], 0.8, places=5)
+
+    def test_validation_moves_images_to_model_device(self):
+        class MetaInputModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.anchor = torch.nn.Parameter(torch.empty(1, device="meta"))
+
+            def forward(self, x):
+                if x.device.type != "meta":
+                    raise AssertionError("validation input did not reach model device")
+                return torch.tensor([[0.0, 1.0]]).repeat(x.shape[0], 1)
+
+        model = MetaInputModel()
+        labels, scores = collect_probabilities(TinyDataset(), {"resnet18": model}, "valid")
+        self.assertEqual(labels, [0, 1])
+        self.assertGreater(scores[0], 0.5)
 
     def test_individual_model_update_uses_only_its_auroc(self):
         self.assertTrue(is_better({"auroc": 0.91}, {"auroc": 0.90}))
