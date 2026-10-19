@@ -34,14 +34,15 @@ def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
 
 
-# 【来源】本项目自写；未有最佳验证记录的模型先跑首轮，此后每轮依次训练三个模型。
-def training_order(best_metrics, rounds):
-    untrained = [name for name in MODEL_NAMES if name not in best_metrics]
+# 【来源】本项目自写；未有最佳验证记录的模型先跑首轮；修改：0轮跳过，各模型按自身轮数结束。
+def training_order(best_metrics, rounds_by_model):
+    untrained = [name for name in MODEL_NAMES
+                 if rounds_by_model[name] > 0 and name not in best_metrics]
     for name in untrained:
         yield 1, name
-    for epoch in range(1, rounds + 1):
+    for epoch in range(1, max(rounds_by_model.values(), default=0) + 1):
         for name in MODEL_NAMES:
-            if epoch != 1 or name not in untrained:
+            if epoch <= rounds_by_model[name] and (epoch != 1 or name not in untrained):
                 yield epoch, name
 
 
@@ -158,7 +159,7 @@ def train(train_dataset, valid_dataset, bootstrap_dir=None):
     optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
                   for name in MODEL_NAMES}
     criterion = nn.CrossEntropyLoss(weight=create_class_weights(train_dataset.labels))
-    for epoch, name in training_order(best_metrics, max(EPOCHS.values())):
+    for epoch, name in training_order(best_metrics, EPOCHS):
         train_one(name, epoch, models, best_models, train_dataset, valid_dataset,
                   best_metrics, run_dir, history, optimizers[name], dataloaders[name], criterion)
 

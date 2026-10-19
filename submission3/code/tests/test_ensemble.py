@@ -78,10 +78,25 @@ class EnsembleTests(unittest.TestCase):
 
     def test_untrained_model_runs_first_then_each_round_has_three_models(self):
         order = list(training_order({"resnet18": {"auroc": 0.94},
-                                     "densenet121": {"auroc": 0.93}}, 2))
+                                     "densenet121": {"auroc": 0.93}},
+                                    {"resnet18": 2, "densenet121": 2, "efficientnet_b0": 2}))
         self.assertEqual(order, [(1, "efficientnet_b0"), (1, "resnet18"),
                                  (1, "densenet121"), (2, "resnet18"),
                                  (2, "densenet121"), (2, "efficientnet_b0")])
+
+    def test_zero_round_models_are_skipped(self):
+        order = list(training_order({"resnet18": {"auroc": 0.94}},
+                                    {"resnet18": 0, "densenet121": 0,
+                                     "efficientnet_b0": 3}))
+        self.assertEqual(order, [(1, "efficientnet_b0"), (2, "efficientnet_b0"),
+                                 (3, "efficientnet_b0")])
+
+    def test_models_stop_after_their_individual_round_count(self):
+        order = list(training_order({}, {"resnet18": 1, "densenet121": 2,
+                                         "efficientnet_b0": 3}))
+        self.assertEqual(order, [(1, "resnet18"), (1, "densenet121"),
+                                 (1, "efficientnet_b0"), (2, "densenet121"),
+                                 (2, "efficientnet_b0"), (3, "efficientnet_b0")])
 
     def test_each_epoch_uses_every_training_image_once(self):
         class NumberedDataset(torch.utils.data.Dataset):
