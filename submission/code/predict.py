@@ -10,8 +10,8 @@ if __name__ == "__main__":
 import torch
 from torch.utils.data import DataLoader
 
-from utils import (BATCH_SIZE, CPU_THREADS, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
-                   PREDICT_CPU_THREADS, TEST_CSV, TEST_DIR, calculate_metrics,
+from utils import (BATCH_SIZE, CPU_THREADS, ImageDataset, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
+                   PREDICT_CPU_THREADS, TEST_CSV, TEST_DIR, VALID_CSV, VALID_DIR, calculate_metrics,
                    load_ensemble, load_images, rank_weighted_probabilities, print_progress,
                    print_rank_weights,
                    write_submission)
@@ -75,6 +75,9 @@ def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
         # 【修改】将模型移动到预测设备，不更改训练权重。
         model.to(device)
     print("预测设备:", device, flush=True)
+    # 【修改】先用有标签官方验证集打印训练时相同的指标；仅随后预测无标签测试集并写CSV。
+    valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
+    evaluate(ImageDataset(valid_paths, valid_labels), models)
     print("开始读取test文件夹；测试集没有真实标签, 不计算准确率.", flush=True)
     test_dataset, image_names = load_images(TEST_CSV, test_dir, labeled=False)
     _, probabilities = collect_probabilities(test_dataset, models, "test")

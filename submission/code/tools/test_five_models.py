@@ -9,11 +9,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import torch
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from model import ImageModel  # noqa: E402
-from predict import collect_probabilities  # noqa: E402
+from predict import collect_probabilities, predict  # noqa: E402
 from train import is_better, train, training_order  # noqa: E402
 from utils import MODEL_NAMES, print_rank_weights, rank_weighted_probabilities, save_ensemble  # noqa: E402
 
@@ -39,6 +40,12 @@ class FixedModel(torch.nn.Module):
     def forward(self, x):
         p = self.probabilities[x[:, 0].long()]
         return torch.log(torch.stack([1 - p, p], dim=1))
+
+
+class BrightnessModel(torch.nn.Module):
+    def forward(self, x):
+        value = x[:, 0, 0, 0]
+        return torch.stack([-value, value], dim=1)
 
 
 class FiveModelTests(unittest.TestCase):
@@ -84,6 +91,35 @@ class FiveModelTests(unittest.TestCase):
                 print_rank_weights()
         self.assertIn("高到低", output.getvalue())
         self.assertIn("0.3, 0.3, 0.2, 0.1, 0.1", output.getvalue())
+
+    def test_predict_validates_labeled_images_before_writing_test_csv(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            valid_dir, test_dir = root / "valid", root / "test"
+            valid_dir.mkdir()
+            test_dir.mkdir()
+            for folder in (valid_dir, test_dir):
+                Image.new("RGB", (64, 64), "black").save(folder / "negative.png")
+                Image.new("RGB", (64, 64), "white").save(folder / "positive.png")
+            valid_csv, test_csv = root / "valid.csv", root / "test.csv"
+            valid_csv.write_text("Image_name,True_Label\nnegative.png,0\npositive.png,1\n", encoding="utf-8")
+            test_csv.write_text("Image_name\nnegative.png\npositive.png\n", encoding="utf-8")
+            model_path, output_csv = root / "best_model.pth", root / "submission.csv"
+            model_path.touch()
+            models = {name: BrightnessModel() for name in MODEL_NAMES}
+            with patch("predict.MODEL_PATH", model_path), \
+                 patch("predict.VALID_CSV", valid_csv, create=True), \
+                 patch("predict.VALID_DIR", valid_dir, create=True), \
+                 patch("predict.TEST_CSV", test_csv), \
+                 patch("predict.load_ensemble", return_value=(models, {"complete": True})):
+                output = StringIO()
+                with redirect_stdout(output):
+                    predict(test_dir=test_dir, output_csv=output_csv)
+            self.assertIn("开始验证", output.getvalue())
+            self.assertLess(output.getvalue().index("开始验证"), output.getvalue().index("开始读取test"))
+            self.assertIn("Acc: 1.0000, AUROC: 1.000000", output.getvalue())
+            self.assertEqual(output_csv.read_text(encoding="utf-8").splitlines()[0],
+                             "Image_name,Probability,Pred_Label")
 
     def test_zero_round_skips_branch_and_rounds_interleave(self):
         rounds = dict.fromkeys(MODEL_NAMES, 2)

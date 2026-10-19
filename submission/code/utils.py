@@ -33,7 +33,7 @@ EPOCHS = {"wide5_slim": 30, "resnet18": 30, "densenet121": 30,
 # 【修改】按单张图片的五个阳性概率从高到低排序后依次乘以以下占比。
 # 第1项对应最高概率，不固定对应某个模型；五项非负且总和必须为1。
 # 全部0.2时是五模型概率平均值；改动后仍以最终概率0.5判阳性。
-RANK_WEIGHTS = (0.3, 0.3, 0.2, 0.1, 0.1)
+RANK_WEIGHTS = (1, 0, 0, 0, 0)
 LEARNING_RATE, MIN_LEARNING_RATE, WEIGHT_DECAY = 1e-4, 1e-6, 1e-4 # 学习率、最小学习率、权重衰减
 MAX_GRAD_NORM, CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 5.0, 8, 4, 25 # 最大梯度范数、CPU线程数、预测CPU线程数、日志间隔步
 RECIPE = "official_rgb64_independent_five_rank_v1" # 新排序加权方案
