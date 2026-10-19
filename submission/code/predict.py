@@ -1,9 +1,5 @@
-"""
-案例:
-    复用课堂 CNN 的测试逻辑；main负责本地预测并生成2026提交文件.
-"""
+"""课堂CNN的todo4：五模型概率按排名加权，生成提交CSV。"""
 
-# 导包
 import sys
 import time
 
@@ -14,46 +10,51 @@ if __name__ == "__main__":
 import torch
 from torch.utils.data import DataLoader
 
-from utils import (
-    BATCH_SIZE,
-    CPU_THREADS,
-    PREDICT_CPU_THREADS,
-    ImageDataset,
-    OUTPUT_CSV,
-    TEST_DIR,
-    calculate_metrics,
-    load_test_data,
-    load_model,
-    print_progress,
-    write_submission,
-)
+from utils import (BATCH_SIZE, CPU_THREADS, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
+                   PREDICT_CPU_THREADS, TEST_CSV, TEST_DIR, calculate_metrics,
+                   load_ensemble, load_images, rank_weighted_probabilities, print_progress,
+                   print_rank_weights,
+                   write_submission)
 
 
-# todo 4. 模型测试.
-# 【来源】复用day07 CNN的evaluate, 新增验证进度及比赛指标, 返回指标字典.
-def evaluate(test_dataset, model=None):
-    # 1. 修改①: 旧冠军按64像素、新候选按128像素分别验证, 两者仍用同一官方验证集.
-    torch.set_num_threads(CPU_THREADS)
-    if model is None:
-        model = load_model()
-    if test_dataset.image_size != model.image_size:
-        test_dataset = ImageDataset(test_dataset.image_paths, test_dataset.labels,
-                                    image_size=model.image_size)
-    dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-    # 3. 切换测试模式并关闭梯度, 保存真实标签和阳性概率.
-    labels, positive_probability, start = [], [], time.time()
-    print(f"开始验证: {len(test_dataset)}张有标签图片", flush=True)
-    model.eval()
+# 【来源】沿用submission3的DataLoader/无梯度预测；修改：五路概率排序后加权。
+def collect_probabilities(dataset, models, stage):
+    if len(models) not in (1, 5):
+        raise ValueError("验证须传入一个模型，五模型预测须传入全部五个模型")
+    if len(models) == 5 and set(models) != set(MODEL_NAMES):
+        raise ValueError("五模型名称不完整")
+    torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
+    devices = {name: next(model.parameters(), torch.empty(0)).device
+               for name, model in models.items()}
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
+                            pin_memory=any(device.type == "cuda" for device in devices.values()))
+    labels, scores, start = [], {name: [] for name in models}, time.time()
+    for model in models.values():
+        model.eval()
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(dataloader, 1):
-            y_pred = model(x)
-            labels.extend(y.tolist())
-            positive_probability.extend(torch.softmax(y_pred, dim=1)[:, 1].tolist())
-            print_progress("valid", batch_idx, len(dataloader), start)
+        for batch_idx, batch in enumerate(dataloader, 1):
+            if dataset.labels is None:
+                x = batch
+            else:
+                x, y = batch
+                labels.extend(y.tolist())
+            for name, model in models.items():
+                inputs = x.to(devices[name], non_blocking=True)
+                scores[name].extend(torch.softmax(model(inputs), dim=1)[:, 1].cpu().tolist())
+            print_progress(stage, batch_idx, len(dataloader), start)
+    if len(models) == 1:
+        return labels, next(iter(scores.values()))
+    return labels, rank_weighted_probabilities(*(scores[name] for name in MODEL_NAMES))
 
-    # 4. 修改②: 保留课堂Acc输出, 同时显示真正能反映阳性检出和概率排序的指标.
-    metrics = calculate_metrics(labels, positive_probability)
+
+# todo 4. 模型验证；有真实标签才计算AUROC，绝不写答案CSV。
+# 【来源】沿用submission3的evaluate；分别支持单模型与五模型联合验证。
+def evaluate(valid_dataset, models):
+    if valid_dataset.labels is None:
+        raise ValueError("验证集必须有真实标签")
+    print(f"开始验证: {len(valid_dataset)}张有标签图片", flush=True)
+    labels, probabilities = collect_probabilities(valid_dataset, models, "valid")
+    metrics = calculate_metrics(labels, probabilities)
     print(f"Acc: {metrics['accuracy']:.4f}, AUROC: {metrics['auroc']:.6f}, "
           f"AUPRC(梯形): {metrics['auprc']:.6f}, AP: {metrics['ap']:.6f}", flush=True)
     print(f"阳性召回率: {metrics['recall']:.2%}, 特异度: {metrics['specificity']:.2%}, "
@@ -61,41 +62,29 @@ def evaluate(test_dataset, model=None):
     return metrics
 
 
-# 【来源】复用课堂CNN测试循环改写, 本地读取无标签测试集并生成2026规定CSV.
+# 【来源】沿用submission3的predict入口；只加载单文件整组最佳快照，单独运行才写CSV。
 def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
-    # 1. 修改②: 2026初赛不再由服务器传参, 默认读取glaucoma_first/test和test.csv.
-    torch.set_num_threads(PREDICT_CPU_THREADS)
-    print("开始读取test文件夹；测试集没有真实标签, 此阶段生成提交CSV, 不计算准确率.", flush=True)
-    # 修改②: 先读权重内输入尺寸, 再创建测试Dataset；旧CSV生成逻辑仍可复现.
-    model = load_model()
-    test_dataset, image_names = load_test_data(test_dir, image_size=model.image_size)
-
-    # 2. 创建测试集数据加载器.
-    dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-    # 3. 模型对象已按参数文件自己的结构和尺寸加载.
-
-    # 4. 遍历本地无标签测试集.
-    positive_probability, start = [], time.time()
-    model.eval()
-    with torch.no_grad():
-        for batch_idx, x in enumerate(dataloader, 1):
-            output = model(x)
-
-            # 修改③: Probability必须是青光眼阳性类别1的概率, 不能取最大类别置信度.
-            probability = torch.softmax(output, dim=1)[:, 1]
-            positive_probability.extend(probability.tolist())
-            print_progress("test", batch_idx, len(dataloader), start)
-
-    # 5. 修改④: 按官方字段生成UTF-8编码的submission.csv.
-    output_csv = write_submission(image_names, positive_probability, output_csv)
+    if not MODEL_PATH.is_file():
+        raise FileNotFoundError("缺少五模型参数, 请先运行train.py: %s" % MODEL_PATH)
+    models, checkpoint = load_ensemble(MODEL_PATH)
+    if not checkpoint["complete"]:
+        raise ValueError("五模型尚未完成训练，不能生成提交CSV")
+    # 【修改】五模型预测优先使用GPU；无CUDA时自动回退CPU，不更改训练权重。
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    for model in models.values():
+        # 【修改】将模型移动到预测设备，不更改训练权重。
+        model.to(device)
+    print("预测设备:", device, flush=True)
+    print("开始读取test文件夹；测试集没有真实标签, 不计算准确率.", flush=True)
+    test_dataset, image_names = load_images(TEST_CSV, test_dir, labeled=False)
+    _, probabilities = collect_probabilities(test_dataset, models, "test")
+    output_csv = write_submission(image_names, probabilities, output_csv)
     print("已生成: %s, 共%d张图片, 预测阳性%d张" % (
-        output_csv, len(image_names), sum(value >= 0.5 for value in positive_probability)
-    ), flush=True)
+        output_csv, len(image_names), sum(value >= 0.5 for value in probabilities)), flush=True)
     return output_csv
 
 
-# 5. 测试.
+# 5. 测试：右键运行predict.py才写答案；train.py导入本文件不会预测无标签测试集。
 if __name__ == "__main__":
-    # 修改⑤: 只有单独运行本文件才执行测试集预测并生成submission.csv；被train导入时不执行.
+    print_rank_weights()
     predict()

@@ -1,50 +1,35 @@
 # 2026 青光眼眼底图像二分类
 
-代码版本 **v1.6.10**。`submission3/` 是正在验证的三模型实验：ResNet-18、DenseNet-121、EfficientNet-B0 独立训练和选模，在预测时对三个阳性概率取中位数，三份参数封装在**一份** `model/best_model.pth`。每个模型每轮遍历全部 51,396 张训练图片，而非抽样 4,096 次；训练批量 64 时为 804 批。首次训练前并行解码并缓存缩小后的训练/验证图片，后续轮次复用缓存。仅在三种模型都完成训练后，才单独运行 `submission3/code/predict.py` 写 CSV。`submission2/` 是已保留的双骨干特征融合方案；原 `submission/` 是旧单模型基线。
+当前代码版本：v1.7.6。活动方案只有 `submission/`：五个模型分别训练、分别按官方验证集 AUROC 保存独立最佳；每轮还用五模型联合预测的 AUROC 保存整组最佳。两个快照都装在同一份 `submission/model/best_model.pth` 中。
 
-## 目录
+五个模型为旧五层 CNN、ResNet-18、DenseNet-121、EfficientNet-B0、ConvNeXt-Tiny。对每张图片的五个阳性概率降序排列后，依次乘以 `submission/code/utils.py` 中的 `RANK_WEIGHTS`，加总得到最终阳性概率；目前占比为 `(0.3, 0.3, 0.2, 0.1, 0.1)`，最终概率不低于 0.5 时输出阳性。训练阶段的整组验证、最终验证和单独预测调用同一加权函数；各分支的梯度更新仍使用自己的交叉熵损失。
+
+## 文件位置
 
 | 路径 | 用途 |
 | --- | --- |
-| `submission3/code/` | 三模型实验的训练、模型、预测、工具及测试源码；用 `deepStudy` 解释器运行 |
-| `submission3/model/best_model.pth` | 三份模型参数合为一份；`complete=False` 时不可预测 |
-| `submission3/results/submission.csv` | 只在单独执行 `submission3/code/predict.py` 后生成 |
-| `submission2/code/model.py` | 定义双骨干特征融合网络；直接运行可看网络结构和参数量 |
-| `submission2/code/train.py` | 在官方训练集上联合训练；每轮用官方验证集计算 AUROC，仅在提高时更新权重；**不写提交 CSV** |
-| `submission2/code/predict.py` | 读取单个融合权重，预测无标签测试集，生成提交 CSV |
-| `submission2/code/utils.py` | 数据读取、图像变换、指标、权重读写和 CSV 工具 |
-| `submission2/model/best_model.pth` | 唯一一份融合模型参数，含两骨干和分类头；当前需继续训练 |
-| `submission2/results/submission.csv` | `predict.py` 生成的待提交文件 |
-| `submission/` | 旧单模型基线；不作为本版训练初始化或提交目录 |
-| `glaucoma_first/` | 官方训练、验证、测试原图与 CSV；只留本地，不提交 GitHub |
-| `项目文档/训练记录/` | 各次训练的日志和逐轮指标，不混入 `results/` |
-
-旧版 01–08 双模型筛选过程见[历史实验结果](项目文档/八组双模型训练结果_2026-10-18.md)。03 的官网历史提交得分是 **92.37**；它不是本次联合融合网络的官网成绩。新方案的运行实测见[本版记录](项目文档/修改说明/v1.6.1联合融合与后续方案.md)。
-
-`submission2/code/` 与原 `submission/code/` 一样，只保留 `model.py`、`train.py`、`predict.py`、`utils.py` 和 `requirements.txt`；数据与权重分别在同级的 `glaucoma_first/`、`submission2/model/`，训练记录在 `项目文档/`。`utils.py` 就是原项目约定的工具文件，不另增测试源码目录。
+| `submission/code/model.py` | 五个模型定义和数据集入口 |
+| `submission/code/train.py` | 单独训练与验证，不生成提交 CSV |
+| `submission/code/predict.py` | 读取最佳整组快照并生成提交 CSV |
+| `submission/code/utils.py` | 数据、指标、参数保存、排序占比、CSV 工具；调整轮数与占比在此文件 |
+| `submission/code/tests/` | 不使用比赛图片的快速行为测试 |
+| `submission/model/best_model.pth` | 一份五模型参数文件；请勿手动删除或覆盖 |
+| `submission/results/submission.csv` | 单独运行预测脚本后生成，提交前核对 |
+| `glaucoma_first/` | 官方训练、验证、测试数据，仅保留本地，不进入 Git |
+| `项目文档/训练记录/` | 逐轮训练记录 |
+| `三个不用的模型.zip` | 旧 `submission`、`submission2`、`submission3` 的本地备份；被 Git 忽略，不进入普通 clone/push |
 
 ## 运行
 
-`submission3` 使用你指定的 `deepStudy` 解释器。`train.py` 启动时会打印实际设备；CUDA 可用时训练及验证优先用 GPU，否则用 CPU。当前本机 `deepStudy` 安装的是 PyTorch CPU 版，故仍会显示 CPU；代码本身不能代替 CUDA 版 PyTorch 或 NVIDIA 显卡。已有单文件参数时，直接运行训练入口续训，不要再添加 `--bootstrap-dir`；全量训练会比旧抽样方案耗时明显更长。训练全部结束后才单独运行预测入口：
+在项目根目录，用 `deepStudy` 解释器运行：
 
 ```powershell
-& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission3/code/train.py
-& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission3/code/predict.py
+& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission/code/train.py
+& "C:\Users\LENOVO\.conda\envs\deepStudy\python.exe" submission/code/predict.py
 ```
 
-`submission3` 的逐轮规则、保存错误处理和验证说明见[三模型方案](项目文档/修改说明/submission3三模型独立训练方案.md)。下方是保留的 `submission2` 使用说明。
+训练入口首先打印 CPU/GPU 与五个排序占比，然后读取完整官方训练集和有标签验证集；第一轮前先测基线。`EPOCHS` 为每个模型独立的目标总轮数，设为 0 表示不训练该模型，但仍参加联合验证。只有单独运行预测入口才写 CSV，CSV 列为 `Image_name,Probability,Pred_Label`，保持官方测试清单顺序。无标签测试集不能计算准确率。
 
-本机解释器是 `C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe`，依赖见 `submission2/code/requirements.txt`；原 `deepStudy` 环境不受影响。
+更改 `RANK_WEIGHTS` 后，旧 `.pth` 的整组最佳快照未必仍是新占比下的最佳；重新运行训练入口会先在官方验证集上复核并按新占比继续选模。不要仅凭改权重后的 CSV 推断验证指标或官网分数。
 
-```powershell
-& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" submission2/code/train.py
-& "C:\Users\LENOVO\.conda\envs\jitiaosai\python.exe" submission2/code/predict.py
-```
-
-点击 `train.py` 时，如已有 `best_model.pth`，会先用**有标签的官方验证集**打印当前模型指标及已保存的最佳 AUROC，再从这份权重继续同时更新两个骨干和融合头；只有后续完整验证集 AUROC 更高才覆盖权重。它不会用无标签 `test` 计算准确率，也不会写测试 CSV。若主动移除这份权重，代码仍可随机初始化训练，但失去已训练起点。权重当前实际轮次与指标以最近的 `项目文档/训练记录/` 和权重内元数据为准。
-
-单独运行 `predict.py` 才生成 `submission2/results/submission.csv`。格式是 `Image_name,Probability,Pred_Label`，与官方 `test.csv` 的顺序一致；`Probability` 是青光眼阳性概率。无标签测试集没有可计算的真实准确率。提交前确认本版 CSV 的行数、列名、概率范围和模型大小；官网分数只能在提交后得知。
-
-本项目不使用外部数据或预训练权重。模型文件上限 500 MB；「小于 500 MB」是约束，不代表要尽量填满。单张推理 100 ms 的要求须在目标环境实测，不应仅按参数量推断。也不能保证本版超过历史官网 92.37。
-
-为使单个模型文件可上传至 GitHub，`submission2/model/*.pth` 使用 Git LFS；克隆仓库时请安装 Git LFS 并运行 `git lfs pull`。原始数据集始终不进入 Git。
+本项目不使用外部训练数据或预训练参数。模型文件需低于 500 MB；单张图像推理 100 ms 需在目标机器实测。大模型文件由 Git LFS 管理，克隆后请运行 `git lfs pull`。旧版本备份 ZIP 若未作为 GitHub Release 附件上传，则仅存在当前本地工作区，不会随 `git clone` 下载。

@@ -1,0 +1,24 @@
+{
+  "variant": "submission2",
+  "model_name": "resnet18_densenet121_feature_fusion",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\submission2\\model\\best_model.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb64_joint_feature_fusion_v1",
+  "best_validation": {
+    "epoch": 1,
+    "train_loss": 0.25580966431152774,
+    "train_accuracy": 0.90087890625,
+    "learning_rate": 2.9999999999999997e-05,
+    "joint_backbones": true,
+    "accuracy": 0.8726277996238673,
+    "auroc": 0.9390614040444979,
+    "auprc": 0.4889600632894344,
+    "ap": 0.49294323226310355,
+    "recall": 0.8586387434554974,
+    "specificity": 0.8731000353481796,
+    "tp": 164,
+    "tn": 4940,
+    "fp": 718,
+    "fn": 27
+  }
+}

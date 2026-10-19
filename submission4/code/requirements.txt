@@ -1,7 +1,0 @@
-# 使用现有deepStudy解释器；版本以环境实际兼容性为准。
-torch>=2.0
-torchvision>=0.15
-Pillow>=10
-numpy>=1.26
-pandas>=2.2
-scikit-learn>=1.5
