@@ -4,6 +4,7 @@ import copy
 import sys
 import time
 from datetime import datetime
+from itertools import groupby
 
 if __name__ == "__main__":
     sys.dont_write_bytecode = True
@@ -17,7 +18,7 @@ from torch.utils.data import DataLoader
 from model import ImageModel, create_dataset
 from predict import evaluate
 from utils import (CPU_THREADS, EPOCHS, MAX_GRAD_NORM, MODEL_NAMES, MODEL_PATH,
-                   PROJECT_DIR, RECORD_DIR, RECIPE, WEIGHT_DECAY, get_learning_rate,
+                   PROJECT_DIR, RANK_WEIGHTS, RECORD_DIR, RECIPE, WEIGHT_DECAY, get_learning_rate,
                    load_ensemble, print_progress, save_ensemble, save_training_record)
 
 SEED, TRAIN_BATCH_SIZE = 0, 64
@@ -53,11 +54,12 @@ def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
 
 
-# 【来源】修改submission3训练顺序；每轮依次跑五模型，0轮或耗尽轮数者跳过。
-def training_order(rounds_by_model):
+# 【来源】修改submission3训练顺序；每个模型累计轮数独立，已完成者不再训练。
+def training_order(rounds_by_model, completed_epochs=None):
+    completed_epochs = completed_epochs or {}
     for epoch in range(1, max(rounds_by_model.values(), default=0) + 1):
         for name in MODEL_NAMES:
-            if epoch <= rounds_by_model[name]:
+            if completed_epochs.get(name, 0) < epoch <= rounds_by_model[name]:
                 yield epoch, name
 
 
@@ -150,13 +152,17 @@ def train(train_dataset, valid_dataset):
         ensemble_models, _ = load_ensemble(MODEL_PATH, "ensemble")
         models = copy.deepcopy(best_models)
         best_metrics = dict(checkpoint["best_metrics"])
-        ensemble_best = checkpoint.get("validation") or None
+        completed = dict(checkpoint.get("completed_epochs") or
+                         {name: checkpoint.get("epoch", 0) for name in MODEL_NAMES})
+        old_weights = tuple(checkpoint.get("rank_weights", ()))
+        ensemble_best = checkpoint.get("validation") if old_weights == tuple(RANK_WEIGHTS) else None
         print("从已有单文件五模型参数继续训练。", flush=True)
     else:
         models = {name: ImageModel(name) for name in MODEL_NAMES}
         load_bootstrap(models)
         best_models, ensemble_models = copy.deepcopy(models), copy.deepcopy(models)
         best_metrics, ensemble_best = {}, None
+        completed = {name: 0 for name in MODEL_NAMES}
     for model in models.values():
         model.to(DEVICE)
     print("并行预读取完整训练集与验证集图片...", flush=True)
@@ -171,23 +177,26 @@ def train(train_dataset, valid_dataset):
         if is_better(metrics, best_metrics.get(name)):
             best_metrics[name] = metrics
             best_models[name].load_state_dict(models[name].state_dict())
+    if MODEL_PATH.is_file() and ensemble_best is None:
+        print("排序权重已改变，重新验证旧整组快照作为基线。", flush=True)
+        ensemble_best = evaluate(valid_dataset, ensemble_models)
     print("训练前五模型联合验证。", flush=True)
     baseline = evaluate(valid_dataset, models)
     if is_better(baseline, ensemble_best):
         ensemble_best = baseline
         for name in MODEL_NAMES:
             ensemble_models[name].load_state_dict(models[name].state_dict())
-    save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best, best_metrics)
+    save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
+                  best_metrics, completed_epochs=completed)
     loaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
     optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
                   for name in MODEL_NAMES if EPOCHS[name] > 0}
     criterion = nn.CrossEntropyLoss(weight=create_class_weights(train_dataset.labels).to(DEVICE))
-    for epoch in range(1, max(EPOCHS.values(), default=0) + 1):
-        for name in MODEL_NAMES:
-            if epoch > EPOCHS[name]:
-                continue
+    for epoch, jobs in groupby(training_order(EPOCHS, completed), key=lambda item: item[0]):
+        for _, name in jobs:
             history.append(train_one(name, epoch, models[name], best_models[name], loaders[name],
                                      valid_dataset, optimizers[name], criterion, best_metrics))
+            completed[name] = epoch
         print(f"第{epoch}轮五模型联合验证:", flush=True)
         combined = evaluate(valid_dataset, models)
         if is_better(combined, ensemble_best):
@@ -198,19 +207,22 @@ def train(train_dataset, valid_dataset):
         else:
             print(f"未超过整组最佳AUROC:{ensemble_best['auroc']:.6f}", flush=True)
         save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
-                      best_metrics, epoch=epoch)
+                      best_metrics, epoch=epoch, completed_epochs=completed)
         save_training_record(run_dir, history,
                              {"recipe": RECIPE, "best_metrics": best_metrics,
                               "combined_validation": ensemble_best, "last_epoch": epoch,
+                              "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
                               "complete": False})
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
-                  best_metrics, epoch=max(EPOCHS.values(), default=0), complete=True)
+                  best_metrics, epoch=max(completed.values(), default=0),
+                  complete=True, completed_epochs=completed)
     size = MODEL_PATH.stat().st_size
     if size > 500_000_000:
         raise ValueError(f"五模型权重{size / 1_000_000:.1f}MB超过500MB限制")
     save_training_record(run_dir, history,
                          {"recipe": RECIPE, "best_metrics": best_metrics,
                           "combined_validation": ensemble_best,
+                          "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
                           "model_file": str(MODEL_PATH), "complete": True})
     print(f"训练结束, 最佳联合AUROC:{ensemble_best['auroc']:.6f}, "
           f"AUPRC:{ensemble_best['auprc']:.6f}, "

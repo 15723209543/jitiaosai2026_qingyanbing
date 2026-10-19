@@ -26,10 +26,18 @@ TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train",
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("wide5_slim", "resnet18", "densenet121", "efficientnet_b0", "convnext_tiny") # 模型名称
 IMAGE_SIZE, BATCH_SIZE = 64, 32 # 图像大小、批量大小
-EPOCHS = {name: 30 for name in MODEL_NAMES} # 每种模型各自训练轮数；设0可跳过该模型
+# 【修改】五个模型的目标总轮数分别设置；已有检查点的已完成轮数不会重复训练。
+# 改某个数即可只追加该模型的训练；设0表示不再训练，但仍参加每次五模型验证。
+EPOCHS = {"wide5_slim": 30, "resnet18": 30, "densenet121": 30,
+          "efficientnet_b0": 30, "convnext_tiny": 30}
+# 【修改】按单张图片的五个阳性概率从高到低排序后依次乘以以下占比。
+# 第1项对应最高概率，不固定对应某个模型；五项非负且总和必须为1。
+# 全部0.2时是五模型概率平均值；改动后仍以最终概率0.5判阳性。
+RANK_WEIGHTS = (0.2, 0.2, 0.2, 0.2, 0.2)
 LEARNING_RATE, MIN_LEARNING_RATE, WEIGHT_DECAY = 1e-4, 1e-6, 1e-4 # 学习率、最小学习率、权重衰减
 MAX_GRAD_NORM, CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 5.0, 8, 4, 25 # 最大梯度范数、CPU线程数、预测CPU线程数、日志间隔步
-RECIPE = "official_rgb64_independent_five_median_v1" # 官方数据处理配方
+RECIPE = "official_rgb64_independent_five_rank_v1" # 新排序加权方案
+LEGACY_RECIPE = "official_rgb64_independent_five_median_v1" # 兼容已经训练好的旧pth
 
 
 # 【来源】复用课堂CNN的Resize/ToTensor/Normalize；修改：只在训练时做轻量增强。
@@ -135,14 +143,18 @@ def calculate_metrics(labels, probabilities):
             "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)}
 
 
-# 【来源】修改submission3三模型中位数；五个概率取中位数，0.5阈值恰是至少三票阳性。
-def median_probabilities(*vectors):
+# 【来源】修改原五模型中位数；每张图先排序概率，再按RANK_WEIGHTS加权求和。
+def rank_weighted_probabilities(*vectors):
     if len(vectors) != 5 or len({len(vector) for vector in vectors}) != 1:
         raise ValueError("必须提供五个长度相同的概率向量")
     values = np.asarray(vectors, dtype=float)
     if not np.isfinite(values).all() or not ((values >= 0) & (values <= 1)).all():
         raise ValueError("概率必须有限且在0到1之间")
-    return np.median(values, axis=0).tolist()
+    weights = np.asarray(RANK_WEIGHTS, dtype=float)
+    if (weights.shape != (5,) or not np.isfinite(weights).all() or
+            (weights < 0).any() or not np.isclose(weights.sum(), 1.0, rtol=0, atol=1e-9)):
+        raise ValueError("RANK_WEIGHTS必须是五个非负占比，且总和为1")
+    return (weights @ np.sort(values, axis=0)[::-1]).tolist()
 
 
 # 【来源】参考旧03的余弦学习率；每个独立模型按自身轮数计算。
@@ -155,7 +167,7 @@ def get_learning_rate(epoch, total_epochs):
 
 # 【来源】修改submission3单文件保存；分别保存五个单模最佳和整组最佳快照。
 def save_ensemble(individual_models, ensemble_models, path, validation,
-                  best_metrics=None, epoch=0, complete=False):
+                  best_metrics=None, epoch=0, complete=False, completed_epochs=None):
     if set(individual_models) != set(MODEL_NAMES) or set(ensemble_models) != set(MODEL_NAMES):
         raise ValueError("必须恰好包含五种指定模型")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,6 +176,8 @@ def save_ensemble(individual_models, ensemble_models, path, validation,
                 "ensemble_models": {name: ensemble_models[name].state_dict() for name in MODEL_NAMES},
                 "model_names": MODEL_NAMES, "image_size": IMAGE_SIZE, "recipe": RECIPE,
                 "best_metrics": best_metrics or {}, "validation": validation,
+                "rank_weights": RANK_WEIGHTS,
+                "completed_epochs": completed_epochs or {name: epoch for name in MODEL_NAMES},
                 "epoch": epoch, "complete": complete}, temporary)
     # 【修改】Windows 上杀毒扫描或文件预览可能短暂占用旧参数；等待释放后再原子替换。
     for attempt in range(30):
@@ -181,7 +195,8 @@ def load_ensemble(path, snapshot="ensemble"):
     from model import ImageModel  # 避免循环导入。
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     if (tuple(checkpoint["model_names"]) != MODEL_NAMES or
-            checkpoint["image_size"] != IMAGE_SIZE or checkpoint["recipe"] != RECIPE):
+            checkpoint["image_size"] != IMAGE_SIZE or
+            checkpoint["recipe"] not in (RECIPE, LEGACY_RECIPE)):
         raise ValueError("权重的五模型结构或训练方案不匹配")
     if snapshot not in ("ensemble", "individual"):
         raise ValueError("snapshot只能为ensemble或individual")

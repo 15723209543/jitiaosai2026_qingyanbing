@@ -1,4 +1,4 @@
-"""课堂CNN的todo4：五模型连续概率中位数（至少三票），生成提交CSV。"""
+"""课堂CNN的todo4：五模型概率按排名加权，生成提交CSV。"""
 
 import sys
 import time
@@ -12,11 +12,11 @@ from torch.utils.data import DataLoader
 
 from utils import (BATCH_SIZE, CPU_THREADS, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
                    PREDICT_CPU_THREADS, TEST_CSV, TEST_DIR, calculate_metrics,
-                   load_ensemble, load_images, median_probabilities, print_progress,
+                   load_ensemble, load_images, rank_weighted_probabilities, print_progress,
                    write_submission)
 
 
-# 【来源】沿用submission3的DataLoader/无梯度预测；修改：五路概率取中位数。
+# 【来源】沿用submission3的DataLoader/无梯度预测；修改：五路概率排序后加权。
 def collect_probabilities(dataset, models, stage):
     if len(models) not in (1, 5):
         raise ValueError("验证须传入一个模型，五模型预测须传入全部五个模型")
@@ -43,7 +43,7 @@ def collect_probabilities(dataset, models, stage):
             print_progress(stage, batch_idx, len(dataloader), start)
     if len(models) == 1:
         return labels, next(iter(scores.values()))
-    return labels, median_probabilities(*(scores[name] for name in MODEL_NAMES))
+    return labels, rank_weighted_probabilities(*(scores[name] for name in MODEL_NAMES))
 
 
 # todo 4. 模型验证；有真实标签才计算AUROC，绝不写答案CSV。
