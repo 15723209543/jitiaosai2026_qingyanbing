@@ -29,6 +29,7 @@ def collect_probabilities(dataset, models, stage):
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
                             pin_memory=any(device.type == "cuda" for device in devices.values()))
     labels, scores, start = [], {name: [] for name in models}, time.time()
+    true_positives = correct_positives = false_positives = 0
     for model in models.values():
         model.eval()
     with torch.no_grad():
@@ -37,11 +38,27 @@ def collect_probabilities(dataset, models, stage):
                 x = batch
             else:
                 x, y = batch
-                labels.extend(y.tolist())
+                batch_labels = y.tolist()
+                labels.extend(batch_labels)
+            batch_scores = {}
             for name, model in models.items():
                 inputs = x.to(devices[name], non_blocking=True)
-                scores[name].extend(torch.softmax(model(inputs), dim=1)[:, 1].cpu().tolist())
-            print_progress(stage, batch_idx, len(dataloader), start)
+                batch_scores[name] = torch.softmax(model(inputs), dim=1)[:, 1].cpu().tolist()
+                scores[name].extend(batch_scores[name])
+            detail = ""
+            if stage == "valid":
+                # 【修改】五模型按提交时同一排序加权规则计算本批预测；统计随批次累计。
+                batch_probabilities = (next(iter(batch_scores.values())) if len(models) == 1 else
+                                       rank_weighted_probabilities(*(batch_scores[name] for name in MODEL_NAMES)))
+                true_positives += sum(label == 1 for label in batch_labels)
+                correct_positives += sum(label == 1 and probability >= 0.5
+                                         for label, probability in zip(batch_labels, batch_probabilities))
+                false_positives += sum(label == 0 and probability >= 0.5
+                                       for label, probability in zip(batch_labels, batch_probabilities))
+                detail = (f", 真实阳性:{true_positives}, 报对阳性:{correct_positives}, "
+                          f"误报:{false_positives}")
+            print_progress(stage, batch_idx, len(dataloader), start, detail,
+                           every_batch=stage == "valid")
     if len(models) == 1:
         return labels, next(iter(scores.values()))
     return labels, rank_weighted_probabilities(*(scores[name] for name in MODEL_NAMES))

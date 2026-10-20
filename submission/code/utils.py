@@ -150,8 +150,9 @@ def load_train_data():
 
 
 # 【来源】沿用课堂训练的批次进度输出；显示已耗时和预计剩余时间。
-def print_progress(stage, batch_idx, batch_count, start, detail=""):
-    if batch_idx == 1 or batch_idx % LOG_EVERY == 0 or batch_idx == batch_count:
+def print_progress(stage, batch_idx, batch_count, start, detail="", every_batch=False):
+    # 【修改】验证集可逐批打印；训练和无标签测试仍按原日志间隔输出。
+    if every_batch or batch_idx == 1 or batch_idx % LOG_EVERY == 0 or batch_idx == batch_count:
         elapsed = time.time() - start
         remaining = elapsed / batch_idx * (batch_count - batch_idx)
         print(f"{stage}, batch: {batch_idx}/{batch_count} ({batch_idx / batch_count:.1%}), "

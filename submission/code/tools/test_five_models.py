@@ -33,6 +33,16 @@ class TinyDataset(torch.utils.data.Dataset):
         pass
 
 
+class FourValidationDataset(torch.utils.data.Dataset):
+    labels = [0, 1, 0, 1]
+
+    def __len__(self):
+        return 4
+
+    def __getitem__(self, index):
+        return torch.tensor([index], dtype=torch.float32), self.labels[index]
+
+
 class FixedModel(torch.nn.Module):
     def __init__(self, probabilities):
         super().__init__()
@@ -170,6 +180,20 @@ class FiveModelTests(unittest.TestCase):
         self.assertIn("漏报:0", result)
         self.assertIn("AUROC: 1.000000", result)
         self.assertNotIn("Acc:", result)
+
+    def test_validation_prints_every_batch_with_cumulative_positive_counts(self):
+        models = {MODEL_NAMES[0]: FixedModel([0.1, 0.9, 0.8, 0.2])}
+        output = StringIO()
+        with patch("predict.BATCH_SIZE", 1), redirect_stdout(output):
+            collect_probabilities(FourValidationDataset(), models, "valid")
+        lines = [line for line in output.getvalue().splitlines() if line.startswith("valid, batch:")]
+        self.assertEqual(len(lines), 4)
+        for index, line in enumerate(lines, 1):
+            self.assertIn(f"batch: {index}/4", line)
+            self.assertIn("time:", line)
+            self.assertIn("remaining:", line)
+        self.assertIn("真实阳性:1, 报对阳性:1, 误报:1", lines[2])
+        self.assertNotIn("loss:", lines[2])
 
     def test_zero_round_skips_branch_and_rounds_interleave(self):
         rounds = dict.fromkeys(MODEL_NAMES, 2)
