@@ -181,19 +181,30 @@ class FiveModelTests(unittest.TestCase):
         self.assertIn("AUROC: 1.000000", result)
         self.assertNotIn("Acc:", result)
 
-    def test_validation_prints_every_batch_with_cumulative_positive_counts(self):
+    def test_validation_logs_interval_counts_not_running_totals(self):
         models = {MODEL_NAMES[0]: FixedModel([0.1, 0.9, 0.8, 0.2])}
         output = StringIO()
-        with patch("predict.BATCH_SIZE", 1), redirect_stdout(output):
+        with patch("predict.BATCH_SIZE", 1), patch("utils.LOG_EVERY", 2), redirect_stdout(output):
             collect_probabilities(FourValidationDataset(), models, "valid")
         lines = [line for line in output.getvalue().splitlines() if line.startswith("valid, batch:")]
-        self.assertEqual(len(lines), 4)
-        for index, line in enumerate(lines, 1):
+        self.assertEqual(len(lines), 3)
+        for index, line in zip((1, 2, 4), lines):
             self.assertIn(f"batch: {index}/4", line)
             self.assertIn("time:", line)
             self.assertIn("remaining:", line)
-        self.assertIn("真实阳性:1, 报对阳性:1, 误报:1", lines[2])
+        self.assertIn("真实阳性:0, 报对阳性:0, 误报:0", lines[0])
+        self.assertIn("真实阳性:1, 报对阳性:1, 误报:0", lines[1])
+        self.assertIn("真实阳性:1, 报对阳性:0, 误报:1", lines[2])
         self.assertNotIn("loss:", lines[2])
+
+    def test_intermediate_validation_hides_total_counts_but_returns_metrics(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            metrics = evaluate(TinyDataset(), {MODEL_NAMES[0]: FixedModel([0.1, 0.9])},
+                               show_counts=False)
+        self.assertEqual(metrics["tp"], 1)
+        self.assertIn("AUROC: 1.000000", output.getvalue())
+        self.assertNotIn("漏报:", output.getvalue())
 
     def test_zero_round_skips_branch_and_rounds_interleave(self):
         rounds = dict.fromkeys(MODEL_NAMES, 2)
@@ -231,11 +242,13 @@ class FiveModelTests(unittest.TestCase):
 
     def test_train_validates_baseline_then_every_branch_and_whole_group(self):
         calls = []
+        show_counts_calls = []
 
-        def fake_evaluate(dataset, models):
+        def fake_evaluate(dataset, models, show_counts=True):
             calls.append(tuple(models))
+            show_counts_calls.append(show_counts)
             value = 0.5 if len(calls) <= 6 else (0.7 if len(models) == 5 else 0.6)
-            return {"auroc": value, "auprc": value, "tp": 1, "fp": 0}
+            return {"auroc": value, "auprc": value, "tp": 1, "fp": 0, "fn": 1}
 
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
             path = Path(directory)
@@ -252,7 +265,11 @@ class FiveModelTests(unittest.TestCase):
             self.assertEqual(len(calls), 12)
             self.assertEqual(calls[5], MODEL_NAMES)
             self.assertEqual(calls[-1], MODEL_NAMES)
+            self.assertTrue(all(not show_counts for show_counts in show_counts_calls))
             self.assertEqual(result["auroc"], 0.7)
+            final_line = next(line for line in output.getvalue().splitlines()
+                              if line.startswith("训练结束,"))
+            self.assertIn("真实阳性:2, 报对阳性:1, 误报:0, 漏报:1", final_line)
             self.assertIn("真实阳性:", output.getvalue())
             self.assertIn("误报:", output.getvalue())
             self.assertNotIn("acc:", output.getvalue())

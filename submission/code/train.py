@@ -144,7 +144,7 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
     print(f"epoch: {epoch}, loss: {total_loss / total_samples:.5f}, "
           f"真实阳性:{total_positive}, 报对阳性:{total_tp}, 误报:{total_fp}, "
           f"time:{time.time() - start:.2f}s", flush=True)
-    metrics = evaluate(valid_dataset, {name: model})
+    metrics = evaluate(valid_dataset, {name: model}, show_counts=False)
     if is_better(metrics, best_metrics.get(name)):
         best_metrics[name] = metrics
         best_model.load_state_dict(model.state_dict())
@@ -190,15 +190,15 @@ def train(train_dataset, valid_dataset):
     print("训练前依次验证五个模型的基线。", flush=True)
     for name in MODEL_NAMES:
         print("训练前单模型验证:", name, flush=True)
-        metrics = evaluate(valid_dataset, {name: models[name]})
+        metrics = evaluate(valid_dataset, {name: models[name]}, show_counts=False)
         if is_better(metrics, best_metrics.get(name)):
             best_metrics[name] = metrics
             best_models[name].load_state_dict(models[name].state_dict())
     if MODEL_PATH.is_file() and ensemble_best is None:
         print("排序权重已改变，重新验证旧整组快照作为基线。", flush=True)
-        ensemble_best = evaluate(valid_dataset, ensemble_models)
+        ensemble_best = evaluate(valid_dataset, ensemble_models, show_counts=False)
     print("训练前五模型联合验证。", flush=True)
-    baseline = evaluate(valid_dataset, models)
+    baseline = evaluate(valid_dataset, models, show_counts=False)
     if is_better(baseline, ensemble_best):
         ensemble_best = baseline
         for name in MODEL_NAMES:
@@ -217,7 +217,7 @@ def train(train_dataset, valid_dataset):
                                      valid_dataset, optimizers[name], criteria[name], best_metrics))
             completed[name] = epoch
         print(f"第{epoch}轮五模型联合验证:", flush=True)
-        combined = evaluate(valid_dataset, models)
+        combined = evaluate(valid_dataset, models, show_counts=False)
         if is_better(combined, ensemble_best):
             ensemble_best = combined
             for name in MODEL_NAMES:
@@ -247,7 +247,9 @@ def train(train_dataset, valid_dataset):
                           "model_file": str(MODEL_PATH), "complete": True})
     print(f"训练结束, 最佳联合AUROC:{ensemble_best['auroc']:.6f}, "
           f"AUPRC:{ensemble_best['auprc']:.6f}, "
-          f"预测阳性:{ensemble_best['tp'] + ensemble_best['fp']}, "
+          f"真实阳性:{ensemble_best['tp'] + ensemble_best['fn']}, "
+          f"报对阳性:{ensemble_best['tp']}, 误报:{ensemble_best['fp']}, "
+          f"漏报:{ensemble_best['fn']}, "
           f"参数大小:{size / 1_000_000:.1f}MB", flush=True)
     print("训练不会写答案；需要提交CSV时单独运行predict.py。", flush=True)
     return ensemble_best

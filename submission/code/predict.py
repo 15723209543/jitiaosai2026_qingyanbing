@@ -29,7 +29,7 @@ def collect_probabilities(dataset, models, stage):
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
                             pin_memory=any(device.type == "cuda" for device in devices.values()))
     labels, scores, start = [], {name: [] for name in models}, time.time()
-    true_positives = correct_positives = false_positives = 0
+    window_positives = window_tp = window_fp = 0
     for model in models.values():
         model.eval()
     with torch.no_grad():
@@ -47,18 +47,18 @@ def collect_probabilities(dataset, models, stage):
                 scores[name].extend(batch_scores[name])
             detail = ""
             if stage == "valid":
-                # 【修改】五模型按提交时同一排序加权规则计算本批预测；统计随批次累计。
+                # 【修改】五模型仍按提交时同一排序加权规则计算；这里只累计本次日志区间。
                 batch_probabilities = (next(iter(batch_scores.values())) if len(models) == 1 else
                                        rank_weighted_probabilities(*(batch_scores[name] for name in MODEL_NAMES)))
-                true_positives += sum(label == 1 for label in batch_labels)
-                correct_positives += sum(label == 1 and probability >= 0.5
-                                         for label, probability in zip(batch_labels, batch_probabilities))
-                false_positives += sum(label == 0 and probability >= 0.5
-                                       for label, probability in zip(batch_labels, batch_probabilities))
-                detail = (f", 真实阳性:{true_positives}, 报对阳性:{correct_positives}, "
-                          f"误报:{false_positives}")
-            print_progress(stage, batch_idx, len(dataloader), start, detail,
-                           every_batch=stage == "valid")
+                window_positives += sum(label == 1 for label in batch_labels)
+                window_tp += sum(label == 1 and probability >= 0.5
+                                 for label, probability in zip(batch_labels, batch_probabilities))
+                window_fp += sum(label == 0 and probability >= 0.5
+                                 for label, probability in zip(batch_labels, batch_probabilities))
+                detail = (f", 真实阳性:{window_positives}, 报对阳性:{window_tp}, "
+                          f"误报:{window_fp}")
+            if print_progress(stage, batch_idx, len(dataloader), start, detail) and stage == "valid":
+                window_positives = window_tp = window_fp = 0
     if len(models) == 1:
         return labels, next(iter(scores.values()))
     return labels, rank_weighted_probabilities(*(scores[name] for name in MODEL_NAMES))
@@ -66,7 +66,7 @@ def collect_probabilities(dataset, models, stage):
 
 # todo 4. 模型验证；有真实标签才计算AUROC，绝不写答案CSV。
 # 【来源】沿用submission3的evaluate；分别支持单模型与五模型联合验证。
-def evaluate(valid_dataset, models):
+def evaluate(valid_dataset, models, show_counts=True):
     if valid_dataset.labels is None:
         raise ValueError("验证集必须有真实标签")
     print(f"开始验证: {len(valid_dataset)}张有标签图片", flush=True)
@@ -74,9 +74,11 @@ def evaluate(valid_dataset, models):
     metrics = calculate_metrics(labels, probabilities)
     print(f"AUROC: {metrics['auroc']:.6f}, "
           f"AUPRC(梯形): {metrics['auprc']:.6f}, AP: {metrics['ap']:.6f}", flush=True)
-    print(f"真实阳性:{metrics['tp'] + metrics['fn']}, 报对阳性:{metrics['tp']}, "
-          f"误报:{metrics['fp']}, 漏报:{metrics['fn']}, "
-          f"阳性召回率:{metrics['recall']:.2%}, 特异度:{metrics['specificity']:.2%}", flush=True)
+    # 【修改】训练中的各次验证只打印选模所需指标；最终总计由train.py统一输出。
+    if show_counts:
+        print(f"真实阳性:{metrics['tp'] + metrics['fn']}, 报对阳性:{metrics['tp']}, "
+              f"误报:{metrics['fp']}, 漏报:{metrics['fn']}, "
+              f"阳性召回率:{metrics['recall']:.2%}, 特异度:{metrics['specificity']:.2%}", flush=True)
     return metrics
 
 
