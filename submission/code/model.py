@@ -3,7 +3,7 @@
 import torch.nn as nn
 from torchvision import models
 
-from utils import IMAGE_SIZE, MODEL_NAMES, RECIPE, load_train_data
+from utils import IMAGE_SIZE, MODEL_NAMES, MODEL_TRAINING, RECIPE, load_train_data
 
 
 # todo 1. 准备数据集。
@@ -25,15 +25,25 @@ class ImageModel(nn.Module):
         builders = {"resnet18": models.resnet18, "densenet121": models.densenet121,
                     "efficientnet_b0": models.efficientnet_b0,
                     "convnext_tiny": models.convnext_tiny}
-        self.network = LegacyCNN() if model_name == "wide5_slim" else builders[model_name](weights=None)
+        if model_name == "wide5_slim":
+            self.network = LegacyCNN()  # 课堂CNN结构和失活参数完全不变。
+        elif model_name == "efficientnet_b0":
+            self.network = builders[model_name](weights=None, dropout=MODEL_TRAINING[model_name]["dropout"])
+        elif model_name == "convnext_tiny":
+            self.network = builders[model_name](
+                weights=None, stochastic_depth_prob=MODEL_TRAINING[model_name]["stochastic_depth"])
+        else:
+            self.network = builders[model_name](weights=None)
         if model_name == "wide5_slim":
             pass  # 课堂模型自身已经输出两类logits。
         elif model_name == "resnet18":
             last = self.network.fc
-            self.network.fc = nn.Sequential(nn.Dropout(0.2), nn.Linear(last.in_features, 2))
+            self.network.fc = nn.Sequential(nn.Dropout(MODEL_TRAINING[model_name]["dropout"]),
+                                            nn.Linear(last.in_features, 2))
         elif model_name == "densenet121":
             last = self.network.classifier
-            self.network.classifier = nn.Sequential(nn.Dropout(0.2), nn.Linear(last.in_features, 2))
+            self.network.classifier = nn.Sequential(nn.Dropout(MODEL_TRAINING[model_name]["dropout"]),
+                                                    nn.Linear(last.in_features, 2))
         elif model_name == "efficientnet_b0":
             last = self.network.classifier[-1]
             self.network.classifier[-1] = nn.Linear(last.in_features, 2)

@@ -55,10 +55,11 @@ def evaluate(valid_dataset, models):
     print(f"开始验证: {len(valid_dataset)}张有标签图片", flush=True)
     labels, probabilities = collect_probabilities(valid_dataset, models, "valid")
     metrics = calculate_metrics(labels, probabilities)
-    print(f"Acc: {metrics['accuracy']:.4f}, AUROC: {metrics['auroc']:.6f}, "
+    print(f"AUROC: {metrics['auroc']:.6f}, "
           f"AUPRC(梯形): {metrics['auprc']:.6f}, AP: {metrics['ap']:.6f}", flush=True)
-    print(f"阳性召回率: {metrics['recall']:.2%}, 特异度: {metrics['specificity']:.2%}, "
-          f"TP:{metrics['tp']} TN:{metrics['tn']} FP:{metrics['fp']} FN:{metrics['fn']}", flush=True)
+    print(f"真实阳性:{metrics['tp'] + metrics['fn']}, 报对阳性:{metrics['tp']}, "
+          f"误报:{metrics['fp']}, 漏报:{metrics['fn']}, "
+          f"阳性召回率:{metrics['recall']:.2%}, 特异度:{metrics['specificity']:.2%}", flush=True)
     return metrics
 
 

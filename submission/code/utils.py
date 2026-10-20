@@ -9,6 +9,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from PIL import Image
 from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
 from torch.utils.data import Dataset
@@ -26,16 +28,38 @@ TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train",
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("wide5_slim", "resnet18", "densenet121", "efficientnet_b0", "convnext_tiny") # 模型名称
 IMAGE_SIZE, BATCH_SIZE = 64, 32 # 图像大小、批量大小
-# 【修改】五个模型的目标总轮数分别设置；已有检查点的已完成轮数不会重复训练。
-# 改某个数即可只追加该模型的训练；设0表示不再训练，但仍参加每次五模型验证。
-EPOCHS = {"wide5_slim": 30, "resnet18": 30, "densenet121": 30,
-          "efficientnet_b0": 30, "convnext_tiny": 30}
+# 【修改】每个模型拥有独立的训练参数；CNN保留原配方，其余四个从原30轮最佳参数续训。
+# epochs是累计目标轮数，设0表示不训练但仍验证；修改某一行不影响其他模型。
+# positive_share是整类阳性损失占比，不是阳性采样比例；不混用测试集伪标签。
+# focal_gamma=0表示原交叉熵；dropout仅用于模型已有分类头，ConvNeXt用stochastic_depth。
+MODEL_TRAINING = {
+    "wide5_slim":    dict(epochs=30, base_epochs=30, learning_rate=1e-4, finetune_lr=1e-4,
+                          min_lr=1e-6, weight_decay=1e-4, positive_share=0.25,
+                          focal_gamma=0.0, max_grad_norm=5.0, dropout=0.5,
+                          stochastic_depth=0.0),
+    "resnet18":      dict(epochs=38, base_epochs=30, learning_rate=8e-5, finetune_lr=3e-5,
+                          min_lr=1e-6, weight_decay=2e-4, positive_share=0.35,
+                          focal_gamma=1.0, max_grad_norm=3.0, dropout=0.30,
+                          stochastic_depth=0.0),
+    "densenet121":   dict(epochs=40, base_epochs=30, learning_rate=7e-5, finetune_lr=2e-5,
+                          min_lr=1e-6, weight_decay=3e-4, positive_share=0.40,
+                          focal_gamma=1.2, max_grad_norm=2.5, dropout=0.35,
+                          stochastic_depth=0.0),
+    "efficientnet_b0": dict(epochs=42, base_epochs=30, learning_rate=1.5e-4, finetune_lr=5e-5,
+                            min_lr=1e-6, weight_decay=1.5e-4, positive_share=0.45,
+                            focal_gamma=1.5, max_grad_norm=4.0, dropout=0.25,
+                            stochastic_depth=0.0),
+    "convnext_tiny": dict(epochs=42, base_epochs=30, learning_rate=5e-5, finetune_lr=4e-5,
+                          min_lr=1e-6, weight_decay=2.5e-4, positive_share=0.50,
+                          focal_gamma=2.0, max_grad_norm=1.0, dropout=0.0,
+                          stochastic_depth=0.20),
+}
+EPOCHS = {name: MODEL_TRAINING[name]["epochs"] for name in MODEL_NAMES}
 # 【修改】按单张图片的五个阳性概率从高到低排序后依次乘以以下占比。
 # 第1项对应最高概率，不固定对应某个模型；五项非负且总和必须为1。
 # 全部0.2时是五模型概率平均值；改动后仍以最终概率0.5判阳性。
 RANK_WEIGHTS = (0.5, 0.3, 0.2, 0, 0)
-LEARNING_RATE, MIN_LEARNING_RATE, WEIGHT_DECAY = 1e-4, 1e-6, 1e-4 # 学习率、最小学习率、权重衰减
-MAX_GRAD_NORM, CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 5.0, 8, 4, 25 # 最大梯度范数、CPU线程数、预测CPU线程数、日志间隔步
+CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25 # CPU线程数、预测CPU线程数、日志间隔步
 RECIPE = "official_rgb64_independent_five_rank_v1" # 新排序加权方案
 LEGACY_RECIPE = "official_rgb64_independent_five_median_v1" # 兼容已经训练好的旧pth
 
@@ -164,11 +188,24 @@ def rank_weighted_probabilities(*vectors):
 
 
 # 【来源】参考旧03的余弦学习率；每个独立模型按自身轮数计算。
-def get_learning_rate(epoch, total_epochs):
+def get_learning_rate(epoch, total_epochs, learning_rate=1e-4, min_learning_rate=1e-6):
     if not 1 <= epoch <= total_epochs:
         raise ValueError("epoch超出范围")
-    return MIN_LEARNING_RATE + (LEARNING_RATE - MIN_LEARNING_RATE) * (
+    return min_learning_rate + (learning_rate - min_learning_rate) * (
         1 + math.cos(math.pi * (epoch - 1) / max(total_epochs - 1, 1))) / 2
+
+
+# 【来源】参考Lin等人ICCV 2017 Focal Loss；仅用于非CNN分支，强化难例而不增模型参数。
+class FocalLoss(nn.Module):
+    def __init__(self, weights, gamma):
+        super().__init__()
+        self.register_buffer("weights", weights)
+        self.gamma = gamma
+
+    def forward(self, logits, targets):
+        ce = F.cross_entropy(logits, targets, reduction="none")
+        weights = self.weights[targets]
+        return (weights * (-torch.expm1(-ce)).pow(self.gamma) * ce).sum() / weights.sum()
 
 
 # 【来源】修改submission3单文件保存；分别保存五个单模最佳和整组最佳快照。

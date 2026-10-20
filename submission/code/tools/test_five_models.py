@@ -14,9 +14,10 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from model import ImageModel  # noqa: E402
-from predict import collect_probabilities, predict  # noqa: E402
-from train import is_better, train, training_order  # noqa: E402
-from utils import MODEL_NAMES, print_rank_weights, rank_weighted_probabilities, save_ensemble  # noqa: E402
+from predict import collect_probabilities, evaluate, predict  # noqa: E402
+from train import (create_criterion, get_model_learning_rate, is_better,
+                   print_training_profiles, train, training_order)  # noqa: E402
+from utils import EPOCHS, MODEL_NAMES, MODEL_TRAINING, print_rank_weights, rank_weighted_probabilities, save_ensemble  # noqa: E402
 
 
 class TinyDataset(torch.utils.data.Dataset):
@@ -49,6 +50,40 @@ class BrightnessModel(torch.nn.Module):
 
 
 class FiveModelTests(unittest.TestCase):
+    def test_four_models_have_independent_finetune_profiles(self):
+        self.assertEqual(EPOCHS["wide5_slim"], 30)
+        self.assertEqual(MODEL_TRAINING["wide5_slim"]["positive_share"], 0.25)
+        self.assertEqual(len({id(MODEL_TRAINING[name]) for name in MODEL_NAMES}), 5)
+        for name in MODEL_NAMES[1:]:
+            self.assertGreater(EPOCHS[name], 30)
+            self.assertGreater(MODEL_TRAINING[name]["positive_share"], 0.25)
+            self.assertAlmostEqual(get_model_learning_rate(name, 31),
+                                   MODEL_TRAINING[name]["finetune_lr"])
+
+    def test_training_start_prints_each_model_profile(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            print_training_profiles()
+        result = output.getvalue()
+        for name in MODEL_NAMES:
+            self.assertIn(name, result)
+        self.assertIn("梯度截断", result)
+        self.assertIn("阳性损失占比", result)
+
+    def test_four_model_criteria_are_separate_and_focus_hard_positives(self):
+        labels = [0] * 30 + [1]
+        cnn = create_criterion(labels, "wide5_slim")
+        resnet = create_criterion(labels, "resnet18")
+        densenet = create_criterion(labels, "densenet121")
+        self.assertIsNot(resnet, densenet)
+        logits = torch.tensor([[4.0, -4.0], [4.0, -4.0]], requires_grad=True)
+        targets = torch.tensor([0, 1])
+        loss = resnet(logits, targets)
+        self.assertTrue(torch.isfinite(loss))
+        self.assertGreater(loss.item(), cnn(logits.detach(), targets).item())
+        loss.backward()
+        self.assertTrue(torch.isfinite(logits.grad).all())
+
     def test_names_and_cnn_are_distinct(self):
         self.assertEqual(len(MODEL_NAMES), 5)
         self.assertIn("wide5_slim", MODEL_NAMES)
@@ -117,9 +152,24 @@ class FiveModelTests(unittest.TestCase):
                     predict(test_dir=test_dir, output_csv=output_csv)
             self.assertIn("开始验证", output.getvalue())
             self.assertLess(output.getvalue().index("开始验证"), output.getvalue().index("开始读取test"))
-            self.assertIn("Acc: 1.0000, AUROC: 1.000000", output.getvalue())
+            self.assertIn("AUROC: 1.000000", output.getvalue())
+            self.assertIn("真实阳性:1, 报对阳性:1, 误报:0, 漏报:0", output.getvalue())
+            self.assertNotIn("Acc:", output.getvalue())
             self.assertEqual(output_csv.read_text(encoding="utf-8").splitlines()[0],
                              "Image_name,Probability,Pred_Label")
+
+    def test_validation_prints_positive_counts_without_accuracy(self):
+        models = {MODEL_NAMES[0]: FixedModel([0.1, 0.9])}
+        output = StringIO()
+        with redirect_stdout(output):
+            evaluate(TinyDataset(), models)
+        result = output.getvalue()
+        self.assertIn("真实阳性:1", result)
+        self.assertIn("报对阳性:1", result)
+        self.assertIn("误报:0", result)
+        self.assertIn("漏报:0", result)
+        self.assertIn("AUROC: 1.000000", result)
+        self.assertNotIn("Acc:", result)
 
     def test_zero_round_skips_branch_and_rounds_interleave(self):
         rounds = dict.fromkeys(MODEL_NAMES, 2)
@@ -170,7 +220,8 @@ class FiveModelTests(unittest.TestCase):
                  patch("train.EPOCHS", {name: 1 for name in MODEL_NAMES}), \
                  patch("train.ImageModel", lambda name: torch.nn.Linear(1, 2)), \
                  patch("train.evaluate", fake_evaluate):
-                with redirect_stdout(StringIO()):
+                output = StringIO()
+                with redirect_stdout(output):
                     result = train(TinyDataset(), TinyDataset())
             checkpoint = torch.load(path / "model" / "best_model.pth",
                                     map_location="cpu", weights_only=True)
@@ -178,6 +229,10 @@ class FiveModelTests(unittest.TestCase):
             self.assertEqual(calls[5], MODEL_NAMES)
             self.assertEqual(calls[-1], MODEL_NAMES)
             self.assertEqual(result["auroc"], 0.7)
+            self.assertIn("真实阳性:", output.getvalue())
+            self.assertIn("误报:", output.getvalue())
+            self.assertNotIn("acc:", output.getvalue())
+            self.assertNotIn("Acc:", output.getvalue())
             self.assertTrue(checkpoint["complete"])
             self.assertEqual(len(checkpoint["individual_models"]), 5)
 

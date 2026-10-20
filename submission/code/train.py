@@ -17,8 +17,8 @@ from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
 from predict import evaluate
-from utils import (CPU_THREADS, EPOCHS, MAX_GRAD_NORM, MODEL_NAMES, MODEL_PATH,
-                   RANK_WEIGHTS, RECORD_DIR, RECIPE, WEIGHT_DECAY, get_learning_rate,
+from utils import (CPU_THREADS, EPOCHS, FocalLoss, MODEL_NAMES, MODEL_PATH, MODEL_TRAINING,
+                   RANK_WEIGHTS, RECORD_DIR, RECIPE, get_learning_rate,
                    load_ensemble, print_progress, print_rank_weights, save_ensemble, save_training_record)
 
 SEED, TRAIN_BATCH_SIZE = 0, 64
@@ -49,6 +49,18 @@ def print_device_info(device):
 DEVICE = choose_device()
 
 
+# 【来源】本项目自写；训练启动时逐行打印五套独立参数，便于核对续训配置。
+def print_training_profiles():
+    for name in MODEL_NAMES:
+        config = MODEL_TRAINING[name]
+        regularization = (f"dropout:{config['dropout']:.2f}" if name != "convnext_tiny" else
+                          f"随机深度:{config['stochastic_depth']:.2f}")
+        print(f"{name}: 目标轮次:{EPOCHS[name]}, 初训学习率:{config['learning_rate']:.2e}, "
+              f"续训学习率:{config['finetune_lr']:.2e}, 权重衰减:{config['weight_decay']:.2e}, "
+              f"阳性损失占比:{config['positive_share']:.2f}, focal γ:{config['focal_gamma']:.1f}, "
+              f"梯度截断:{config['max_grad_norm']:.1f}, {regularization}", flush=True)
+
+
 # 【来源】沿用submission3；只凭验证AUROC严格提高来更新参数。
 def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
@@ -69,42 +81,69 @@ def create_train_loader(train_dataset):
                       pin_memory=DEVICE.type == "cuda")
 
 
-# 【来源】沿用submission3等效类别加权；不抽样，仍使用训练全集。
-def create_class_weights(labels):
+# 【来源】修改submission3类别加权；每个模型单独设置阳性损失占比，仍遍历训练全集。
+def create_class_weights(labels, name):
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=2)
     if torch.any(counts == 0):
         raise ValueError("训练集必须同时包含0和1")
-    return torch.tensor([0.75 / counts[0], 0.25 / counts[1]], dtype=torch.float32)
+    positive_share = MODEL_TRAINING[name]["positive_share"]
+    return torch.tensor([(1 - positive_share) / counts[0], positive_share / counts[1]],
+                        dtype=torch.float32)
+
+
+# 【来源】CNN沿用原交叉熵；四个非CNN模型依各自gamma使用Focal Loss，不共用损失对象。
+def create_criterion(labels, name):
+    weights = create_class_weights(labels, name).to(DEVICE)
+    gamma = MODEL_TRAINING[name]["focal_gamma"]
+    return nn.CrossEntropyLoss(weight=weights) if gamma == 0 else FocalLoss(weights, gamma)
+
+
+# 【来源】原余弦学习率；各模型独立设置初训及30轮后续训的起点、目标轮数。
+def get_model_learning_rate(name, epoch):
+    config = MODEL_TRAINING[name]
+    base_epochs = config["base_epochs"]
+    if epoch <= base_epochs:
+        return get_learning_rate(epoch, base_epochs, config["learning_rate"], config["min_lr"])
+    return get_learning_rate(epoch - base_epochs, EPOCHS[name] - base_epochs,
+                             config["finetune_lr"], config["min_lr"])
 
 
 # 【来源】复用课堂CNN交叉熵前向/反向/更新；只更新当前网络。
-def train_step(model, x, y, optimizer, criterion):
+def train_step(model, x, y, optimizer, criterion, max_grad_norm):
     model.train()
     y_pred = model(x)
     loss = criterion(y_pred, y)
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
-    nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM, error_if_nonfinite=True)
+    nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm, error_if_nonfinite=True)
     optimizer.step()
-    return loss.item(), int((torch.argmax(y_pred, dim=1) == y).sum().item())
+    predicted_positive = torch.argmax(y_pred, dim=1) == 1
+    return (loss.item(), int((y == 1).sum().item()),
+            int((predicted_positive & (y == 1)).sum().item()),
+            int((predicted_positive & (y == 0)).sum().item()))
 
 
 # 【来源】修改submission3单模型循环；训练全集一轮，再验证并更新本模型最佳。
 def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, criterion, best_metrics):
-    lr = get_learning_rate(epoch, EPOCHS[name])
+    lr = get_model_learning_rate(name, epoch)
     optimizer.param_groups[0]["lr"] = lr
-    total_loss, total_correct, total_samples, start = 0.0, 0, 0, time.time()
+    total_loss, total_positive, total_tp, total_fp, total_samples, start = 0.0, 0, 0, 0, 0, time.time()
     print(f"开始训练 {name} epoch: {epoch}/{EPOCHS[name]}, lr:{lr:.2e}", flush=True)
     for batch_idx, (x, y) in enumerate(loader, 1):
         x, y = x.to(DEVICE, non_blocking=True), y.to(DEVICE, non_blocking=True)
-        loss, correct = train_step(model, x, y, optimizer, criterion)
+        loss, positives, tp, fp = train_step(
+            model, x, y, optimizer, criterion, MODEL_TRAINING[name]["max_grad_norm"])
         total_loss += loss * len(y)
-        total_correct += correct
+        total_positive += positives
+        total_tp += tp
+        total_fp += fp
         total_samples += len(y)
         print_progress(f"{name} epoch: {epoch}/{EPOCHS[name]}", batch_idx, len(loader), start,
-                       f", loss:{total_loss / total_samples:.5f}, acc:{total_correct / total_samples:.4f}")
+                       f", loss:{total_loss / total_samples:.5f}, 真实阳性:{total_positive}, "
+                       f"报对阳性:{total_tp}, 误报:{total_fp}")
     print(f"epoch: {epoch}, loss: {total_loss / total_samples:.5f}, "
-          f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True)
+          f"真实阳性:{total_positive}, 报对阳性:{total_tp}, 误报:{total_fp}, "
+          f"time:{time.time() - start:.2f}s", flush=True)
     metrics = evaluate(valid_dataset, {name: model})
     if is_better(metrics, best_metrics.get(name)):
         best_metrics[name] = metrics
@@ -113,7 +152,8 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
     else:
         print(f"未超过{name}独立最佳AUROC:{best_metrics[name]['auroc']:.6f}", flush=True)
     return {"model": name, "epoch": epoch, "train_loss": total_loss / total_samples,
-            "train_accuracy": total_correct / total_samples, "learning_rate": lr, **metrics}
+            "train_positives": total_positive, "train_tp": total_tp, "train_fp": total_fp,
+            "learning_rate": lr, **metrics}
 
 
 # todo 3. 五模型训练；第一轮前验证基线；每轮五模型训练后联合验证。
@@ -166,13 +206,15 @@ def train(train_dataset, valid_dataset):
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
                   best_metrics, completed_epochs=completed)
     loaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
-    optimizers = {name: optim.AdamW(models[name].parameters(), weight_decay=WEIGHT_DECAY)
+    optimizers = {name: optim.AdamW(models[name].parameters(),
+                                   weight_decay=MODEL_TRAINING[name]["weight_decay"])
                   for name in MODEL_NAMES if EPOCHS[name] > 0}
-    criterion = nn.CrossEntropyLoss(weight=create_class_weights(train_dataset.labels).to(DEVICE))
+    criteria = {name: create_criterion(train_dataset.labels, name) for name in MODEL_NAMES
+                if EPOCHS[name] > 0}
     for epoch, jobs in groupby(training_order(EPOCHS, completed), key=lambda item: item[0]):
         for _, name in jobs:
             history.append(train_one(name, epoch, models[name], best_models[name], loaders[name],
-                                     valid_dataset, optimizers[name], criterion, best_metrics))
+                                     valid_dataset, optimizers[name], criteria[name], best_metrics))
             completed[name] = epoch
         print(f"第{epoch}轮五模型联合验证:", flush=True)
         combined = evaluate(valid_dataset, models)
@@ -189,6 +231,7 @@ def train(train_dataset, valid_dataset):
                              {"recipe": RECIPE, "best_metrics": best_metrics,
                               "combined_validation": ensemble_best, "last_epoch": epoch,
                               "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
+                              "model_training": MODEL_TRAINING,
                               "complete": False})
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
                   best_metrics, epoch=max(completed.values(), default=0),
@@ -200,6 +243,7 @@ def train(train_dataset, valid_dataset):
                          {"recipe": RECIPE, "best_metrics": best_metrics,
                           "combined_validation": ensemble_best,
                           "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
+                          "model_training": MODEL_TRAINING,
                           "model_file": str(MODEL_PATH), "complete": True})
     print(f"训练结束, 最佳联合AUROC:{ensemble_best['auroc']:.6f}, "
           f"AUPRC:{ensemble_best['auprc']:.6f}, "
@@ -213,5 +257,6 @@ def train(train_dataset, valid_dataset):
 if __name__ == "__main__":
     print_device_info(DEVICE)
     print_rank_weights()
+    print_training_profiles()
     print("正在读取glaucoma_first的训练集和官方验证集...", flush=True)
     train(*create_dataset())
