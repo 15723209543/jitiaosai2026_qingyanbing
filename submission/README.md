@@ -1,6 +1,6 @@
 # 五模型方案
 
-本目录在 v1.7.6 中更名为 `submission/`。`code/` 只保留模型、训练、预测、工具及 `tools/` 行为检查，不再有 `tests/` 文件夹；`model/best_model.pth` 是单文件五模型参数；`results/submission.csv` 仅由 `code/predict.py` 生成。
+本目录在 v1.7.6 中更名为 `submission/`。`code/` 只保留 `model.py`、`train.py`、`predict.py`、`utils.py` 四份代码及非代码依赖表 `requirements.txt`；`model/best_model.pth` 是单文件五模型参数；`results/submission.csv` 仅由 `code/predict.py` 生成。
 
 五个模型分别按自己的 `EPOCHS` 训练；目标轮数为 0 或已完成目标轮数的模型不再训练，但仍参加每轮验证。每个模型的独立最佳和整组最佳都按官方有标签验证集 AUROC 严格提高更新。训练前打印实际 CPU/GPU 和五个排序占比，并先验证现有参数的基线；训练不读取无标签测试集、不写提交 CSV。
 

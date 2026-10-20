@@ -1,6 +1,6 @@
 # 2026 青光眼眼底图像二分类
 
-当前源码版本：v1.8.5（待用户续训验证）。活动方案只有 `submission/`：五个模型分别训练、分别按官方验证集 AUROC 保存独立最佳；每轮还用五模型联合预测的 AUROC 保存整组最佳。两个快照都装在同一份 `submission/model/best_model.pth` 中。现有 `.pth` 与 CSV 未被本次代码修改覆盖，新参数是否提分尚未实测。
+当前源码版本：v1.8.6（待用户续训验证）。活动方案只有 `submission/`：五个模型分别训练、分别按官方验证集 AUROC 保存独立最佳；每轮还用五模型联合预测的 AUROC 保存整组最佳。两个快照都装在同一份 `submission/model/best_model.pth` 中。现有 `.pth` 与 CSV 未被本次代码修改覆盖，新参数是否提分尚未实测。
 
 五个模型为旧五层 CNN、ResNet-18、DenseNet-121、EfficientNet-B0、ConvNeXt-Tiny。对每张图片的五个阳性概率降序排列后，依次乘以 `submission/code/utils.py` 中的 `RANK_WEIGHTS`，加总得到最终阳性概率；当前占比以该文件和运行开始时的终端打印为准，最终概率不低于 0.5 时输出阳性。训练阶段的整组验证、最终验证和单独预测调用同一加权函数；各分支的梯度更新仍使用自己的交叉熵损失。
 
@@ -12,7 +12,6 @@
 | `submission/code/train.py` | 单独训练与验证，不生成提交 CSV |
 | `submission/code/predict.py` | 读取最佳整组快照并生成提交 CSV |
 | `submission/code/utils.py` | 数据、指标、参数保存、排序占比、CSV 工具；调整轮数与占比在此文件 |
-| `submission/code/tools/test_five_models.py` | 不使用比赛图片的快速行为测试；`code/` 下不再有 `tests` 文件夹 |
 | `submission/model/best_model.pth` | 一份五模型参数文件；请勿手动删除或覆盖 |
 | `submission/results/submission.csv` | 单独运行预测脚本后生成，提交前核对 |
 | `glaucoma_first/` | 官方训练、验证、测试数据，仅保留本地，不进入 Git |
