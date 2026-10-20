@@ -1,4 +1,10 @@
-"""课堂CNN的todo1/todo2：定义五个分别训练的卷积神经网络。"""
+"""课堂CNN的todo1/todo2：定义五个分别训练的卷积神经网络。
+
+本文件只写网络的创建与前向传播。数据读取、损失和参数更新分属
+utils.py、train.py，验证和测试分属predict.py；行数不是网络深度。
+后四个完整网络由torchvision实现，本文件只选结构并替换二分类头。
+保持现有层名和形状，才能继续读取已经训练好的单文件五模型参数。
+"""
 
 import torch.nn as nn
 from torchvision import models
@@ -14,7 +20,8 @@ def create_dataset():
 
 # todo 2. 搭建(卷积)神经网络。
 class ImageModel(nn.Module):
-    # 【来源】复用submission3三模型；修改：加入课堂wide5_slim和ConvNeXt-Tiny。
+    # 【来源】复用submission3三模型；加入课堂wide5_slim和ConvNeXt-Tiny。
+    # 后四个builders返回的是完整网络，不是四个简单的占位分类器。
     def __init__(self, model_name, image_size=IMAGE_SIZE):
         super().__init__()
         if model_name not in MODEL_NAMES:
@@ -22,6 +29,8 @@ class ImageModel(nn.Module):
         self.model_name = model_name
         self.model_config = {"model_name": model_name, "image_size": image_size, "recipe": RECIPE}
         # 只使用结构，禁止下载外部预训练权重。
+        # ResNet残差连接、DenseNet稠密连接、EfficientNet复合缩放、ConvNeXt卷积块
+        # 均在torchvision内部定义；weights=None明确不下载预训练参数。
         builders = {"resnet18": models.resnet18, "densenet121": models.densenet121,
                     "efficientnet_b0": models.efficientnet_b0,
                     "convnext_tiny": models.convnext_tiny}
@@ -34,9 +43,8 @@ class ImageModel(nn.Module):
                 weights=None, stochastic_depth_prob=MODEL_TRAINING[model_name]["stochastic_depth"])
         else:
             self.network = builders[model_name](weights=None)
-        if model_name == "wide5_slim":
-            pass  # 课堂模型自身已经输出两类logits。
-        elif model_name == "resnet18":
+        # 课堂CNN自己的classifier已输出两类logits，无须替换。
+        if model_name == "resnet18":
             last = self.network.fc
             self.network.fc = nn.Sequential(nn.Dropout(MODEL_TRAINING[model_name]["dropout"]),
                                             nn.Linear(last.in_features, 2))
@@ -58,6 +66,8 @@ class ImageModel(nn.Module):
 
 # 【来源】逐层复用旧submission v1.5.1 的 wide5_slim 五层CNN；保留原参数键名以载入旧权重。
 class LegacyCNN(nn.Module):
+    # 【来源】原五层CNN的卷积、池化、激活、失活和分类头原样保留。
+    # 这里的5层指conv1~conv5；其余四个网络的层数在torchvision中。
     def __init__(self, negative_slope=0.01, conv_dropout=0.1, dropout=0.5):
         super().__init__()
         self.activation = nn.LeakyReLU(negative_slope) if negative_slope else nn.ReLU()
@@ -95,3 +105,4 @@ if __name__ == "__main__":
         print("模型:", name)
         print(model)
         print("Total params:", sum(p.numel() for p in model.parameters()))
+        print("Trainable params:", sum(p.numel() for p in model.parameters() if p.requires_grad))

@@ -16,10 +16,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
-from predict import evaluate
+from predict import collect_probabilities, evaluate
 from utils import (CPU_THREADS, EPOCHS, FocalLoss, MODEL_NAMES, MODEL_PATH, MODEL_TRAINING,
-                   RANK_WEIGHTS, RECORD_DIR, RECIPE, get_learning_rate,
-                   load_ensemble, print_progress, print_rank_weights, save_ensemble, save_training_record)
+                   RANK_WEIGHTS, RECORD_DIR, RECIPE, calculate_metrics, get_learning_rate,
+                   load_ensemble, print_progress, print_rank_weights, save_ensemble,
+                   rank_weighted_probabilities, save_training_record, tune_rank_weights)
 
 SEED, TRAIN_BATCH_SIZE = 0, 64
 
@@ -49,14 +50,14 @@ def print_device_info(device):
 DEVICE = choose_device()
 
 
-# 【来源】本项目自写；训练启动时逐行打印五套独立参数，便于核对续训配置。
+# 【来源】本项目自写；训练启动时逐行打印五套独立参数，便于核对本次轮数。
 def print_training_profiles():
     for name in MODEL_NAMES:
         config = MODEL_TRAINING[name]
         regularization = (f"dropout:{config['dropout']:.2f}" if name != "convnext_tiny" else
                           f"随机深度:{config['stochastic_depth']:.2f}")
-        print(f"{name}: 目标轮次:{EPOCHS[name]}, 初训学习率:{config['learning_rate']:.2e}, "
-              f"续训学习率:{config['finetune_lr']:.2e}, 权重衰减:{config['weight_decay']:.2e}, "
+        print(f"{name}: 本次轮数:{EPOCHS[name]}, 学习率:{config['learning_rate']:.2e}, "
+              f"权重衰减:{config['weight_decay']:.2e}, "
               f"阳性损失占比:{config['positive_share']:.2f}, focal γ:{config['focal_gamma']:.1f}, "
               f"梯度截断:{config['max_grad_norm']:.1f}, {regularization}", flush=True)
 
@@ -66,12 +67,12 @@ def is_better(candidate, previous):
     return previous is None or candidate["auroc"] > previous["auroc"]
 
 
-# 【来源】修改submission3训练顺序；每个模型累计轮数独立，已完成者不再训练。
+# 【来源】修改submission3训练顺序；本次运行从第0轮开始，各模型轮数独立。
 def training_order(rounds_by_model, completed_epochs=None):
     completed_epochs = completed_epochs or {}
-    for epoch in range(1, max(rounds_by_model.values(), default=0) + 1):
+    for epoch in range(max(rounds_by_model.values(), default=0)):
         for name in MODEL_NAMES:
-            if completed_epochs.get(name, 0) < epoch <= rounds_by_model[name]:
+            if completed_epochs.get(name, 0) <= epoch < rounds_by_model[name]:
                 yield epoch, name
 
 
@@ -98,14 +99,10 @@ def create_criterion(labels, name):
     return nn.CrossEntropyLoss(weight=weights) if gamma == 0 else FocalLoss(weights, gamma)
 
 
-# 【来源】原余弦学习率；各模型独立设置初训及30轮后续训的起点、目标轮数。
+# 【来源】原余弦学习率；本次每个模型从第0轮开始单独调度。
 def get_model_learning_rate(name, epoch):
     config = MODEL_TRAINING[name]
-    base_epochs = config["base_epochs"]
-    if epoch <= base_epochs:
-        return get_learning_rate(epoch, base_epochs, config["learning_rate"], config["min_lr"])
-    return get_learning_rate(epoch - base_epochs, EPOCHS[name] - base_epochs,
-                             config["finetune_lr"], config["min_lr"])
+    return get_learning_rate(epoch + 1, EPOCHS[name], config["learning_rate"], config["min_lr"])
 
 
 # 【来源】复用课堂CNN交叉熵前向/反向/更新；只更新当前网络。
@@ -173,28 +170,28 @@ def train(train_dataset, valid_dataset):
     torch.set_num_threads(CPU_THREADS)
     run_dir = RECORD_DIR / (datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_five_models")
     run_dir.mkdir(parents=True, exist_ok=False)
-    history = []
+    history, rank_history = [], []
     if MODEL_PATH.is_file():
         best_models, checkpoint = load_ensemble(MODEL_PATH, "individual")
         ensemble_models, _ = load_ensemble(MODEL_PATH, "ensemble")
         models = copy.deepcopy(best_models)
         best_metrics = dict(checkpoint["best_metrics"])
-        completed = dict(checkpoint.get("completed_epochs") or
-                         {name: checkpoint.get("epoch", 0) for name in MODEL_NAMES})
-        old_weights = tuple(checkpoint.get("rank_weights", ()))
-        ensemble_best = checkpoint.get("validation") if old_weights == tuple(RANK_WEIGHTS) else None
-        print("从已有单文件五模型参数继续训练。", flush=True)
+        best_weights = tuple(checkpoint.get("rank_weights", RANK_WEIGHTS))
+        ensemble_best = None  # 旧快照的指标先用当前官方验证集复核。
+        print("读取已有五模型参数；本次训练轮次从0重新计数。", flush=True)
     else:
         models = {name: ImageModel(name) for name in MODEL_NAMES}
         print("未找到五模型参数，五个分支从随机参数开始；不使用外部预训练权重。", flush=True)
         best_models, ensemble_models = copy.deepcopy(models), copy.deepcopy(models)
         best_metrics, ensemble_best = {}, None
-        completed = {name: 0 for name in MODEL_NAMES}
+        best_weights = tuple(RANK_WEIGHTS)
+    completed = {name: 0 for name in MODEL_NAMES}
     for model in models.values():
         model.to(DEVICE)
     print("并行预读取完整训练集与验证集图片...", flush=True)
     train_dataset.preload()
     valid_dataset.preload()
+    weight_dataset = train_dataset.evaluation_view()
     print(f"训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
           f"每轮{len(create_train_loader(train_dataset))}批, CPU线程:{CPU_THREADS}", flush=True)
     print("训练前依次验证五个模型的基线。", flush=True)
@@ -204,17 +201,22 @@ def train(train_dataset, valid_dataset):
         if is_better(metrics, best_metrics.get(name)):
             best_metrics[name] = metrics
             best_models[name].load_state_dict(models[name].state_dict())
-    if MODEL_PATH.is_file() and ensemble_best is None:
-        print("排序权重已改变，重新验证旧整组快照作为基线。", flush=True)
-        ensemble_best = evaluate(valid_dataset, ensemble_models, show_counts=False)
+    if MODEL_PATH.is_file():
+        print("旧参数保存的排序占比:", flush=True)
+        print_rank_weights(best_weights)
+        print("验证旧整组快照及其原有排序占比。", flush=True)
+        ensemble_best = evaluate(valid_dataset, ensemble_models, show_counts=False,
+                                 weights=best_weights)
     print("训练前五模型联合验证。", flush=True)
-    baseline = evaluate(valid_dataset, models, show_counts=False)
+    baseline = evaluate(valid_dataset, models, show_counts=False, weights=RANK_WEIGHTS)
+    print_rank_weights(RANK_WEIGHTS)
+    print(f"初始占比验证AUROC:{baseline['auroc']:.6f}", flush=True)
     if is_better(baseline, ensemble_best):
-        ensemble_best = baseline
+        ensemble_best, best_weights = baseline, tuple(RANK_WEIGHTS)
         for name in MODEL_NAMES:
             ensemble_models[name].load_state_dict(models[name].state_dict())
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
-                  best_metrics, completed_epochs=completed)
+                  best_metrics, completed_epochs=completed, rank_weights=best_weights)
     loaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
     optimizers = {name: optim.AdamW(models[name].parameters(),
                                    weight_decay=MODEL_TRAINING[name]["weight_decay"])
@@ -225,34 +227,58 @@ def train(train_dataset, valid_dataset):
         for _, name in jobs:
             history.append(train_one(name, epoch, models[name], best_models[name], loaders[name],
                                      valid_dataset, optimizers[name], criteria[name], best_metrics))
-            completed[name] = epoch
+            completed[name] = epoch + 1
+        # 【修改】五模型共同预测训练全集，用真实训练标签只调整排序占比，不再反向更新单模参数。
+        print(f"第{epoch}轮五模型训练排序占比: {len(weight_dataset)}张训练图片", flush=True)
+        train_labels, _, train_scores = collect_probabilities(
+            weight_dataset, models, "weight_train", weights=best_weights,
+            return_scores=True, show_progress=False)
+        candidate_weights, rank_train_metrics = tune_rank_weights(train_labels, train_scores,
+                                                                  best_weights)
+        print(f"排序占比训练AUROC:{rank_train_metrics['auroc']:.6f}", flush=True)
         print(f"第{epoch}轮五模型联合验证:", flush=True)
-        combined = evaluate(valid_dataset, models, show_counts=False)
-        if is_better(combined, ensemble_best):
-            ensemble_best = combined
+        labels, _, scores = collect_probabilities(valid_dataset, models, "valid",
+                                                  weights=candidate_weights, return_scores=True)
+        combined = calculate_metrics(labels, rank_weighted_probabilities(
+            *(scores[name] for name in MODEL_NAMES), weights=candidate_weights))
+        print_rank_weights(candidate_weights)
+        print(f"验证AUROC:{combined['auroc']:.6f}, AUPRC:{combined['auprc']:.6f}, "
+              f"真实阳性:{combined['tp'] + combined['fn']}, 报对阳性:{combined['tp']}, "
+              f"误报:{combined['fp']}, 漏报:{combined['fn']}", flush=True)
+        accepted = is_better(combined, ensemble_best)
+        rank_history.append({"epoch": epoch, "candidate_weights": candidate_weights,
+                             "train_auroc": rank_train_metrics["auroc"],
+                             "valid_auroc": combined["auroc"], "accepted": accepted})
+        if accepted:
+            ensemble_best, best_weights = combined, candidate_weights
             for name in MODEL_NAMES:
                 ensemble_models[name].load_state_dict(models[name].state_dict())
             print(f"已更新整组最佳, 验证AUROC:{combined['auroc']:.6f}", flush=True)
         else:
             print(f"未超过整组最佳AUROC:{ensemble_best['auroc']:.6f}", flush=True)
+        print("本轮结束后保留的五个排序占比:", flush=True)
+        print_rank_weights(best_weights)
         save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
-                      best_metrics, epoch=epoch, completed_epochs=completed)
+                      best_metrics, epoch=epoch, completed_epochs=completed,
+                      rank_weights=best_weights)
         save_training_record(run_dir, history,
                              {"recipe": RECIPE, "best_metrics": best_metrics,
                               "combined_validation": ensemble_best, "last_epoch": epoch,
-                              "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
+                              "completed_epochs": completed, "rank_weights": best_weights,
+                              "rank_history": rank_history,
                               "model_training": MODEL_TRAINING,
                               "complete": False})
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
-                  best_metrics, epoch=max(completed.values(), default=0),
-                  complete=True, completed_epochs=completed)
+                  best_metrics, epoch=max(max(completed.values(), default=0) - 1, 0),
+                  complete=True, completed_epochs=completed, rank_weights=best_weights)
     size = MODEL_PATH.stat().st_size
     if size > 500_000_000:
         raise ValueError(f"五模型权重{size / 1_000_000:.1f}MB超过500MB限制")
     save_training_record(run_dir, history,
                          {"recipe": RECIPE, "best_metrics": best_metrics,
                           "combined_validation": ensemble_best,
-                          "completed_epochs": completed, "rank_weights": RANK_WEIGHTS,
+                          "completed_epochs": completed, "rank_weights": best_weights,
+                          "rank_history": rank_history,
                           "model_training": MODEL_TRAINING,
                           "model_file": str(MODEL_PATH), "complete": True})
     print(f"训练结束, 最佳联合AUROC:{ensemble_best['auroc']:.6f}, "
@@ -261,6 +287,7 @@ def train(train_dataset, valid_dataset):
           f"报对阳性:{ensemble_best['tp']}, 误报:{ensemble_best['fp']}, "
           f"漏报:{ensemble_best['fn']}, "
           f"参数大小:{size / 1_000_000:.1f}MB", flush=True)
+    print_rank_weights(best_weights)
     print("训练不会写答案；需要提交CSV时单独运行predict.py。", flush=True)
     return ensemble_best
 

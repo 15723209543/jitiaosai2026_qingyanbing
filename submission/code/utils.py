@@ -28,28 +28,38 @@ TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train",
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("wide5_slim", "resnet18", "densenet121", "efficientnet_b0", "convnext_tiny") # 模型名称
 IMAGE_SIZE, BATCH_SIZE = 64, 32 # 图像大小、批量大小
-# 【修改】每个模型拥有独立的训练参数；CNN保留原配方，其余四个从原30轮最佳参数续训。
-# epochs是累计目标轮数，设0表示不训练但仍验证；修改某一行不影响其他模型。
+# 【修改】每次点击train.py都从本次第0轮计数；可读取旧权重，但不继承旧轮次。
+# epochs是本次运行要训练的轮数，设0表示不训练但仍验证；各模型独立修改。
 # positive_share是整类阳性损失占比，不是阳性采样比例；不混用测试集伪标签。
 # focal_gamma=0表示原交叉熵；dropout仅用于模型已有分类头，ConvNeXt用stochastic_depth。
+# 下面每一个参数的说明：
+# epochs：本次训练轮数，从0开始计数，不叠加旧检查点的轮次。
+# learning_rate：本次起始学习率；若加载旧权重，沿用较小的微调学习率。
+# min_lr：本次余弦调度的最小学习率。
+# weight_decay：权重衰减。
+# positive_share：整类阳性损失占比，不是阳性采样比例；不混用测试集伪标签。
+# focal_gamma：Focal Loss的gamma参数。
+# max_grad_norm：梯度裁剪。
+# dropout：部分失活比例。
+# stochastic_depth：ConvNeXt的stochastic depth参数。
 MODEL_TRAINING = {
-    "wide5_slim":    dict(epochs=30, base_epochs=30, learning_rate=1e-4, finetune_lr=1e-4,
-                          min_lr=1e-6, weight_decay=1e-4, positive_share=0.25,
-                          focal_gamma=0.0, max_grad_norm=5.0, dropout=0.5,
-                          stochastic_depth=0.0),
-    "resnet18":      dict(epochs=38, base_epochs=30, learning_rate=8e-5, finetune_lr=3e-5,
+    "wide5_slim": dict(epochs=4, learning_rate=1e-4,
+                       min_lr=1e-6, weight_decay=1e-4, positive_share=0.25,
+                       focal_gamma=0.0, max_grad_norm=5.0, dropout=0.5,
+                       stochastic_depth=0.0),
+    "resnet18":      dict(epochs=8, learning_rate=3e-5,
                           min_lr=1e-6, weight_decay=2e-4, positive_share=0.35,
                           focal_gamma=1.0, max_grad_norm=3.0, dropout=0.30,
                           stochastic_depth=0.0),
-    "densenet121":   dict(epochs=40, base_epochs=30, learning_rate=7e-5, finetune_lr=2e-5,
+    "densenet121":   dict(epochs=10, learning_rate=2e-5,
                           min_lr=1e-6, weight_decay=3e-4, positive_share=0.40,
                           focal_gamma=1.2, max_grad_norm=2.5, dropout=0.35,
                           stochastic_depth=0.0),
-    "efficientnet_b0": dict(epochs=42, base_epochs=30, learning_rate=1.5e-4, finetune_lr=5e-5,
+    "efficientnet_b0": dict(epochs=12, learning_rate=5e-5,
                             min_lr=1e-6, weight_decay=1.5e-4, positive_share=0.45,
                             focal_gamma=1.5, max_grad_norm=4.0, dropout=0.25,
                             stochastic_depth=0.0),
-    "convnext_tiny": dict(epochs=42, base_epochs=30, learning_rate=5e-5, finetune_lr=4e-5,
+    "convnext_tiny": dict(epochs=12, learning_rate=4e-5,
                           min_lr=1e-6, weight_decay=2.5e-4, positive_share=0.50,
                           focal_gamma=2.0, max_grad_norm=1.0, dropout=0.0,
                           stochastic_depth=0.20),
@@ -59,14 +69,15 @@ EPOCHS = {name: MODEL_TRAINING[name]["epochs"] for name in MODEL_NAMES}
 # 第1项对应最高概率，不固定对应某个模型；五项非负且总和必须为1。
 # 全部0.2时是五模型概率平均值；改动后仍以最终概率0.5判阳性。
 RANK_WEIGHTS = (0.5, 0.3, 0.2, 0, 0)
+RANK_STEP = 0.05 # 每轮用训练集最多移动5个百分点；只用官方有标签验证集验收。
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25 # CPU线程数、预测CPU线程数、日志间隔步
 RECIPE = "official_rgb64_independent_five_rank_v1" # 新排序加权方案
 LEGACY_RECIPE = "official_rgb64_independent_five_median_v1" # 兼容已经训练好的旧pth
 
 
 # 【来源】本项目自写；训练和预测开始前打印当前五个排序占比，便于核对配置。
-def print_rank_weights():
-    print("五模型排序权重（阳性概率从高到低）:", ", ".join(str(value) for value in RANK_WEIGHTS),
+def print_rank_weights(weights=RANK_WEIGHTS):
+    print("五模型排序权重（阳性概率从高到低）:", ", ".join(str(value) for value in weights),
           flush=True)
 
 
@@ -116,6 +127,14 @@ class ImageDataset(Dataset):
         if self.labels is None:
             return x
         return x, torch.tensor(int(self.labels[index]), dtype=torch.long)
+
+    # 【来源】本项目自写；排序占比训练复用已解码图片，但关闭随机增强以稳定估计概率。
+    def evaluation_view(self):
+        if self.labels is None:
+            raise ValueError("无标签图片不能用于训练排序占比")
+        view = ImageDataset(self.image_paths, self.labels, training=False)
+        view.cache = self.cache
+        return view
 
 
 # 【来源】沿用旧03的官方CSV读取工具；保证验证集、无标签测试集互不混用。
@@ -177,17 +196,42 @@ def calculate_metrics(labels, probabilities):
 
 
 # 【来源】修改原五模型中位数；每张图先排序概率，再按RANK_WEIGHTS加权求和。
-def rank_weighted_probabilities(*vectors):
+def rank_weighted_probabilities(*vectors, weights=None):
     if len(vectors) != 5 or len({len(vector) for vector in vectors}) != 1:
         raise ValueError("必须提供五个长度相同的概率向量")
     values = np.asarray(vectors, dtype=float)
     if not np.isfinite(values).all() or not ((values >= 0) & (values <= 1)).all():
         raise ValueError("概率必须有限且在0到1之间")
-    weights = np.asarray(RANK_WEIGHTS, dtype=float)
+    weights = np.asarray(RANK_WEIGHTS if weights is None else weights, dtype=float)
     if (weights.shape != (5,) or not np.isfinite(weights).all() or
             (weights < 0).any() or not np.isclose(weights.sum(), 1.0, rtol=0, atol=1e-9)):
         raise ValueError("RANK_WEIGHTS必须是五个非负占比，且总和为1")
     return (weights @ np.sort(values, axis=0)[::-1]).tolist()
+
+
+# 【来源】本项目自写；在官方训练集预测上调整排序占比，验证集只负责验收。
+def tune_rank_weights(labels, scores, weights):
+    weights = tuple(float(value) for value in weights)
+    best_metrics = calculate_metrics(labels, rank_weighted_probabilities(*scores, weights=weights))
+    best_weights = weights
+    for source in range(5):
+        if weights[source] + 1e-9 < RANK_STEP:
+            continue
+        for target in range(5):
+            if source == target:
+                continue
+            candidate = list(weights)
+            candidate[source] -= RANK_STEP
+            candidate[target] += RANK_STEP
+            if any(candidate[index] + 1e-9 < candidate[index + 1] for index in range(4)):
+                continue  # 保持最高概率对应最高占比。
+            candidate = tuple(round(value, 10) for value in candidate)
+            metrics = calculate_metrics(labels, rank_weighted_probabilities(*scores, weights=candidate))
+            if (metrics["auroc"] > best_metrics["auroc"] + 1e-9 or
+                    (abs(metrics["auroc"] - best_metrics["auroc"]) <= 1e-9 and
+                     metrics["fp"] + metrics["fn"] < best_metrics["fp"] + best_metrics["fn"])):
+                best_weights, best_metrics = candidate, metrics
+    return best_weights, best_metrics
 
 
 # 【来源】参考旧03的余弦学习率；每个独立模型按自身轮数计算。
@@ -213,7 +257,8 @@ class FocalLoss(nn.Module):
 
 # 【来源】修改submission3单文件保存；分别保存五个单模最佳和整组最佳快照。
 def save_ensemble(individual_models, ensemble_models, path, validation,
-                  best_metrics=None, epoch=0, complete=False, completed_epochs=None):
+                  best_metrics=None, epoch=0, complete=False, completed_epochs=None,
+                  rank_weights=None):
     if set(individual_models) != set(MODEL_NAMES) or set(ensemble_models) != set(MODEL_NAMES):
         raise ValueError("必须恰好包含五种指定模型")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -222,7 +267,7 @@ def save_ensemble(individual_models, ensemble_models, path, validation,
                 "ensemble_models": {name: ensemble_models[name].state_dict() for name in MODEL_NAMES},
                 "model_names": MODEL_NAMES, "image_size": IMAGE_SIZE, "recipe": RECIPE,
                 "best_metrics": best_metrics or {}, "validation": validation,
-                "rank_weights": RANK_WEIGHTS,
+                "rank_weights": tuple(RANK_WEIGHTS if rank_weights is None else rank_weights),
                 "completed_epochs": completed_epochs or {name: epoch for name in MODEL_NAMES},
                 "epoch": epoch, "complete": complete}, temporary)
     # 【修改】Windows 上杀毒扫描或文件预览可能短暂占用旧参数；等待释放后再原子替换。
