@@ -1,0 +1,412 @@
+{
+  "recipe": "official_rgb64_independent_five_rank_v1",
+  "best_metrics": {
+    "wide5_slim": {
+      "accuracy": 0.9700803556163446,
+      "auroc": 0.9423843179929637,
+      "auprc": 0.5128212944907362,
+      "ap": 0.5140967893481317,
+      "recall": 0.49214659685863876,
+      "specificity": 0.9862142099681867,
+      "tp": 94,
+      "tn": 5580,
+      "fp": 78,
+      "fn": 97
+    },
+    "resnet18": {
+      "accuracy": 0.943409129765772,
+      "auroc": 0.9257262570349355,
+      "auprc": 0.46375697130369864,
+      "ap": 0.46540433765700284,
+      "recall": 0.6387434554973822,
+      "specificity": 0.9536938847649346,
+      "tp": 122,
+      "tn": 5396,
+      "fp": 262,
+      "fn": 69
+    },
+    "densenet121": {
+      "accuracy": 0.9449478543340742,
+      "auroc": 0.9243502689977958,
+      "auprc": 0.4778778614606552,
+      "ap": 0.4801137748923967,
+      "recall": 0.6335078534031413,
+      "specificity": 0.9554612937433722,
+      "tp": 121,
+      "tn": 5406,
+      "fp": 252,
+      "fn": 70
+    },
+    "efficientnet_b0": {
+      "accuracy": 0.9307573944263977,
+      "auroc": 0.8684936678640631,
+      "auprc": 0.3105931313212472,
+      "ap": 0.31281977096197705,
+      "recall": 0.5078534031413613,
+      "specificity": 0.9450335807705903,
+      "tp": 97,
+      "tn": 5347,
+      "fp": 311,
+      "fn": 94
+    },
+    "convnext_tiny": {
+      "accuracy": 0.9061378013335613,
+      "auroc": 0.8834527953747554,
+      "auprc": 0.35482037629324215,
+      "ap": 0.356932742371379,
+      "recall": 0.6020942408376964,
+      "specificity": 0.916401555319901,
+      "tp": 115,
+      "tn": 5185,
+      "fp": 473,
+      "fn": 76
+    }
+  },
+  "combined_validation": {
+    "accuracy": 0.9064797401265173,
+    "auroc": 0.9413803186518093,
+    "auprc": 0.5452069397917126,
+    "ap": 0.5474217119161504,
+    "recall": 0.8010471204188482,
+    "specificity": 0.9100388829975257,
+    "tp": 153,
+    "tn": 5149,
+    "fp": 509,
+    "fn": 38
+  },
+  "completed_epochs": {
+    "wide5_slim": 20,
+    "resnet18": 20,
+    "densenet121": 20,
+    "efficientnet_b0": 20,
+    "convnext_tiny": 20
+  },
+  "rank_weights": [
+    0.45,
+    0.3,
+    0.2,
+    0.05,
+    0.0
+  ],
+  "rank_history": [
+    {
+      "epoch": 0,
+      "candidate_weights": [
+        0.45,
+        0.3,
+        0.2,
+        0.05,
+        0.0
+      ],
+      "train_auroc": 0.975850499656487,
+      "valid_auroc": 0.9323359964762862,
+      "accepted": false
+    },
+    {
+      "epoch": 1,
+      "candidate_weights": [
+        0.45,
+        0.3,
+        0.2,
+        0.05,
+        0.0
+      ],
+      "train_auroc": 0.9801670331684197,
+      "valid_auroc": 0.9413803186518093,
+      "accepted": true
+    },
+    {
+      "epoch": 2,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9803849115921622,
+      "valid_auroc": 0.9333057580518896,
+      "accepted": false
+    },
+    {
+      "epoch": 3,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.98442692823952,
+      "valid_auroc": 0.9372079379796757,
+      "accepted": false
+    },
+    {
+      "epoch": 4,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9838928063877873,
+      "valid_auroc": 0.9359670503147098,
+      "accepted": false
+    },
+    {
+      "epoch": 5,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9869584651312562,
+      "valid_auroc": 0.939412109805141,
+      "accepted": false
+    },
+    {
+      "epoch": 6,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.989127773228516,
+      "valid_auroc": 0.9389522133327411,
+      "accepted": false
+    },
+    {
+      "epoch": 7,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9902755873893467,
+      "valid_auroc": 0.9387430853593763,
+      "accepted": false
+    },
+    {
+      "epoch": 8,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9910261680637988,
+      "valid_auroc": 0.9400394937252355,
+      "accepted": false
+    },
+    {
+      "epoch": 9,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.991693174277999,
+      "valid_auroc": 0.9338369060904358,
+      "accepted": false
+    },
+    {
+      "epoch": 10,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9926573503064391,
+      "valid_auroc": 0.9333039073618599,
+      "accepted": false
+    },
+    {
+      "epoch": 11,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9929976298850913,
+      "valid_auroc": 0.9360308991207372,
+      "accepted": false
+    },
+    {
+      "epoch": 12,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9941096870868104,
+      "valid_auroc": 0.9336148232868625,
+      "accepted": false
+    },
+    {
+      "epoch": 13,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9946766781622398,
+      "valid_auroc": 0.935949468759427,
+      "accepted": false
+    },
+    {
+      "epoch": 14,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9951745941212041,
+      "valid_auroc": 0.9367545189223803,
+      "accepted": false
+    },
+    {
+      "epoch": 15,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9954816768759236,
+      "valid_auroc": 0.9329217398707107,
+      "accepted": false
+    },
+    {
+      "epoch": 16,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "train_auroc": 0.9959309866665127,
+      "valid_auroc": 0.9341071068347835,
+      "accepted": false
+    },
+    {
+      "epoch": 17,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9960928818498949,
+      "valid_auroc": 0.9375364354599612,
+      "accepted": false
+    },
+    {
+      "epoch": 18,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9958360189980473,
+      "valid_auroc": 0.9348464575016795,
+      "accepted": false
+    },
+    {
+      "epoch": 19,
+      "candidate_weights": [
+        0.4,
+        0.3,
+        0.2,
+        0.05,
+        0.05
+      ],
+      "train_auroc": 0.9961708871061316,
+      "valid_auroc": 0.9347233866146992,
+      "accepted": false
+    }
+  ],
+  "model_training": {
+    "wide5_slim": {
+      "epochs": 20,
+      "learning_rate": 0.0001,
+      "min_lr": 1e-06,
+      "weight_decay": 0.0001,
+      "positive_share": 0.25,
+      "focal_gamma": 0.0,
+      "max_grad_norm": 5.0,
+      "dropout": 0.5,
+      "stochastic_depth": 0.0
+    },
+    "resnet18": {
+      "epochs": 20,
+      "learning_rate": 3e-05,
+      "min_lr": 1e-06,
+      "weight_decay": 0.0002,
+      "positive_share": 0.35,
+      "focal_gamma": 1.0,
+      "max_grad_norm": 3.0,
+      "dropout": 0.3,
+      "stochastic_depth": 0.0
+    },
+    "densenet121": {
+      "epochs": 20,
+      "learning_rate": 2e-05,
+      "min_lr": 1e-06,
+      "weight_decay": 0.0003,
+      "positive_share": 0.4,
+      "focal_gamma": 1.2,
+      "max_grad_norm": 2.5,
+      "dropout": 0.35,
+      "stochastic_depth": 0.0
+    },
+    "efficientnet_b0": {
+      "epochs": 20,
+      "learning_rate": 5e-05,
+      "min_lr": 1e-06,
+      "weight_decay": 0.00015,
+      "positive_share": 0.45,
+      "focal_gamma": 1.5,
+      "max_grad_norm": 4.0,
+      "dropout": 0.25,
+      "stochastic_depth": 0.0
+    },
+    "convnext_tiny": {
+      "epochs": 20,
+      "learning_rate": 4e-05,
+      "min_lr": 1e-06,
+      "weight_decay": 0.00025,
+      "positive_share": 0.5,
+      "focal_gamma": 2.0,
+      "max_grad_norm": 1.0,
+      "dropout": 0.0,
+      "stochastic_depth": 0.2
+    }
+  },
+  "model_file": "C:\\Users\\27616\\Desktop\\青眼病题\\submission\\model\\best_model.pth",
+  "complete": true
+}
