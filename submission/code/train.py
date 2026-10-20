@@ -128,6 +128,7 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
     lr = get_model_learning_rate(name, epoch)
     optimizer.param_groups[0]["lr"] = lr
     total_loss, total_positive, total_tp, total_fp, total_samples, start = 0.0, 0, 0, 0, 0, time.time()
+    window_positive = window_tp = window_fp = 0
     print(f"开始训练 {name} epoch: {epoch}/{EPOCHS[name]}, lr:{lr:.2e}", flush=True)
     for batch_idx, (x, y) in enumerate(loader, 1):
         x, y = x.to(DEVICE, non_blocking=True), y.to(DEVICE, non_blocking=True)
@@ -137,12 +138,20 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
         total_positive += positives
         total_tp += tp
         total_fp += fp
+        window_positive += positives
+        window_tp += tp
+        window_fp += fp
         total_samples += len(y)
-        print_progress(f"{name} epoch: {epoch}/{EPOCHS[name]}", batch_idx, len(loader), start,
-                       f", loss:{total_loss / total_samples:.5f}, 真实阳性:{total_positive}, "
-                       f"报对阳性:{total_tp}, 误报:{total_fp}")
+        # 【修改】进度行仅统计自上次输出以来的图片；整轮误报/漏报仍在轮末保存。
+        printed = print_progress(f"{name} epoch: {epoch}/{EPOCHS[name]}", batch_idx, len(loader), start,
+                                 f", loss:{total_loss / total_samples:.5f}, "
+                                 f"真实阳性:{window_positive}, 报对阳性:{window_tp}, "
+                                 f"误报:{window_fp}, 漏报:{window_positive - window_tp}")
+        if printed:
+            window_positive = window_tp = window_fp = 0
     print(f"epoch: {epoch}, loss: {total_loss / total_samples:.5f}, "
-          f"真实阳性:{total_positive}, 报对阳性:{total_tp}, 误报:{total_fp}, "
+          f"真实阳性:{total_positive}, 报对阳性:{total_tp}, "
+          f"误报:{total_fp}, 漏报:{total_positive - total_tp}, "
           f"time:{time.time() - start:.2f}s", flush=True)
     metrics = evaluate(valid_dataset, {name: model}, show_counts=False)
     if is_better(metrics, best_metrics.get(name)):
@@ -153,6 +162,7 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
         print(f"未超过{name}独立最佳AUROC:{best_metrics[name]['auroc']:.6f}", flush=True)
     return {"model": name, "epoch": epoch, "train_loss": total_loss / total_samples,
             "train_positives": total_positive, "train_tp": total_tp, "train_fp": total_fp,
+            "train_fn": total_positive - total_tp,
             "learning_rate": lr, **metrics}
 
 

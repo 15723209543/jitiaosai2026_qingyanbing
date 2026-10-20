@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model import ImageModel  # noqa: E402
 from predict import collect_probabilities, evaluate, predict  # noqa: E402
 from train import (create_criterion, get_model_learning_rate, is_better,
-                   print_training_profiles, train, training_order)  # noqa: E402
+                   print_training_profiles, train, train_one, training_order)  # noqa: E402
 from utils import EPOCHS, MODEL_NAMES, MODEL_TRAINING, print_rank_weights, rank_weighted_probabilities, save_ensemble  # noqa: E402
 
 
@@ -205,6 +205,27 @@ class FiveModelTests(unittest.TestCase):
         self.assertEqual(metrics["tp"], 1)
         self.assertIn("AUROC: 1.000000", output.getvalue())
         self.assertNotIn("漏报:", output.getvalue())
+
+    def test_training_progress_logs_interval_false_positives_and_false_negatives(self):
+        model = torch.nn.Linear(1, 2)
+        best_model = torch.nn.Linear(1, 2)
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        batches = [(torch.ones(1, 1), torch.tensor([0])) for _ in range(4)]
+        steps = [(0.1, 1, 0, 1), (0.2, 1, 1, 0),
+                 (0.3, 0, 0, 1), (0.4, 1, 0, 0)]
+        output = StringIO()
+        with patch("train.train_step", side_effect=steps), \
+             patch("train.evaluate", return_value={"auroc": 0.7}), \
+             patch("utils.LOG_EVERY", 2), redirect_stdout(output):
+            record = train_one(MODEL_NAMES[0], 1, model, best_model, batches,
+                               TinyDataset(), optimizer, None, {})
+        lines = [line for line in output.getvalue().splitlines() if "batch:" in line]
+        self.assertEqual(len(lines), 3)
+        self.assertIn("真实阳性:1, 报对阳性:0, 误报:1, 漏报:1", lines[0])
+        self.assertIn("真实阳性:1, 报对阳性:1, 误报:0, 漏报:0", lines[1])
+        self.assertIn("真实阳性:1, 报对阳性:0, 误报:1, 漏报:1", lines[2])
+        self.assertIn("真实阳性:3, 报对阳性:1, 误报:2, 漏报:2", output.getvalue())
+        self.assertEqual(record["train_fn"], 2)
 
     def test_zero_round_skips_branch_and_rounds_interleave(self):
         rounds = dict.fromkeys(MODEL_NAMES, 2)
