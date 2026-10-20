@@ -43,23 +43,23 @@ IMAGE_SIZE, BATCH_SIZE = 64, 32 # 图像大小、批量大小
 # dropout：部分失活比例。
 # stochastic_depth：ConvNeXt的stochastic depth参数。
 MODEL_TRAINING = {
-    "wide5_slim": dict(epochs=4, learning_rate=1e-4,
+    "wide5_slim": dict(epochs=30, learning_rate=1e-4,
                        min_lr=1e-6, weight_decay=1e-4, positive_share=0.25,
                        focal_gamma=0.0, max_grad_norm=5.0, dropout=0.5,
                        stochastic_depth=0.0),
-    "resnet18":      dict(epochs=8, learning_rate=3e-5,
+    "resnet18":      dict(epochs=30, learning_rate=3e-5,
                           min_lr=1e-6, weight_decay=2e-4, positive_share=0.35,
                           focal_gamma=1.0, max_grad_norm=3.0, dropout=0.30,
                           stochastic_depth=0.0),
-    "densenet121":   dict(epochs=10, learning_rate=2e-5,
+    "densenet121":   dict(epochs=30, learning_rate=2e-5,
                           min_lr=1e-6, weight_decay=3e-4, positive_share=0.40,
                           focal_gamma=1.2, max_grad_norm=2.5, dropout=0.35,
                           stochastic_depth=0.0),
-    "efficientnet_b0": dict(epochs=12, learning_rate=5e-5,
+    "efficientnet_b0": dict(epochs=30, learning_rate=5e-5,
                             min_lr=1e-6, weight_decay=1.5e-4, positive_share=0.45,
                             focal_gamma=1.5, max_grad_norm=4.0, dropout=0.25,
                             stochastic_depth=0.0),
-    "convnext_tiny": dict(epochs=12, learning_rate=4e-5,
+    "convnext_tiny": dict(epochs=30, learning_rate=4e-5,
                           min_lr=1e-6, weight_decay=2.5e-4, positive_share=0.50,
                           focal_gamma=2.0, max_grad_norm=1.0, dropout=0.0,
                           stochastic_depth=0.20),
@@ -211,6 +211,12 @@ def rank_weighted_probabilities(*vectors, weights=None):
 
 # 【来源】本项目自写；在官方训练集预测上调整排序占比，验证集只负责验收。
 def tune_rank_weights(labels, scores, weights):
+    # 【修复】收集函数返回按模型名索引的字典；按固定顺序取五条概率向量。
+    # 直接*字典会展开模型名字符串，而不是概率向量。
+    if isinstance(scores, dict):
+        if set(scores) != set(MODEL_NAMES):
+            raise ValueError("排序占比训练必须包含全部五个模型")
+        scores = tuple(scores[name] for name in MODEL_NAMES)
     weights = tuple(float(value) for value in weights)
     best_metrics = calculate_metrics(labels, rank_weighted_probabilities(*scores, weights=weights))
     best_weights = weights
