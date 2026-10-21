@@ -11,23 +11,24 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
+from PIL import Image, ImageOps
 from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
 from torch.utils.data import Dataset
 from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Normalize,
-                                    RandomHorizontalFlip, RandomRotation, Resize, ToTensor)
+                                    RandomHorizontalFlip, RandomRotation, ToTensor)
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 VARIANT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_DIR / "glaucoma_first"
-MODEL_PATH = VARIANT_DIR / "model" / "best_model.pth"
+# 【修改】64像素旧权重仍留在model/best_model.pth；高分辨率训练另存，禁止误载或覆盖。
+MODEL_PATH = VARIANT_DIR / "model" / "highres224" / "best_model.pth"
 OUTPUT_CSV = VARIANT_DIR / "results" / "submission.csv"
 RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
 MODEL_NAMES = ("wide5_slim", "resnet18", "densenet121", "efficientnet_b0", "convnext_tiny") # 模型名称
-IMAGE_SIZE, BATCH_SIZE = 64, 32 # 图像大小、批量大小
+IMAGE_SIZE, BATCH_SIZE = 224, 16 # 保留视盘细节；高分辨率下减小验证/预测批量
 # 【修改】每次点击train.py都从本次第0轮计数；可读取旧权重，但不继承旧轮次。
 # epochs是本次运行要训练的轮数，设0表示不训练但仍验证；各模型独立修改。
 # positive_share是整类阳性损失占比，不是阳性采样比例；不混用测试集伪标签。
@@ -71,8 +72,8 @@ EPOCHS = {name: MODEL_TRAINING[name]["epochs"] for name in MODEL_NAMES}
 RANK_WEIGHTS = (0.5, 0.3, 0.2, 0, 0)
 RANK_STEP = 0.05 # 每轮用训练集最多移动5个百分点；只用官方有标签验证集验收。
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25 # CPU线程数、预测CPU线程数、日志间隔步
-RECIPE = "official_rgb64_independent_five_rank_v1" # 新排序加权方案
-LEGACY_RECIPE = "official_rgb64_independent_five_median_v1" # 兼容已经训练好的旧pth
+RECIPE = "official_rgb224_letterbox_independent_five_rank_v1"
+LEGACY_RECIPE = RECIPE  # 64像素参数不可与224像素输入混用
 
 
 # 【来源】本项目自写；训练和预测开始前打印当前五个排序占比，便于核对配置。
@@ -81,9 +82,9 @@ def print_rank_weights(weights=RANK_WEIGHTS):
           flush=True)
 
 
-# 【来源】复用课堂CNN的Resize/ToTensor/Normalize；修改：只在训练时做轻量增强。
+# 【来源】复用课堂CNN的ToTensor/Normalize；修改：缩放移到读图，保持宽高比。
 def create_transform(training=False):
-    steps = [Resize((IMAGE_SIZE, IMAGE_SIZE))]
+    steps = []
     if training:
         steps += [RandomHorizontalFlip(0.5),
                   RandomRotation(15, interpolation=InterpolationMode.BILINEAR),
@@ -92,28 +93,38 @@ def create_transform(training=False):
 
 
 class ImageDataset(Dataset):
-    # 【来源】复用课堂CNN的Dataset接口；修改：官方图片缩放后缓存以加快CPU训练。
-    def __init__(self, image_paths, labels=None, training=False):
+    # 【来源】复用课堂CNN的Dataset接口；修改：只缓存较小的验证集，避免训练集占用约7GB内存。
+    def __init__(self, image_paths, labels=None, training=False, cache_images=False):
         self.image_paths = list(image_paths)
         self.labels = None if labels is None else list(labels)
         self.transform = create_transform(training)
+        self.cache_images = cache_images
         self.cache = {}
 
     # 【来源】复用PyTorch Dataset接口；返回图片数。
     def __len__(self):
         return len(self.image_paths)
 
-    # 【来源】沿用原眼底图片缩放缓存；拆出纯读取供多线程预加载复用。
+    # 【来源】沿用原眼底图片读取；修改：224像素保比例缩放并居中填黑边，不拉伸视盘。
     def _load_image(self, index):
-        if index not in self.cache:
-            with Image.open(self.image_paths[index]) as image:
-                image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
-                self.cache[index] = image.convert("RGB").resize(
-                    (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR)
-        return self.cache[index]
+        if self.cache_images and index in self.cache:
+            return self.cache[index]
+        with Image.open(self.image_paths[index]) as image:
+            image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
+            image = ImageOps.exif_transpose(image).convert("RGB")
+            image.thumbnail((IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR)
+            square = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE))
+            square.paste(image, ((IMAGE_SIZE - image.width) // 2,
+                                 (IMAGE_SIZE - image.height) // 2))
+        if self.cache_images:
+            self.cache[index] = square
+        return square
 
-    # 【来源】本项目自写；首次训练前并行解码全部图片，后续轮次仍用各自随机增强。
+    # 【来源】本项目自写；只预载验证集，避免高分辨率训练集占满内存。
     def preload(self, workers=8):
+        if not self.cache_images:
+            print("高分辨率训练集按需读取，不全部预载到内存。", flush=True)
+            return
         start, total = time.time(), math.ceil(len(self) / 512)
         with ThreadPoolExecutor(max_workers=workers) as pool:
             for batch_idx, offset in enumerate(range(0, len(self), 512), 1):
@@ -132,7 +143,8 @@ class ImageDataset(Dataset):
     def evaluation_view(self):
         if self.labels is None:
             raise ValueError("无标签图片不能用于训练排序占比")
-        view = ImageDataset(self.image_paths, self.labels, training=False)
+        view = ImageDataset(self.image_paths, self.labels, training=False,
+                            cache_images=self.cache_images)
         view.cache = self.cache
         return view
 
@@ -165,7 +177,7 @@ def load_train_data():
     train_paths, train_labels = load_images(TRAIN_CSV, TRAIN_DIR)
     valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
     return (ImageDataset(train_paths, train_labels, training=True),
-            ImageDataset(valid_paths, valid_labels))
+            ImageDataset(valid_paths, valid_labels, cache_images=True))
 
 
 # 【来源】沿用课堂训练的批次进度输出；显示已耗时和预计剩余时间。

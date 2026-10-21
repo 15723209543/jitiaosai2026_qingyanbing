@@ -22,7 +22,7 @@ from utils import (CPU_THREADS, EPOCHS, FocalLoss, MODEL_NAMES, MODEL_PATH, MODE
                    load_ensemble, print_progress, print_rank_weights, save_ensemble,
                    rank_weighted_probabilities, save_training_record, tune_rank_weights)
 
-SEED, TRAIN_BATCH_SIZE = 0, 64
+SEED, TRAIN_BATCH_SIZE = 0, 16  # 【修改】224像素下控制显存峰值；每轮仍遍历训练全集。
 
 
 # 【来源】参考用户提供的CUDA检测代码；有CUDA时优先使用第一块显卡。
