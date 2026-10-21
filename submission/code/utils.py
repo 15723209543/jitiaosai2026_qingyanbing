@@ -18,7 +18,7 @@ DATA = ROOT / "glaucoma_first"
 MODEL_PATH = VARIANT / "model" / "best_model.pth"
 OUTPUT_CSV = VARIANT / "results" / "submission.csv"
 FULL_SIZE, DISC_SIZE = 320, 192
-TRAIN_BATCH, EVAL_BATCH, EPOCHS = 16, 32, 30
+TRAIN_BATCH, EVAL_BATCH, EPOCHS = 32, 32, 20 # 训练批次大小、验证批次大小、训练轮数
 LR, WEIGHT_DECAY, NUM_WORKERS = 3e-4, 1e-4, 0
 
 
