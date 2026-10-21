@@ -1,27 +1,33 @@
-# 五模型方案
+# submission：高分辨率双视野 CNN 实验
 
-本目录在 v1.7.6 中更名为 `submission/`。`code/` 只保留 `model.py`、`train.py`、`predict.py`、`utils.py` 四份代码及非代码依赖表 `requirements.txt`；`results/submission.csv` 仅由 `code/predict.py` 生成。
+这是当前活动实验，尚未达到 98% AUROC。仅使用主办方 `glaucoma_first` 数据，从随机参数训练；目前没有运行正式训练，也没有生成新的 `.pth` 或 CSV。旧五模型已归档在项目根目录的 `五模型归档.zip`，不作为本实验的初始化。
 
-**高分辨率实验（尚未训练）：** 原方案将原图直接拉伸到 64×64，可能损失视盘/神经纤维层细节。现改为最长边缩至 224 像素、保持宽高比、居中填黑边；训练/验证/预测执行同一读图规则。训练批量和验证/预测批量均为 16，每轮仍遍历完整数据集。高分辨率训练集按需从磁盘读取，不一次性缓存约 51,396 张；验证集可缓存。模型路径保持为 `model/best_model.pth`，不新增模型文件夹。首次运行 `code/train.py` 会读取该路径已有的 64 像素参数作初始化，先在 224 像素验证集重算各模型和联合 AUROC，再把新参数保存到同一路径；旧验证指标不作为本次选模基准。**训练启动后旧权重会被新权重覆盖，需要恢复时可从旧 Git 提交取回；训练前旧 CSV 不会更改，只有单独运行 `code/predict.py` 才会生成新版 CSV。** 旧 64 像素参数不能直接按新预处理运行 `predict.py`。224 像素方案的 AUROC、推理时延均未实测，不保证优于旧方案或满足 100ms；请训练后验证。
+## 思路与依据
 
-五个模型分别按自己的 `EPOCHS` 训练；每次运行都从第 0 轮计数，旧 `.pth` 仅作为参数初始化，不继承其轮号。本次轮数设 0 的模型不训练，但仍参加每轮验证。每个模型的独立最佳和整组最佳都按官方有标签验证集 AUROC 严格提高更新。训练前打印实际 CPU/GPU 和五个初始排序占比，并先验证现有参数的基线；训练不读取无标签测试集、不写提交 CSV。
+原 64×64 输入可能丢失视盘边缘、神经纤维层等细节。本方案同时读取整张眼底（保比例填充至 320×320）和亮区启发式定位的候选视盘邻域（192×192），用**共享的自写残差卷积骨干**提取特征，在分类头联合训练；保存的是一份参数，而非两个单模型预测后平均。使用通道注意力、残差连接、SiLU、Dropout 和温和的阳性加权损失，主要目标是改善图像表征与类别不平衡。全图分支保留视盘外信息；亮区定位只是弱启发式，可能找错位置，必须通过官方验证集检验。
 
-**训练速度设置：** GPU 上训练/验证/预测使用混合精度；训练集用同一个带两个持久读取进程的 DataLoader 依次供五个模型使用，CPU 仍用单进程。每个模型仍在每轮训练全集并在官方验证集完整验证。`code/utils.py` 的 `RANK_TUNE_EVERY=5` 表示只在第 5、10…轮及本次最后一轮让五个模型再次预测完整训练集以调整排序占比；其他轮沿用当前占比，但仍做完整联合验证。此设置减少额外全量前向次数，不保证同原来每轮调占比得到相同 AUROC；未在目标 GPU 上实测提速或精度。
+研究依据：[AG-CNN（CVPR 2019，视盘相关区域注意力）](https://openaccess.thecvf.com/content_CVPR_2019/papers/Li_Attention_Based_Glaucoma_Detection_A_Large-Scale_Database_and_CNN_Model_CVPR_2019_paper.pdf)、[眼底视盘外区域也含诊断信息（Scientific Reports 2021）](https://www.nature.com/articles/s41598-021-99605-1)、[视盘定位结合 CNN（Scientific Reports 2023）](https://www.nature.com/articles/s41598-023-44473-0)。搜索到的[同届公开仓库](https://github.com/InkyUmbrella/2026Ncccu_BiDataCompetition)尚无可核实的正式训练成绩，不能据此认定某结构可达 98%。比赛规则禁止抄袭其他参赛者的代码/方案，所以这里没有复制该仓库代码，也没有使用外部数据或预训练权重。
 
-当前五个模型的本次训练轮数都设为 20。上一版第 0 轮联合占比计算的报错已修复：按固定模型顺序从概率字典提取五条向量，不再把模型名当成概率输入。
+## 目录与运行
 
-在 `code/utils.py` 修改 `RANK_WEIGHTS`：五个值是初始占比，对应单张图像的五个阳性概率从高到低，而不是固定模型顺序；须非负且和为 1。每轮五模型预测完整训练集，在当前占比附近搜索，最多移动 0.05；再用官方有标签验证集决定是否接受，最佳占比写入同一份 `.pth`。轮末打印候选和最终保留的占比。训练和预测调用同一加权函数，再以 0.5 判断阳性。CNN 使用交叉熵，另四模型使用各自的 Focal Loss。单独运行 `code/predict.py` 时读取 `.pth` 保存的占比，先用官方有标签验证集打印指标，随后才预测无标签测试集并写 CSV。测试集没有真实标签，不能用于计算 AUROC 或选模。仅修改初始占比不会改变旧 `.pth` 的预测。
+| 文件 | 用途 |
+| --- | --- |
+| `code/model.py` | 自写双视野残差注意力 CNN；一次输出一个阳性 logit |
+| `code/utils.py` | 官方 CSV 读取、图像保比例处理、视盘候选定位、指标和提交格式 |
+| `code/train.py` | 先验证基线，再完整训练/验证；仅当完整验证集 AUROC 严格提高，更新 `model/best_model.pth`；逐轮记录写项目文档 |
+| `code/predict.py` | 读取最佳参数，先复核官方验证集，再预测无标签测试集，写 `results/submission.csv` |
 
-旧版三个目录已备份到项目根目录的 `三个不用的模型.zip`；当前方案从已有单文件参数继续训练，缺少参数时五个分支随机初始化，不再依赖旧目录。无外部数据或预训练权重。
+使用 `deepStudy` 解释器，在项目根目录运行：
 
-`model.py` 只定义网络：旧 CNN 的五层卷积显式写在其中，另外四个完整网络由 `torchvision` 实现。本地代码较短不表示网络层数或参数减少；训练、验证代码分别在 `train.py`、`predict.py`。直接运行 `model.py` 可打印结构和参数量，不会训练。
+```powershell
+& 'C:\Users\LENOVO\.conda\envs\deepStudy\python.exe' submission/code/train.py
+& 'C:\Users\LENOVO\.conda\envs\deepStudy\python.exe' submission/code/predict.py
+```
 
-| 模型 | 可训练参数量（本地实例化实测） | 结构所在位置 |
-| --- | ---: | --- |
-| wide5_slim（课堂 CNN） | 3,929,410 | `model.py` 的 `LegacyCNN` |
-| ResNet-18 | 11,177,538 | `torchvision.models.resnet18`；本文件替换二分类头 |
-| DenseNet-121 | 6,955,906 | `torchvision.models.densenet121`；本文件替换二分类头 |
-| EfficientNet-B0 | 4,010,110 | `torchvision.models.efficientnet_b0`；本文件替换二分类头 |
-| ConvNeXt-Tiny | 27,821,666 | `torchvision.models.convnext_tiny`；本文件替换二分类头 |
+官方文件保持原位：`glaucoma_first/train.csv` 和 `train/`、`valid.csv` 和 `valid/`、`test.csv` 和 `test/`。只用 `train` 更新梯度，`valid` 计算 AUROC 并选模；**绝不把无标签 test 当验证集**。在 `code/utils.py` 修改轮数、批量、学习率等常量；训练可以继续读取此方案已存在的 `.pth`。预测输出 `Image_name,Probability,Pred_Label`，行顺序与官方 `test.csv` 一致，判阳阈值暂固定 0.5。
 
-上述五个结构未为凑代码行数而改动，但原 64 像素权重与新输入处理的分布不一致，因此旧参数仅用于初始化，旧 AUROC 必须重算。旧单文件权重约 433 MB，低于 500 MB；高分辨率版本本次未重新训练或测速。
+运行 `train.py` 时先完成一遍官方验证集基线，然后才进入第 1 轮训练。训练进度在第 1 批、每 25 批和最后一批打印本段的 loss、真实阳性、报对阳性、误报、漏报；每轮结束再打印累计统计。预验证期间显示的是 `valid` 进度，不是训练卡住。
+
+## 验收标准与风险
+
+正式训练后应比较现有验证 AUROC 约 0.94、AUPRC、真阳性、误报/漏报以及隐藏榜单成绩；不能用训练准确率代替。当前**没有实测**新方案是否超过 0.98，也未在指定 T4 上证明单张端到端推理不超过 100 ms。保存文件应小于 500 MB，但最终体积和时延都要训练后实际检查。若候选视盘定位频繁偏离、AUROC 不升，优先改定位/输入尺寸并做消融，不要仅增加轮数或宣称达标。

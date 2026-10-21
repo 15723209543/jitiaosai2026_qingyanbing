@@ -1,128 +1,62 @@
-"""课堂CNN的todo4：五模型概率按排名加权，生成提交CSV。"""
+"""先复核官方有标签验证集，再单独预测 test 并生成可提交 CSV。"""
 
-import sys
 import time
-
-if __name__ == "__main__":
-    sys.dont_write_bytecode = True
-    print("预测程序已启动, 正在加载PyTorch...", flush=True)
 
 import torch
 from torch.utils.data import DataLoader
 
-from utils import (BATCH_SIZE, CPU_THREADS, ImageDataset, MODEL_NAMES, MODEL_PATH, OUTPUT_CSV,
-                   PREDICT_CPU_THREADS, TEST_CSV, TEST_DIR, VALID_CSV, VALID_DIR, calculate_metrics,
-                   load_ensemble, load_images, rank_weighted_probabilities, print_progress,
-                   print_rank_weights,
-                   write_submission)
+from model import FundusNet
+from utils import (EVAL_BATCH, MODEL_PATH, NUM_WORKERS, OUTPUT_CSV,
+                   FundusDataset, metrics, progress, write_submission)
 
 
-# 【来源】沿用submission3的DataLoader/无梯度预测；修改：五路概率排序后加权。
-def collect_probabilities(dataset, models, stage, weights=None, return_scores=False,
-                          show_progress=True):
-    if len(models) not in (1, 5):
-        raise ValueError("验证须传入一个模型，五模型预测须传入全部五个模型")
-    if len(models) == 5 and set(models) != set(MODEL_NAMES):
-        raise ValueError("五模型名称不完整")
-    torch.set_num_threads(PREDICT_CPU_THREADS if stage == "test" else CPU_THREADS)
-    devices = {name: next(model.parameters(), torch.empty(0)).device
-               for name, model in models.items()}
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
-                            pin_memory=any(device.type == "cuda" for device in devices.values()))
-    labels, scores, start = [], {name: [] for name in models}, time.time()
-    window_positives = window_tp = window_fp = 0
-    for model in models.values():
-        model.eval()
-    # 【修改】只在推理时关闭自动求导版本记录；GPU同时用混合精度加快五路前向。
-    with torch.inference_mode():
-        for batch_idx, batch in enumerate(dataloader, 1):
-            if dataset.labels is None:
-                x = batch
-            else:
-                x, y = batch
-                batch_labels = y.tolist()
-                labels.extend(batch_labels)
-            batch_scores = {}
-            for name, model in models.items():
-                inputs = x.to(devices[name], non_blocking=True)
-                with torch.autocast(device_type=devices[name].type,
-                                    enabled=devices[name].type == "cuda"):
-                    logits = model(inputs)
-                batch_scores[name] = torch.softmax(logits.float(), dim=1)[:, 1].cpu().tolist()
-                scores[name].extend(batch_scores[name])
-            detail = ""
-            if stage == "valid":
-                # 【修改】五模型仍按提交时同一排序加权规则计算；这里只累计本次日志区间。
-                batch_probabilities = (next(iter(batch_scores.values())) if len(models) == 1 else
-                                       rank_weighted_probabilities(*(batch_scores[name] for name in MODEL_NAMES),
-                                                                   weights=weights))
-                window_positives += sum(label == 1 for label in batch_labels)
-                window_tp += sum(label == 1 and probability >= 0.5
-                                 for label, probability in zip(batch_labels, batch_probabilities))
-                window_fp += sum(label == 0 and probability >= 0.5
-                                 for label, probability in zip(batch_labels, batch_probabilities))
-                detail = (f", 真实阳性:{window_positives}, 报对阳性:{window_tp}, "
-                          f"误报:{window_fp}")
-            printed = (print_progress(stage, batch_idx, len(dataloader), start, detail)
-                       if show_progress else False)
-            if printed and stage == "valid":
-                window_positives = window_tp = window_fp = 0
-    if len(models) == 1:
-        probabilities = next(iter(scores.values()))
-        return (labels, probabilities, scores) if return_scores else (labels, probabilities)
-    probabilities = rank_weighted_probabilities(*(scores[name] for name in MODEL_NAMES), weights=weights)
-    return (labels, probabilities, scores) if return_scores else (labels, probabilities)
+@torch.no_grad()
+def infer(model, dataset, device, stage="valid"):
+    """参考课堂 CNN 测试逻辑：eval/no_grad，按原 CSV 顺序返回连续阳性概率。"""
+    model.eval()
+    loader = DataLoader(dataset, batch_size=EVAL_BATCH, shuffle=False,
+                        num_workers=NUM_WORKERS, pin_memory=device.type == "cuda")
+    probabilities, labels, start = [], [], time.time()
+    for batch_index, (full, disc, batch_labels) in enumerate(loader, 1):
+        with torch.autocast(device_type=device.type, enabled=device.type == "cuda"):
+            logits = model(full.to(device, non_blocking=True),
+                           disc.to(device, non_blocking=True))
+        probabilities.extend(torch.sigmoid(logits.float()).cpu().tolist())
+        labels.extend(batch_labels.tolist())
+        progress(stage, batch_index, len(loader), start)
+    return labels, probabilities
 
 
-# todo 4. 模型验证；有真实标签才计算AUROC，绝不写答案CSV。
-# 【来源】沿用submission3的evaluate；分别支持单模型与五模型联合验证。
-def evaluate(valid_dataset, models, show_counts=True, weights=None, return_scores=False):
-    if valid_dataset.labels is None:
-        raise ValueError("验证集必须有真实标签")
-    print(f"开始验证: {len(valid_dataset)}张有标签图片", flush=True)
-    result = collect_probabilities(valid_dataset, models, "valid", weights=weights,
-                                   return_scores=return_scores)
-    labels, probabilities = result[:2]
-    metrics = calculate_metrics(labels, probabilities)
-    print(f"AUROC: {metrics['auroc']:.6f}, "
-          f"AUPRC(梯形): {metrics['auprc']:.6f}, AP: {metrics['ap']:.6f}", flush=True)
-    # 【修改】训练中的各次验证只打印选模所需指标；最终总计由train.py统一输出。
-    if show_counts:
-        print(f"真实阳性:{metrics['tp'] + metrics['fn']}, 报对阳性:{metrics['tp']}, "
-              f"误报:{metrics['fp']}, 漏报:{metrics['fn']}, "
-              f"阳性召回率:{metrics['recall']:.2%}, 特异度:{metrics['specificity']:.2%}", flush=True)
-    return (metrics, labels, result[2]) if return_scores else metrics
+def evaluate(model, valid_data, device):
+    """自写：使用完整官方 valid，不读取 test 标签；打印 AUROC/AUPRC/报对/误报/漏报。"""
+    print(f"开始验证: {len(valid_data)}张有标签图片", flush=True)
+    labels, probabilities = infer(model, valid_data, device)
+    result = metrics(labels, probabilities)
+    print(f"AUROC:{result['auroc']:.6f}, AUPRC:{result['auprc']:.6f}, "
+          f"真实阳性:{result['tp'] + result['fn']}, 报对阳性:{result['tp']}, "
+          f"误报:{result['fp']}, 漏报:{result['fn']}", flush=True)
+    return result
 
 
-# 【来源】沿用submission3的predict入口；只加载单文件整组最佳快照，单独运行才写CSV。
-def predict(test_dir=TEST_DIR, output_csv=OUTPUT_CSV):
+def predict():
+    """自写：只读取一份训练完成的 pth；只有此入口才写 results/submission.csv。"""
     if not MODEL_PATH.is_file():
-        raise FileNotFoundError("缺少五模型参数, 请先运行train.py: %s" % MODEL_PATH)
-    models, checkpoint = load_ensemble(MODEL_PATH)
-    if not checkpoint["complete"]:
-        raise ValueError("五模型尚未完成训练，不能生成提交CSV")
-    weights = tuple(checkpoint.get("rank_weights", ()))
-    if len(weights) != 5:
-        raise ValueError("模型参数缺少五模型排序占比")
-    print_rank_weights(weights)
-    # 【修改】五模型预测优先使用GPU；无CUDA时自动回退CPU，不更改训练权重。
+        raise FileNotFoundError(f"缺少参数，请先训练: {MODEL_PATH}")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    for model in models.values():
-        # 【修改】将模型移动到预测设备，不更改训练权重。
-        model.to(device)
-    print("预测设备:", device, flush=True)
-    # 【修改】先用有标签官方验证集打印训练时相同的指标；仅随后预测无标签测试集并写CSV。
-    valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
-    evaluate(ImageDataset(valid_paths, valid_labels), models, weights=weights)
-    print("开始读取test文件夹；测试集没有真实标签, 不计算准确率.", flush=True)
-    test_dataset, image_names = load_images(TEST_CSV, test_dir, labeled=False)
-    _, probabilities = collect_probabilities(test_dataset, models, "test", weights=weights)
-    output_csv = write_submission(image_names, probabilities, output_csv)
-    print("已生成: %s, 共%d张图片, 预测阳性%d张" % (
-        output_csv, len(image_names), sum(value >= 0.5 for value in probabilities)), flush=True)
-    return output_csv
+    checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
+    if checkpoint.get("architecture") != "dual_view_residual_se_v1":
+        raise ValueError("模型参数架构不匹配")
+    model = FundusNet().to(device)
+    model.load_state_dict(checkpoint["state_dict"])
+    print("预测设备:", device, "最佳训练轮:", checkpoint["epoch"], flush=True)
+    evaluate(model, FundusDataset("valid"), device)
+    dataset = FundusDataset("test", labeled=False)
+    _, probabilities = infer(model, dataset, device, stage="test")
+    path = write_submission(dataset.names, probabilities, OUTPUT_CSV)
+    print("已生成:", path, "总数:", len(probabilities),
+          "预测阳性:", sum(p >= 0.5 for p in probabilities), flush=True)
+    return path
 
 
-# 5. 测试：右键运行predict.py才写答案；train.py导入本文件不会预测无标签测试集。
 if __name__ == "__main__":
     predict()
