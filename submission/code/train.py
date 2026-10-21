@@ -93,7 +93,8 @@ def train(epochs=EPOCHS):
     print(f"训练集:{len(train_data)}张, 阳性:{positives}, 验证集:{len(valid_data)}张, "
           f"阳性:{sum(valid_data.labels)}, 每批:{TRAIN_BATCH}", flush=True)
     loader = DataLoader(train_data, batch_size=TRAIN_BATCH, shuffle=True,
-                        num_workers=NUM_WORKERS, pin_memory=device.type == "cuda")
+                        num_workers=NUM_WORKERS, pin_memory=device.type == "cuda",
+                        persistent_workers=NUM_WORKERS > 0)
     model = FundusNet()
     best_auc = float("-inf")
     if MODEL_PATH.is_file():

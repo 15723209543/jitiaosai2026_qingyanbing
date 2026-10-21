@@ -18,8 +18,10 @@ DATA = ROOT / "glaucoma_first"
 MODEL_PATH = VARIANT / "model" / "best_model.pth"
 OUTPUT_CSV = VARIANT / "results" / "submission.csv"
 FULL_SIZE, DISC_SIZE = 320, 192
+SOURCE_DRAFT_SIZE = 640  # JPEG在完整解码前先缩图，再生成320全图和192视盘图。
 TRAIN_BATCH, EVAL_BATCH, EPOCHS = 32, 32, 20 # 训练批次大小、验证批次大小、训练轮数
-LR, WEIGHT_DECAY, NUM_WORKERS = 3e-4, 1e-4, 0
+LR, WEIGHT_DECAY = 3e-4, 1e-4
+NUM_WORKERS = 2 if torch.cuda.is_available() else 0  # GPU并行读取图片；CPU保持单进程。
 
 
 def letterbox(image, size):
@@ -42,7 +44,9 @@ def find_disc_center(image):
 
 
 def create_views(image):
-    """自写：同时生成全眼底和候选视盘邻域，供同一网络联合训练。"""
+    """自写：JPEG先缩小解码，再生成全眼底和候选视盘视野；训练/预测一致。"""
+    # 【修改】避免先解码数千万像素再缩到320；其他不支持draft的格式保持原处理。
+    image.draft("RGB", (SOURCE_DRAFT_SIZE, SOURCE_DRAFT_SIZE))
     image = ImageOps.exif_transpose(image).convert("RGB")
     x, y = find_disc_center(image)
     side = max(1, int(min(image.size) * 0.42))

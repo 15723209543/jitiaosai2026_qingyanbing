@@ -2,7 +2,7 @@
 
 活动方案为 `submission/` 中的双视野共享骨干 CNN：同一张眼底图生成整图与候选视盘局部，两路特征在同一网络中融合，训练后保存一份 `model/best_model.pth`。这是原 `submission2/` 实验更名后的版本，目前尚未正式训练，不能直接运行 `predict.py` 提交。
 
-原五模型 `submission/` 的代码、权重和 CSV 已打包为本地 `五模型归档.zip`；其中权重已更新为远端 v1.9.1 提交的最新版本并完成 SHA-256 校验，归档校验通过后才移出活动目录。ZIP 约 401 MB，被 Git 忽略，不随普通 clone 下载；旧权重仍可从历史 Git LFS 提交恢复。此前的 `三个不用的模型.zip` 仍保持原样。
+原五模型 `submission/` 的代码、权重和 CSV 已打包为本地 `五模型归档.zip`；其中权重已更新为远端 v1.9.1 提交的最新版本并完成 SHA-256 校验，归档校验通过后才移出活动目录。ZIP 约 401 MB，被 Git 忽略，不随普通 clone 下载；可从 [v1.9.2 Release 附件](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/download/v1.9.2/five-model-archive.zip)下载，线上文件名为 `five-model-archive.zip`。旧权重也可从历史 Git LFS 提交恢复。此前的 `三个不用的模型.zip` 仍保持原样。
 
 ## 文件位置
 
