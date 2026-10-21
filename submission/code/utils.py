@@ -1,129 +1,212 @@
-"""官方图片、双视野预处理、验证指标与提交格式；不使用外部数据。"""
+"""数据读取、指标、权重及CSV工具；训练/预测流程仍放在对应todo文件。"""
 
+# 导包
+import json
+import math
 import time
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-from PIL import Image, ImageFilter, ImageOps
-from sklearn.metrics import average_precision_score, confusion_matrix, roc_auc_score
-from torch.utils.data import Dataset
-from torchvision.transforms.functional import to_tensor
+from PIL import Image
+from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
+from torch.utils.data import Dataset, WeightedRandomSampler
+from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Normalize,
+                                    RandomHorizontalFlip, RandomRotation, Resize, ToTensor)
 
 
-ROOT = Path(__file__).resolve().parents[2]
-VARIANT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "glaucoma_first"
-MODEL_PATH = VARIANT / "model" / "best_model.pth"
-OUTPUT_CSV = VARIANT / "results" / "submission.csv"
-FULL_SIZE, DISC_SIZE = 320, 192
-SOURCE_DRAFT_SIZE = 640  # JPEG在完整解码前先缩图，再生成320全图和192视盘图。
-TRAIN_BATCH, EVAL_BATCH, EPOCHS = 32, 32, 20 # 训练批次大小、验证批次大小、训练轮数
-LR, WEIGHT_DECAY = 3e-4, 1e-4
-NUM_WORKERS = 2 if torch.cuda.is_available() else 0  # GPU并行读取图片；CPU保持单进程。
+PROJECT_DIR = Path(__file__).resolve().parents[2]
+VARIANT_DIR = Path(__file__).resolve().parents[1]
+MODEL_DIR = VARIANT_DIR / "model"
+MODEL_PATH = MODEL_DIR / "best_model.pth"
+OUTPUT_CSV = VARIANT_DIR / "results" / "submission.csv"
+RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
+DATA_DIR = PROJECT_DIR / "glaucoma_first"
+TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
+TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
+IMAGE_SIZE, BATCH_SIZE = 64, 32
+SAMPLES_PER_EPOCH = 8192
+EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 20, 10, 6
+WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
+WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
+CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
+RECIPE = "official_train_rgb64_balanced8192_adamw_v2"
 
 
-def letterbox(image, size):
-    """自写：保留眼底原始宽高比，缩放最长边并以黑色居中填充。"""
-    image = image.copy()
-    image.thumbnail((size, size), Image.Resampling.LANCZOS)
-    result = Image.new("RGB", (size, size))
-    result.paste(image, ((size - image.width) // 2, (size - image.height) // 2))
-    return result
+# 【来源】本项目自写；复用课堂Resize/ToTensor/Normalize，随机增强只用于训练。
+def create_transform(training=False):
+    steps = [Resize((IMAGE_SIZE, IMAGE_SIZE))]
+    if training:
+        steps += [RandomHorizontalFlip(0.5),
+                  RandomRotation(15, interpolation=InterpolationMode.BILINEAR),
+                  ColorJitter(brightness=0.1, contrast=0.1)]
+    return Compose(steps + [ToTensor(), Normalize((0.5,) * 3, (0.5,) * 3)])
 
 
-def find_disc_center(image):
-    """自写：用模糊后的绿色通道寻找候选亮区；只是弱定位，不用外部视盘标注。"""
-    small = image.getchannel("G").resize((64, 64), Image.Resampling.BOX)
-    bright = np.asarray(small.filter(ImageFilter.BoxBlur(3)), dtype=np.float32)
-    bright[:8, :] = bright[56:, :] = -1
-    bright[:, :8] = bright[:, 56:] = -1
-    row, col = np.unravel_index(int(np.argmax(bright)), bright.shape)
-    return int((col + 0.5) * image.width / 64), int((row + 0.5) * image.height / 64)
+class ImageDataset(Dataset):
+    # 【来源】本项目自写；用赛题图片代替课堂CIFAR10，缓存缩小后的RGB图片。
+    def __init__(self, image_paths, labels=None, training=False):
+        self.image_paths = list(image_paths)
+        self.labels = None if labels is None else list(labels)
+        self.transform = create_transform(training)
+        self.cache = {}
 
-
-def create_views(image):
-    """自写：JPEG先缩小解码，再生成全眼底和候选视盘视野；训练/预测一致。"""
-    # 【修改】避免先解码数千万像素再缩到320；其他不支持draft的格式保持原处理。
-    image.draft("RGB", (SOURCE_DRAFT_SIZE, SOURCE_DRAFT_SIZE))
-    image = ImageOps.exif_transpose(image).convert("RGB")
-    x, y = find_disc_center(image)
-    side = max(1, int(min(image.size) * 0.42))
-    left = min(max(0, x - side // 2), image.width - side)
-    top = min(max(0, y - side // 2), image.height - side)
-    return letterbox(image, FULL_SIZE), letterbox(
-        image.crop((left, top, left + side, top + side)), DISC_SIZE)
-
-
-class FundusDataset(Dataset):
-    """复用课堂 Dataset 接口；每次只读取一张官方图片，避免全量高分辨率缓存。"""
-
-    def __init__(self, split, labeled=True, augment=False):
-        table = pd.read_csv(DATA / f"{split}.csv")
-        if "Image_name" not in table or (labeled and "True_Label" not in table):
-            raise ValueError(f"{split}.csv 缺少必需字段")
-        image_dir = DATA / split
-        available = {p.name.casefold(): p for p in image_dir.rglob("*") if p.is_file()}
-        self.names = table["Image_name"].astype(str).tolist()
-        self.paths = [available.get(Path(name).name.casefold()) for name in self.names]
-        if any(path is None for path in self.paths):
-            raise FileNotFoundError(f"{split} 图片文件不完整")
-        self.labels = (table["True_Label"].astype(int).tolist() if labeled else None)
-        if self.labels is not None and not set(self.labels) <= {0, 1}:
-            raise ValueError("标签必须为0或1")
-        self.augment = augment
-
+    # 【来源】复用PyTorch Dataset接口；返回样本数。
     def __len__(self):
-        """复用 Dataset 接口：返回图片数量。"""
-        return len(self.paths)
+        return len(self.image_paths)
 
+    # 【来源】复用Dataset取样接口；新增JPEG草图解码及内存缓存。
     def __getitem__(self, index):
-        """自写：相同随机翻转同步作用于全图和视盘图，防止两视野错位。"""
-        with Image.open(self.paths[index]) as source:
-            full, disc = create_views(source)
-        if self.augment and torch.rand(()).item() < 0.5:
-            full = ImageOps.mirror(full)
-            disc = ImageOps.mirror(disc)
-        label = -1 if self.labels is None else self.labels[index]
-        return (to_tensor(full) - 0.5) / 0.5, (to_tensor(disc) - 0.5) / 0.5, label
+        if index not in self.cache:
+            with Image.open(self.image_paths[index]) as image:
+                image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
+                self.cache[index] = image.convert("RGB").resize(
+                    (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR)
+        x = self.transform(self.cache[index])
+        if self.labels is None:
+            return x
+        return x, torch.tensor(int(self.labels[index]), dtype=torch.long)
 
 
-def metrics(labels, probabilities, threshold=0.5):
-    """自写：AUROC 按连续概率计算；另给出阳性报对、误报和漏报。"""
-    labels = np.asarray(labels, dtype=int)
-    probabilities = np.asarray(probabilities, dtype=float)
-    if set(np.unique(labels)) != {0, 1} or not np.isfinite(probabilities).all():
-        raise ValueError("验证集必须含两类，且概率均有限")
-    tn, fp, fn, tp = confusion_matrix(labels, probabilities >= threshold,
-                                      labels=[0, 1]).ravel()
-    return dict(auroc=float(roc_auc_score(labels, probabilities)),
-                auprc=float(average_precision_score(labels, probabilities)),
-                tp=int(tp), fp=int(fp), fn=int(fn), tn=int(tn))
+# 【来源】本项目自写；根据官方CSV逐行查找图片，兼容jpg/JPG大小写。
+def load_images(csv_path, image_dir, labeled=True):
+    if not csv_path.is_file() or not image_dir.is_dir():
+        raise FileNotFoundError("缺少官方数据: %s 或 %s" % (csv_path, image_dir))
+    data = pd.read_csv(csv_path)
+    if "Image_name" not in data or (labeled and "True_Label" not in data):
+        raise ValueError("官方CSV字段不完整")
+    actual = {path.name.casefold(): path for path in image_dir.rglob("*") if path.is_file()}
+    names = data["Image_name"].astype(str).tolist()
+    paths = []
+    for name in names:
+        path = actual.get(Path(name).name.casefold())
+        if path is None:
+            raise FileNotFoundError("找不到图片: %s" % name)
+        paths.append(path)
+    if not labeled:
+        return ImageDataset(paths), names
+    labels = data["True_Label"].astype(int).tolist()
+    if not set(labels) <= {0, 1}:
+        raise ValueError("标签只能为0或1")
+    return paths, labels
 
 
-def progress(stage, index, total, start, detail=""):
-    """复用课堂进度习惯：首批、每25批及末批打印耗时与剩余时间。"""
-    if index == 1 or index % 25 == 0 or index == total:
+# 【来源】参考课堂create_dataset改写；官方train/valid严格分开。
+def load_train_data():
+    train_paths, train_labels = load_images(TRAIN_CSV, TRAIN_DIR)
+    valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
+    return (ImageDataset(train_paths, train_labels, training=True),
+            ImageDataset(valid_paths, valid_labels))
+
+
+# 【来源】本项目自写；按类别频数倒数进行有放回均衡采样。
+def create_sampler(labels, num_samples=None):
+    labels = torch.tensor(labels, dtype=torch.long)
+    counts = torch.bincount(labels, minlength=2).float()
+    if torch.any(counts == 0):
+        raise ValueError("训练集必须同时包含0和1")
+    return WeightedRandomSampler(1.0 / counts[labels],
+                                 len(labels) if num_samples is None else num_samples,
+                                 replacement=True)
+
+
+# 【来源】本项目自写；延续课堂首批/中间/末批进度输出。
+def print_progress(stage, batch_idx, batch_count, start, detail=""):
+    if batch_idx == 1 or batch_idx % LOG_EVERY == 0 or batch_idx == batch_count:
         elapsed = time.time() - start
-        detail = detail() if callable(detail) else detail
-        print(f"{stage}, batch: {index}/{total} ({index / total:.1%}), "
-              f"time:{elapsed:.1f}s, remaining:{elapsed * (total - index) / index / 60:.1f}min{detail}",
-              flush=True)
-        return True
-    return False
+        remaining = elapsed / batch_idx * (batch_count - batch_idx)
+        print(f"{stage}, batch: {batch_idx}/{batch_count} ({batch_idx / batch_count:.1%}), "
+              f"time:{elapsed:.1f}s, remaining:{remaining / 60:.1f}min{detail}", flush=True)
 
 
-def write_submission(names, probabilities, path=OUTPUT_CSV, threshold=0.5):
-    """自写：仅 predict.py 调用；生成官方 Image_name/Probability/Pred_Label 三列。"""
-    probabilities = np.asarray(probabilities, dtype=float)
-    if (len(names) != len(probabilities) or not np.isfinite(probabilities).all()
-            or np.any((probabilities < 0) | (probabilities > 1))):
-        raise ValueError("预测数量或概率无效")
-    path = Path(path)
+# 【来源】本项目自写；验证指标使用阳性概率，AUROC与官方主指标一致。
+def calculate_metrics(labels, probabilities):
+    labels, probabilities = np.asarray(labels), np.asarray(probabilities)
+    if set(np.unique(labels)) != {0, 1} or not np.isfinite(probabilities).all():
+        raise ValueError("验证集必须含两类，概率须有限")
+    tn, fp, fn, tp = confusion_matrix(labels, probabilities >= 0.5, labels=[0, 1]).ravel()
+    precision, recall, _ = precision_recall_curve(labels, probabilities)
+    return {"accuracy": float((tp + tn) / len(labels)),
+            "auroc": float(roc_auc_score(labels, probabilities)),
+            "auprc": float(auc(recall, precision)),
+            "ap": float(average_precision_score(labels, probabilities)),
+            "recall": float(tp / (tp + fn)), "specificity": float(tn / (tn + fp)),
+            "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)}
+
+
+# 【来源】本项目自写；前两轮预热，余弦下降，不用训练准确率调整学习率。
+def get_learning_rate(epoch):
+    if not 1 <= epoch <= EPOCHS:
+        raise ValueError("epoch超出范围")
+    if epoch <= WARMUP_EPOCHS:
+        return LEARNING_RATE * (0.1 + 0.9 * (epoch - 1) / (WARMUP_EPOCHS - 1))
+    progress = (epoch - WARMUP_EPOCHS) / (EPOCHS - WARMUP_EPOCHS)
+    return MIN_LEARNING_RATE + (LEARNING_RATE - MIN_LEARNING_RATE) * (1 + math.cos(math.pi * progress)) / 2
+
+
+# 【来源】复用03方案的模型路径；修改：两个网络统一装入一份best_model.pth。
+def model_path(model_name):
+    if model_name not in ("resnet18", "densenet121"):
+        raise ValueError("不支持的模型名")
+    return MODEL_PATH
+
+
+# 【来源】本项目自写；检查单文件中是否已有指定网络的最佳参数。
+def has_model(model_name):
+    if not MODEL_PATH.is_file():
+        return False
+    checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
+    return model_name in checkpoint.get("models", {})
+
+
+# 【来源】复用03方案的权重读取；修改：从同一PTH取指定网络，仍严格核对结构。
+def load_model(path, model_name):
+    from model import ImageModel  # 避免循环导入。
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    checkpoint = checkpoint["models"][model_name]
+    config = checkpoint["model_config"]
+    model = ImageModel(config["model_name"], config["image_size"])
+    if config != model.model_config:
+        raise ValueError("权重的模型结构或训练方案不匹配")
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
+
+
+# 【来源】复用课堂torch.save及03方案的AUROC选模；修改：原子更新单文件内对应网络。
+def save_model(model, path, metrics, epoch):
     path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"Image_name": names,
-                  "Probability": np.round(probabilities, 6),
-                  "Pred_Label": (probabilities >= threshold).astype(int)}).to_csv(
-                      path, index=False, encoding="utf-8")
-    return path
+    temporary = path.with_suffix(".tmp")
+    checkpoint = ({"models": torch.load(path, map_location="cpu", weights_only=True)["models"]}
+                  if path.is_file() else {"models": {}})
+    checkpoint["models"][model.model_config["model_name"]] = {
+        "state_dict": model.state_dict(), "model_config": model.model_config,
+        "validation": metrics, "epoch": epoch, "selection_metric": "validation_auroc"}
+    torch.save(checkpoint, temporary)
+    temporary.replace(path)
+
+
+# 【来源】本项目自写；训练历史只写项目文档，不混入提交results目录。
+def save_training_record(run_dir, history, model_name):
+    run_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(history).fillna("").to_csv(run_dir / "training_history.csv", index=False, encoding="utf-8")
+    (run_dir / "run_config.json").write_text(json.dumps({
+        "variant": VARIANT_DIR.name, "model_name": model_name, "model_file": str(model_path(model_name)),
+        "selection_metric": "validation_auroc", "training_recipe": RECIPE,
+        "best_validation": max(history, key=lambda row: row["auroc"]) if history else None,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# 【来源】本项目自写；按官网字段保存可直接上传的UTF-8三列CSV。
+def write_submission(image_names, probabilities, output_csv=OUTPUT_CSV):
+    probabilities = np.round(np.asarray(probabilities), 6)
+    if len(image_names) != len(probabilities) or not np.isfinite(probabilities).all():
+        raise ValueError("图片数量或概率无效")
+    if not ((probabilities >= 0) & (probabilities <= 1)).all():
+        raise ValueError("概率必须在0和1之间")
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"Image_name": [Path(name).name for name in image_names],
+                  "Probability": ["%.6f" % value for value in probabilities],
+                  "Pred_Label": (probabilities >= 0.5).astype(int)}).to_csv(
+                      output_csv, index=False, encoding="utf-8")
+    return output_csv

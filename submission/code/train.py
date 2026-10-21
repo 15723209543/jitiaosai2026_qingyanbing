@@ -1,144 +1,131 @@
-"""从零训练双视野 CNN；仅官方 train 更新参数、valid 选最佳，不碰无标签 test。"""
+"""复用课堂CNN的todo3训练循环；每个单模型独立训练，最后验证等权双模型。"""
 
-import csv
-import math
+# 导包
+import sys
 import time
+import shutil
 from datetime import datetime
 
+if __name__ == "__main__":
+    sys.dont_write_bytecode = True
+    print("训练程序已启动, 正在加载PyTorch和数据读取模块...", flush=True)
+
 import torch
+import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from model import FundusNet
+from model import ImageModel, MODEL_NAMES, create_dataset
 from predict import evaluate
-from utils import (EPOCHS, LR, MODEL_PATH, NUM_WORKERS, TRAIN_BATCH,
-                   VARIANT, WEIGHT_DECAY, FundusDataset, progress)
+from utils import (BATCH_SIZE, CPU_THREADS, EARLY_STOPPING_PATIENCE, EPOCHS,
+                   LEARNING_RATE, MAX_GRAD_NORM, MIN_EPOCHS, MODEL_DIR, RECORD_DIR,
+                   SAMPLES_PER_EPOCH,
+                   WEIGHT_DECAY, create_sampler, get_learning_rate, has_model, load_model,
+                   model_path, print_progress, save_model, save_training_record)
 
 
-def print_device(device):
-    """沿用原 train.py 习惯：只在开头打印一次实际 CPU/GPU 与显存。"""
-    if device.type == "cuda":
-        print("GPU训练已启用:", torch.cuda.get_device_name(device),
-              "显存: %.2f GB" % (torch.cuda.get_device_properties(device).total_memory / 1024**3))
-    else:
-        print("当前使用CPU训练")
-    print("PyTorch版本:", torch.__version__, "CUDA版本:", torch.version.cuda, flush=True)
+# 修改①: 已有参数默认不重复训练；确需重训时改为True，旧参数先备份且只被更高AUROC替换。
+RETRAIN_EXISTING = False
+SEED = 0
 
 
-def train_one_epoch(model, loader, optimizer, criterion, scaler, device, epoch):
-    """参考课堂 CNN 的清梯度、前向、反向、更新四步；新增 AMP 与梯度裁剪。"""
-    model.train()
-    start, total_loss, count = time.time(), 0.0, 0
-    total_counts = torch.zeros(3, dtype=torch.long, device=device)
-    window_counts = torch.zeros_like(total_counts)
-    window_loss = window_count = 0
+# todo 3. 模型训练.
+# 【来源】复用day07 CNN的train循环；修改②: 每次只训练一个网络，AUROC严格提高才保存。
+def train_one(model_name, train_dataset, valid_dataset):
+    torch.manual_seed(SEED)
+    torch.set_num_threads(CPU_THREADS)
+    path = model_path(model_name)
+    run_dir = RECORD_DIR / (datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_" + model_name)
+    run_dir.mkdir(parents=True, exist_ok=False)
 
-    # 【来源】本项目自写；只在真正打印的批次把GPU计数搬回CPU，避免每批额外等待显卡。
-    def window_detail():
-        positive, tp, fp = window_counts.cpu().tolist()
-        return (f", loss:{window_loss / window_count:.5f}, 真实阳性:{positive}, "
-                f"报对阳性:{tp}, 误报:{fp}, 漏报:{positive - tp}")
+    # 1. 修改⑤: 每轮均衡抽取8192张，控制CPU训练耗时；每批仍为32张。
+    dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
+                            sampler=create_sampler(train_dataset.labels, SAMPLES_PER_EPOCH))
+    print(f"模型:{model_name}, 训练集:{len(train_dataset)}张, 验证集:{len(valid_dataset)}张, "
+          f"共{EPOCHS}轮, 每轮{len(dataloader)}批, CPU线程:{CPU_THREADS}", flush=True)
 
-    for batch_index, (full, disc, labels) in enumerate(loader, 1):
-        full = full.to(device, non_blocking=True)
-        disc = disc.to(device, non_blocking=True)
-        labels = labels.float().to(device, non_blocking=True)
-        optimizer.zero_grad(set_to_none=True)
-        with torch.autocast(device_type=device.type, enabled=device.type == "cuda"):
-            logits = model(full, disc)
-            loss = criterion(logits, labels)
-        scaler.scale(loss).backward()
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=3.0)
-        scaler.step(optimizer)
-        scaler.update()
-        batch_loss = loss.item() * len(labels)
-        total_loss += batch_loss
-        count += len(labels)
-        # 【修改】当前日志区间单独统计，轮末再输出全集累计值。
-        predicted = torch.sigmoid(logits.detach().float()) >= 0.5
-        positive = labels >= 0.5
-        batch_counts = torch.stack((positive.sum(), (positive & predicted).sum(),
-                                    ((~positive) & predicted).sum()))
-        total_counts += batch_counts
-        window_counts += batch_counts
-        window_loss += batch_loss
-        window_count += len(labels)
-        if progress(f"train epoch {epoch}", batch_index, len(loader), start, window_detail):
-            window_loss = window_count = 0
-            window_counts.zero_()
-    total_positive, total_tp, total_fp = total_counts.cpu().tolist()
-    print(f"epoch:{epoch}, 真实阳性:{total_positive}, 报对阳性:{total_tp}, "
-          f"误报:{total_fp}, 漏报:{total_positive - total_tp}", flush=True)
-    return total_loss / count
+    # 2. 创建模型；如已有参数，只作为成绩基线，不把不同训练过程混合进权重。
+    model = ImageModel(model_name)
+    best_metrics, history = None, []
+    if has_model(model_name):
+        shutil.copy2(path, run_dir / "baseline_model.pth")
+        print("已备份现有参数, 先验证旧模型...", flush=True)
+        best_metrics = evaluate(valid_dataset, [load_model(path, model_name)])
+        history.append({"epoch": 0, **best_metrics})
 
+    # 3. 交叉熵训练；均衡采样后不再叠加类别权重。
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(model.parameters(), lr=get_learning_rate(1),
+                            weight_decay=WEIGHT_DECAY)
+    candidate_best_auroc, stale_epochs = float("-inf"), 0
 
-def save_best(model, path, epoch, result):
-    """自写：只保留一个模型 state_dict，原子写入唯一 best_model.pth。"""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    state = {name: tensor.detach().cpu() for name, tensor in model.state_dict().items()}
-    torch.save({"architecture": "dual_view_residual_se_v1", "epoch": epoch,
-                "state_dict": state, "validation": result}, temporary)
-    temporary.replace(path)
+    # 4. 循环遍历epoch；每轮显示课堂loss、acc、time，再做独立验证。
+    for epoch_idx in range(EPOCHS):
+        total_loss, total_correct, total_samples, start = 0.0, 0, 0, time.time()
+        learning_rate = get_learning_rate(epoch_idx + 1)
+        optimizer.param_groups[0]["lr"] = learning_rate
+        print(f"开始训练 {model_name} epoch: {epoch_idx + 1}/{EPOCHS}, lr:{learning_rate:.2e}", flush=True)
+        for batch_idx, (x, y) in enumerate(dataloader, 1):
+            model.train()
+            y_pred = model(x)
+            loss = criterion(y_pred, y)
+            optimizer.zero_grad(set_to_none=True)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM, error_if_nonfinite=True)
+            optimizer.step()
+            total_correct += (torch.argmax(y_pred, dim=1) == y).sum().item()
+            total_loss += loss.item() * len(y)
+            total_samples += len(y)
+            print_progress(f"epoch: {epoch_idx + 1}/{EPOCHS}", batch_idx, len(dataloader), start,
+                           f", loss:{total_loss / total_samples:.5f}, acc:{total_correct / total_samples:.4f}")
+        print(f"epoch: {epoch_idx + 1}, loss: {total_loss / total_samples:.5f}, "
+              f"acc:{total_correct / total_samples:.4f}, time:{time.time() - start:.2f}s", flush=True)
 
-
-def train(epochs=EPOCHS):
-    """自写：先验证初始/旧权重，再每轮完整训练、完整验证，AUROC严格提高才更新。"""
-    torch.manual_seed(42)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print_device(device)
-    train_data = FundusDataset("train", augment=True)
-    valid_data = FundusDataset("valid")
-    positives = sum(train_data.labels)
-    print(f"训练集:{len(train_data)}张, 阳性:{positives}, 验证集:{len(valid_data)}张, "
-          f"阳性:{sum(valid_data.labels)}, 每批:{TRAIN_BATCH}", flush=True)
-    loader = DataLoader(train_data, batch_size=TRAIN_BATCH, shuffle=True,
-                        num_workers=NUM_WORKERS, pin_memory=device.type == "cuda",
-                        persistent_workers=NUM_WORKERS > 0)
-    model = FundusNet()
-    best_auc = float("-inf")
-    if MODEL_PATH.is_file():
-        checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
-        if checkpoint.get("architecture") != "dual_view_residual_se_v1":
-            raise ValueError("已有参数架构不匹配，拒绝覆盖")
-        model.load_state_dict(checkpoint["state_dict"])
-        best_auc = float(checkpoint["validation"]["auroc"])
-        print("已读取本方案已有参数，先复核完整验证集。", flush=True)
-    model.to(device)
-    print("训练前验证基线:", flush=True)
-    baseline = evaluate(model, valid_data, device)
-    if MODEL_PATH.is_file():
-        best_auc = baseline["auroc"]  # 以本次重新计算的完整验证结果为准。
-    pos_weight = torch.tensor([math.sqrt((len(train_data) - positives) / positives)],
-                              device=device)
-    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max(1, epochs), eta_min=LR / 100)
-    scaler = torch.amp.GradScaler(device.type, enabled=device.type == "cuda")
-    records = VARIANT.parent / "项目文档" / "训练记录" / "submission2"
-    records.mkdir(parents=True, exist_ok=True)
-    record_file = records / (datetime.now().strftime("%Y%m%d_%H%M%S") + ".csv")
-    with record_file.open("w", encoding="utf-8-sig", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=["epoch", "loss", "auroc", "auprc",
-                                                     "tp", "fp", "fn", "lr", "saved"])
-        writer.writeheader()
-        for epoch in range(1, epochs + 1):
-            loss = train_one_epoch(model, loader, optimizer, criterion, scaler, device, epoch)
-            print(f"epoch:{epoch}/{epochs}, loss:{loss:.5f}, lr:{optimizer.param_groups[0]['lr']:.2e}",
-                  flush=True)
-            result = evaluate(model, valid_data, device)
-            better = result["auroc"] > best_auc
-            if better:
-                best_auc = result["auroc"]
-                save_best(model, MODEL_PATH, epoch, result)
-                print(f"已更新最佳模型: AUROC {best_auc:.6f}", flush=True)
-            writer.writerow(dict(epoch=epoch, loss=loss, auroc=result["auroc"],
-                                 auprc=result["auprc"], tp=result["tp"], fp=result["fp"],
-                                 fn=result["fn"], lr=optimizer.param_groups[0]["lr"], saved=better))
-            stream.flush()
-            scheduler.step()
-    print("训练完成。最佳参数:", MODEL_PATH, "验证AUROC:", f"{best_auc:.6f}", flush=True)
+        # 5. 修改③: 只用本模型独立验证AUROC决定权重是否更新。
+        metrics = evaluate(valid_dataset, [model])
+        if metrics["auroc"] > candidate_best_auroc:
+            candidate_best_auroc, stale_epochs = metrics["auroc"], 0
+            save_model(model, run_dir / "candidate_model.pth", metrics, epoch_idx + 1)
+        else:
+            stale_epochs += 1
+        history.append({"epoch": epoch_idx + 1, "train_loss": total_loss / total_samples,
+                        "train_accuracy": total_correct / total_samples,
+                        "learning_rate": learning_rate, **metrics})
+        if best_metrics is None or metrics["auroc"] > best_metrics["auroc"]:
+            best_metrics = metrics
+            save_model(model, path, metrics, epoch_idx + 1)
+            print(f"已保存最佳模型: {path}, 验证AUROC:{metrics['auroc']:.6f}", flush=True)
+        else:
+            print(f"本轮未超过最佳验证AUROC:{best_metrics['auroc']:.6f}, 保留最佳参数", flush=True)
+        save_training_record(run_dir, history, model_name)
+        if epoch_idx + 1 >= MIN_EPOCHS and stale_epochs >= EARLY_STOPPING_PATIENCE:
+            print(f"{model_name}连续{EARLY_STOPPING_PATIENCE}轮AUROC未提高, 提前结束训练", flush=True)
+            break
+    print(f"{model_name}训练结束, 保留验证AUROC:{best_metrics['auroc']:.6f}, "
+          f"训练记录:{run_dir}", flush=True)
+    return path
 
 
+# 【来源】复用课堂train入口；修改④: 两个网络分开训练或复用，最后只验证组合，不写答案。
+def train(train_dataset, valid_dataset):
+    torch.set_num_threads(CPU_THREADS)
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    for model_name in MODEL_NAMES:
+        path = model_path(model_name)
+        if has_model(model_name) and not RETRAIN_EXISTING:
+            print(f"已有参数, 跳过重复训练: {path}", flush=True)
+        else:
+            train_one(model_name, train_dataset, valid_dataset)
+        print(f"单模型验证: {model_name}", flush=True)
+        evaluate(valid_dataset, [load_model(path, model_name)])
+    print("双模型等权平均验证:", " + ".join(MODEL_NAMES), flush=True)
+    metrics = evaluate(valid_dataset, [load_model(model_path(name), name) for name in MODEL_NAMES])
+    print(f"双模型验证AUROC:{metrics['auroc']:.6f}, AUPRC:{metrics['auprc']:.6f}", flush=True)
+    print("训练与验证结束。需要生成提交答案时, 请单独运行predict.py。", flush=True)
+    return metrics
+
+
+# 5. 测试: 点击运行train.py只训练并验证，不运行无标签测试集预测。
 if __name__ == "__main__":
-    train()
+    print("正在读取glaucoma_first的训练集和官方验证集...", flush=True)
+    train(*create_dataset())
