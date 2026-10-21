@@ -17,10 +17,11 @@ from torch.utils.data import DataLoader
 
 from model import ImageModel, create_dataset
 from predict import collect_probabilities, evaluate
-from utils import (CPU_THREADS, EPOCHS, FocalLoss, MODEL_NAMES, MODEL_PATH, MODEL_TRAINING,
+from utils import (CPU_THREADS, EPOCHS, FocalLoss, GPU_TRAIN_WORKERS, MODEL_NAMES, MODEL_PATH, MODEL_TRAINING,
                    RANK_WEIGHTS, RECORD_DIR, RECIPE, calculate_metrics, get_learning_rate,
                    load_ensemble, print_progress, print_rank_weights, save_ensemble,
-                   rank_weighted_probabilities, save_training_record, tune_rank_weights)
+                   rank_weighted_probabilities, save_training_record, should_tune_rank,
+                   tune_rank_weights)
 
 SEED, TRAIN_BATCH_SIZE = 0, 16  # 【修改】224像素下控制显存峰值；每轮仍遍历训练全集。
 
@@ -77,8 +78,11 @@ def training_order(rounds_by_model, completed_epochs=None):
 
 
 # 【来源】复用课堂CNN的DataLoader洗牌；每轮遍历全部官方训练图片。
-def create_train_loader(train_dataset):
+def create_train_loader(train_dataset, workers=None):
+    # 【修改】GPU读取图片时用两个持久子进程预取；CPU运行保持原来的单进程行为。
+    workers = (GPU_TRAIN_WORKERS if DEVICE.type == "cuda" else 0) if workers is None else workers
     return DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True,
+                      num_workers=workers, persistent_workers=workers > 0,
                       pin_memory=DEVICE.type == "cuda")
 
 
@@ -106,14 +110,18 @@ def get_model_learning_rate(name, epoch):
 
 
 # 【来源】复用课堂CNN交叉熵前向/反向/更新；只更新当前网络。
-def train_step(model, x, y, optimizer, criterion, max_grad_norm):
+def train_step(model, x, y, optimizer, criterion, max_grad_norm, scaler):
     model.train()
-    y_pred = model(x)
-    loss = criterion(y_pred, y)
+    # 【修改】GPU采用混合精度与梯度缩放；CPU关闭混合精度，保留原计算结果。
+    with torch.autocast(device_type=DEVICE.type, enabled=DEVICE.type == "cuda"):
+        y_pred = model(x)
+        loss = criterion(y_pred, y)
     optimizer.zero_grad(set_to_none=True)
-    loss.backward()
+    scaler.scale(loss).backward()
+    scaler.unscale_(optimizer)
     nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm, error_if_nonfinite=True)
-    optimizer.step()
+    scaler.step(optimizer)
+    scaler.update()
     predicted_positive = torch.argmax(y_pred, dim=1) == 1
     return (loss.item(), int((y == 1).sum().item()),
             int((predicted_positive & (y == 1)).sum().item()),
@@ -121,7 +129,8 @@ def train_step(model, x, y, optimizer, criterion, max_grad_norm):
 
 
 # 【来源】修改submission3单模型循环；训练全集一轮，再验证并更新本模型最佳。
-def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, criterion, best_metrics):
+def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, criterion,
+              best_metrics, scaler):
     lr = get_model_learning_rate(name, epoch)
     optimizer.param_groups[0]["lr"] = lr
     total_loss, total_positive, total_tp, total_fp, total_samples, start = 0.0, 0, 0, 0, 0, time.time()
@@ -130,7 +139,7 @@ def train_one(name, epoch, model, best_model, loader, valid_dataset, optimizer, 
     for batch_idx, (x, y) in enumerate(loader, 1):
         x, y = x.to(DEVICE, non_blocking=True), y.to(DEVICE, non_blocking=True)
         loss, positives, tp, fp = train_step(
-            model, x, y, optimizer, criterion, MODEL_TRAINING[name]["max_grad_norm"])
+            model, x, y, optimizer, criterion, MODEL_TRAINING[name]["max_grad_norm"], scaler)
         total_loss += loss * len(y)
         total_positive += positives
         total_tp += tp
@@ -222,25 +231,34 @@ def train(train_dataset, valid_dataset):
             ensemble_models[name].load_state_dict(models[name].state_dict())
     save_ensemble(best_models, ensemble_models, MODEL_PATH, ensemble_best,
                   best_metrics, completed_epochs=completed, rank_weights=best_weights)
-    loaders = {name: create_train_loader(train_dataset) for name in MODEL_NAMES}
+    # 【修改】五个模型复用同一DataLoader，避免Windows上同时保留十个读图子进程。
+    loader = create_train_loader(train_dataset)
     optimizers = {name: optim.AdamW(models[name].parameters(),
                                    weight_decay=MODEL_TRAINING[name]["weight_decay"])
                   for name in MODEL_NAMES if EPOCHS[name] > 0}
     criteria = {name: create_criterion(train_dataset.labels, name) for name in MODEL_NAMES
                 if EPOCHS[name] > 0}
+    scalers = {name: torch.amp.GradScaler(DEVICE.type, enabled=DEVICE.type == "cuda")
+               for name in MODEL_NAMES if EPOCHS[name] > 0}
+    last_epoch = max(EPOCHS.values(), default=0) - 1
     for epoch, jobs in groupby(training_order(EPOCHS, completed), key=lambda item: item[0]):
         for _, name in jobs:
-            history.append(train_one(name, epoch, models[name], best_models[name], loaders[name],
-                                     valid_dataset, optimizers[name], criteria[name], best_metrics))
+            history.append(train_one(name, epoch, models[name], best_models[name], loader,
+                                     valid_dataset, optimizers[name], criteria[name],
+                                     best_metrics, scalers[name]))
             completed[name] = epoch + 1
-        # 【修改】五模型共同预测训练全集，用真实训练标签只调整排序占比，不再反向更新单模参数。
-        print(f"第{epoch}轮五模型训练排序占比: {len(weight_dataset)}张训练图片", flush=True)
-        train_labels, _, train_scores = collect_probabilities(
-            weight_dataset, models, "weight_train", weights=best_weights,
-            return_scores=True, show_progress=False)
-        candidate_weights, rank_train_metrics = tune_rank_weights(train_labels, train_scores,
-                                                                  best_weights)
-        print(f"排序占比训练AUROC:{rank_train_metrics['auroc']:.6f}", flush=True)
+        # 【修改】每5轮及末轮再对完整训练集调占比，省去其余轮次五模型重复前向。
+        candidate_weights, rank_train_metrics = best_weights, None
+        if should_tune_rank(epoch, last_epoch):
+            print(f"第{epoch}轮五模型训练排序占比: {len(weight_dataset)}张训练图片", flush=True)
+            train_labels, _, train_scores = collect_probabilities(
+                weight_dataset, models, "weight_train", weights=best_weights,
+                return_scores=True, show_progress=False)
+            candidate_weights, rank_train_metrics = tune_rank_weights(train_labels, train_scores,
+                                                                      best_weights)
+            print(f"排序占比训练AUROC:{rank_train_metrics['auroc']:.6f}", flush=True)
+        else:
+            print(f"第{epoch}轮沿用当前排序占比；本轮仍进行完整验证。", flush=True)
         print(f"第{epoch}轮五模型联合验证:", flush=True)
         labels, _, scores = collect_probabilities(valid_dataset, models, "valid",
                                                   weights=candidate_weights, return_scores=True)
@@ -252,7 +270,7 @@ def train(train_dataset, valid_dataset):
               f"误报:{combined['fp']}, 漏报:{combined['fn']}", flush=True)
         accepted = is_better(combined, ensemble_best)
         rank_history.append({"epoch": epoch, "candidate_weights": candidate_weights,
-                             "train_auroc": rank_train_metrics["auroc"],
+                             "train_auroc": None if rank_train_metrics is None else rank_train_metrics["auroc"],
                              "valid_auroc": combined["auroc"], "accepted": accepted})
         if accepted:
             ensemble_best, best_weights = combined, candidate_weights

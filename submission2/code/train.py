@@ -28,6 +28,16 @@ def train_one_epoch(model, loader, optimizer, criterion, scaler, device, epoch):
     """参考课堂 CNN 的清梯度、前向、反向、更新四步；新增 AMP 与梯度裁剪。"""
     model.train()
     start, total_loss, count = time.time(), 0.0, 0
+    total_counts = torch.zeros(3, dtype=torch.long, device=device)
+    window_counts = torch.zeros_like(total_counts)
+    window_loss = window_count = 0
+
+    # 【来源】本项目自写；只在真正打印的批次把GPU计数搬回CPU，避免每批额外等待显卡。
+    def window_detail():
+        positive, tp, fp = window_counts.cpu().tolist()
+        return (f", loss:{window_loss / window_count:.5f}, 真实阳性:{positive}, "
+                f"报对阳性:{tp}, 误报:{fp}, 漏报:{positive - tp}")
+
     for batch_index, (full, disc, labels) in enumerate(loader, 1):
         full = full.to(device, non_blocking=True)
         disc = disc.to(device, non_blocking=True)
@@ -41,9 +51,24 @@ def train_one_epoch(model, loader, optimizer, criterion, scaler, device, epoch):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=3.0)
         scaler.step(optimizer)
         scaler.update()
-        total_loss += loss.item() * len(labels)
+        batch_loss = loss.item() * len(labels)
+        total_loss += batch_loss
         count += len(labels)
-        progress(f"train epoch {epoch}", batch_index, len(loader), start)
+        # 【修改】当前日志区间单独统计，轮末再输出全集累计值。
+        predicted = torch.sigmoid(logits.detach().float()) >= 0.5
+        positive = labels >= 0.5
+        batch_counts = torch.stack((positive.sum(), (positive & predicted).sum(),
+                                    ((~positive) & predicted).sum()))
+        total_counts += batch_counts
+        window_counts += batch_counts
+        window_loss += batch_loss
+        window_count += len(labels)
+        if progress(f"train epoch {epoch}", batch_index, len(loader), start, window_detail):
+            window_loss = window_count = 0
+            window_counts.zero_()
+    total_positive, total_tp, total_fp = total_counts.cpu().tolist()
+    print(f"epoch:{epoch}, 真实阳性:{total_positive}, 报对阳性:{total_tp}, "
+          f"误报:{total_fp}, 漏报:{total_positive - total_tp}", flush=True)
     return total_loss / count
 
 

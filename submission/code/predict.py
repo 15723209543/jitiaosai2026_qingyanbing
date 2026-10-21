@@ -24,7 +24,7 @@ def collect_probabilities(dataset, models, stage, weights=None, return_scores=Fa
         raise ValueError("验证须传入一个模型，五模型预测须传入全部五个模型")
     if len(models) == 5 and set(models) != set(MODEL_NAMES):
         raise ValueError("五模型名称不完整")
-    torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
+    torch.set_num_threads(PREDICT_CPU_THREADS if stage == "test" else CPU_THREADS)
     devices = {name: next(model.parameters(), torch.empty(0)).device
                for name, model in models.items()}
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False,
@@ -33,7 +33,8 @@ def collect_probabilities(dataset, models, stage, weights=None, return_scores=Fa
     window_positives = window_tp = window_fp = 0
     for model in models.values():
         model.eval()
-    with torch.no_grad():
+    # 【修改】只在推理时关闭自动求导版本记录；GPU同时用混合精度加快五路前向。
+    with torch.inference_mode():
         for batch_idx, batch in enumerate(dataloader, 1):
             if dataset.labels is None:
                 x = batch
@@ -44,7 +45,10 @@ def collect_probabilities(dataset, models, stage, weights=None, return_scores=Fa
             batch_scores = {}
             for name, model in models.items():
                 inputs = x.to(devices[name], non_blocking=True)
-                batch_scores[name] = torch.softmax(model(inputs), dim=1)[:, 1].cpu().tolist()
+                with torch.autocast(device_type=devices[name].type,
+                                    enabled=devices[name].type == "cuda"):
+                    logits = model(inputs)
+                batch_scores[name] = torch.softmax(logits.float(), dim=1)[:, 1].cpu().tolist()
                 scores[name].extend(batch_scores[name])
             detail = ""
             if stage == "valid":

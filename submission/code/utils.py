@@ -70,7 +70,10 @@ EPOCHS = {name: MODEL_TRAINING[name]["epochs"] for name in MODEL_NAMES}
 # 第1项对应最高概率，不固定对应某个模型；五项非负且总和必须为1。
 # 全部0.2时是五模型概率平均值；改动后仍以最终概率0.5判阳性。
 RANK_WEIGHTS = (0.5, 0.3, 0.2, 0, 0)
-RANK_STEP = 0.05 # 每轮用训练集最多移动5个百分点；只用官方有标签验证集验收。
+RANK_STEP = 0.05 # 每次调占比最多移动5个百分点；只用官方有标签验证集验收。
+# 【修改】排序占比每5轮和最后一轮才用完整训练集重新计算；每轮仍用完整验证集选模。
+RANK_TUNE_EVERY = 5
+GPU_TRAIN_WORKERS = 2 # GPU训练读取图片的持久子进程数；显存不足不受此项控制。
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25 # CPU线程数、预测CPU线程数、日志间隔步
 RECIPE = "official_rgb224_letterbox_independent_five_rank_v1"
 LEGACY_RECIPE = "official_rgb64_independent_five_rank_v1"  # 旧权重只允许训练时作初始化。
@@ -219,6 +222,14 @@ def rank_weighted_probabilities(*vectors, weights=None):
             (weights < 0).any() or not np.isclose(weights.sum(), 1.0, rtol=0, atol=1e-9)):
         raise ValueError("RANK_WEIGHTS必须是五个非负占比，且总和为1")
     return (weights @ np.sort(values, axis=0)[::-1]).tolist()
+
+
+# 【来源】本项目自写；控制排序占比全量训练集重算的轮次。
+def should_tune_rank(epoch, last_epoch, interval=RANK_TUNE_EVERY):
+    # 【来源】本项目自写；最后一轮即使不足一个间隔也必须调整一次。
+    if interval < 1:
+        raise ValueError("排序占比调整间隔必须大于0")
+    return (epoch + 1) % interval == 0 or epoch == last_epoch
 
 
 # 【来源】本项目自写；在官方训练集预测上调整排序占比，验证集只负责验收。

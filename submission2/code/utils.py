@@ -98,13 +98,16 @@ def metrics(labels, probabilities, threshold=0.5):
                 tp=int(tp), fp=int(fp), fn=int(fn), tn=int(tn))
 
 
-def progress(stage, index, total, start):
+def progress(stage, index, total, start, detail=""):
     """复用课堂进度习惯：首批、每25批及末批打印耗时与剩余时间。"""
     if index == 1 or index % 25 == 0 or index == total:
         elapsed = time.time() - start
+        detail = detail() if callable(detail) else detail
         print(f"{stage}, batch: {index}/{total} ({index / total:.1%}), "
-              f"time:{elapsed:.1f}s, remaining:{elapsed * (total - index) / index / 60:.1f}min",
+              f"time:{elapsed:.1f}s, remaining:{elapsed * (total - index) / index / 60:.1f}min{detail}",
               flush=True)
+        return True
+    return False
 
 
 def write_submission(names, probabilities, path=OUTPUT_CSV, threshold=0.5):
