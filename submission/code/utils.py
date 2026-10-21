@@ -21,8 +21,8 @@ from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Nor
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 VARIANT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_DIR / "glaucoma_first"
-# 【修改】64像素旧权重仍留在model/best_model.pth；高分辨率训练另存，禁止误载或覆盖。
-MODEL_PATH = VARIANT_DIR / "model" / "highres224" / "best_model.pth"
+# 【修改】继续使用原来的model/best_model.pth，不另外创建模型目录。
+MODEL_PATH = VARIANT_DIR / "model" / "best_model.pth"
 OUTPUT_CSV = VARIANT_DIR / "results" / "submission.csv"
 RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
@@ -73,7 +73,7 @@ RANK_WEIGHTS = (0.5, 0.3, 0.2, 0, 0)
 RANK_STEP = 0.05 # 每轮用训练集最多移动5个百分点；只用官方有标签验证集验收。
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25 # CPU线程数、预测CPU线程数、日志间隔步
 RECIPE = "official_rgb224_letterbox_independent_five_rank_v1"
-LEGACY_RECIPE = RECIPE  # 64像素参数不可与224像素输入混用
+LEGACY_RECIPE = "official_rgb64_independent_five_rank_v1"  # 旧权重只允许训练时作初始化。
 
 
 # 【来源】本项目自写；训练和预测开始前打印当前五个排序占比，便于核对配置。
@@ -299,13 +299,14 @@ def save_ensemble(individual_models, ensemble_models, path, validation,
             time.sleep(1)
 
 
-# 【来源】修改submission3读取；预测使用整组最佳，训练可选单模型最佳。
-def load_ensemble(path, snapshot="ensemble"):
+# 【来源】修改submission3读取；旧64像素权重只供224像素训练初始化，预测仍须新方案权重。
+def load_ensemble(path, snapshot="ensemble", allow_legacy=False):
     from model import ImageModel  # 避免循环导入。
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    if (tuple(checkpoint["model_names"]) != MODEL_NAMES or
-            checkpoint["image_size"] != IMAGE_SIZE or
-            checkpoint["recipe"] not in (RECIPE, LEGACY_RECIPE)):
+    current = checkpoint["image_size"] == IMAGE_SIZE and checkpoint["recipe"] == RECIPE
+    legacy = (allow_legacy and checkpoint["image_size"] == 64 and
+              checkpoint["recipe"] == LEGACY_RECIPE)
+    if tuple(checkpoint["model_names"]) != MODEL_NAMES or not (current or legacy):
         raise ValueError("权重的五模型结构或训练方案不匹配")
     if snapshot not in ("ensemble", "individual"):
         raise ValueError("snapshot只能为ensemble或individual")

@@ -172,13 +172,18 @@ def train(train_dataset, valid_dataset):
     run_dir.mkdir(parents=True, exist_ok=False)
     history, rank_history = [], []
     if MODEL_PATH.is_file():
-        best_models, checkpoint = load_ensemble(MODEL_PATH, "individual")
-        ensemble_models, _ = load_ensemble(MODEL_PATH, "ensemble")
+        best_models, checkpoint = load_ensemble(MODEL_PATH, "individual", allow_legacy=True)
+        ensemble_models, _ = load_ensemble(MODEL_PATH, "ensemble", allow_legacy=True)
         models = copy.deepcopy(best_models)
-        best_metrics = dict(checkpoint["best_metrics"])
+        # 【修改】旧64像素AUROC不能作为224像素训练的最佳值；先在新验证图上重算。
+        legacy = checkpoint["recipe"] != RECIPE
+        best_metrics = {} if legacy else dict(checkpoint["best_metrics"])
         best_weights = tuple(checkpoint.get("rank_weights", RANK_WEIGHTS))
         ensemble_best = None  # 旧快照的指标先用当前官方验证集复核。
-        print("读取已有五模型参数；本次训练轮次从0重新计数。", flush=True)
+        if legacy:
+            print("读取已有64像素五模型参数作224像素训练初始化；旧AUROC不沿用，先重新验证。", flush=True)
+        else:
+            print("读取已有五模型参数；本次训练轮次从0重新计数。", flush=True)
     else:
         models = {name: ImageModel(name) for name in MODEL_NAMES}
         print("未找到五模型参数，五个分支从随机参数开始；不使用外部预训练权重。", flush=True)
