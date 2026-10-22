@@ -2,7 +2,7 @@
 
 当前活动目录 `submission/` 是已确认官网得分最高的非五模型版本：ResNet-18 + DenseNet-121 双模型，历史提交 92.37 分（ID 14086）。两网络独立训练、阳性概率等权平均；原来两份最佳权重已装入一份 `submission/model/best_model.pth`，预测行为不变。对应 `submission/results/submission.csv` 已恢复。详情见 [submission 说明](submission/README.md) 和 [提交记录](项目文档/提交记录/第6次提交-92.37分.md)。
 
-使用 `deepStudy` 解释器，在根目录运行 `submission/code/predict.py` 可重新生成 CSV；运行 `submission/code/train.py` 默认跳过已有参数的重训，并用官方验证集复核。数据放在 `glaucoma_first/`，不纳入 Git。训练记录在 `项目文档/训练记录/`。
+使用 `deepStudy` 解释器，运行 `submission/code/train.py` 会从现有权重继续、每个模型全量训练 5 轮；当前输入改为整图等比例缩小并补边至 256×256，不裁剪、不拉伸。训练先重新验证新输入下的基线，只有验证 AUROC 提高才更新权重。训练不写 CSV；单独运行 `submission/code/predict.py` 才会重新生成 CSV。数据放在 `glaucoma_first/`，不纳入 Git。训练记录在 `项目文档/训练记录/`。现有 CSV 仍是历史 92.37 分版本，不能视为新预处理的成绩。
 
 五模型源码、权重和 CSV 保留在本地 `五模型归档.zip`（Git 忽略），可从 [v1.9.2 Release 附件](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/download/v1.9.2/five-model-archive.zip)恢复；旧 `submission`、`submission2`、`submission3` 的归档仍为本地 `三个不用的模型.zip`。用户未提交的项目文档改动没有纳入本次恢复。
 

@@ -12,8 +12,7 @@ import torch
 from PIL import Image
 from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
 from torch.utils.data import Dataset, WeightedRandomSampler
-from torchvision.transforms import (ColorJitter, Compose, InterpolationMode, Normalize,
-                                    RandomHorizontalFlip, RandomRotation, Resize, ToTensor)
+from torchvision.transforms import ColorJitter, Compose, Normalize, RandomHorizontalFlip, ToTensor
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
@@ -25,45 +24,46 @@ RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 DATA_DIR = PROJECT_DIR / "glaucoma_first"
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
 TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
-IMAGE_SIZE, BATCH_SIZE = 64, 32
-SAMPLES_PER_EPOCH = 8192
-EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 20, 10, 6
+IMAGE_SIZE, BATCH_SIZE = 256, 16
+EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 5, 5, 6
 WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
 WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
-RECIPE = "official_train_rgb64_balanced8192_adamw_v2"
+RECIPE = "official_train_rgb256_letterbox_full_adamw_v1"
+
+
+# 【来源】本项目自写；修改：保持长宽比例，将完整眼底图缩入256方框并补黑边，不裁剪、不拉伸。
+def letterbox(image):
+    image = image.convert("RGB")
+    image.thumbnail((IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS)
+    result = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE))
+    result.paste(image, ((IMAGE_SIZE - image.width) // 2, (IMAGE_SIZE - image.height) // 2))
+    return result
 
 
 # 【来源】本项目自写；复用课堂Resize/ToTensor/Normalize，随机增强只用于训练。
 def create_transform(training=False):
-    steps = [Resize((IMAGE_SIZE, IMAGE_SIZE))]
+    steps = []
     if training:
-        steps += [RandomHorizontalFlip(0.5),
-                  RandomRotation(15, interpolation=InterpolationMode.BILINEAR),
-                  ColorJitter(brightness=0.1, contrast=0.1)]
+        steps += [RandomHorizontalFlip(0.5), ColorJitter(brightness=0.1, contrast=0.1)]
     return Compose(steps + [ToTensor(), Normalize((0.5,) * 3, (0.5,) * 3)])
 
 
 class ImageDataset(Dataset):
-    # 【来源】本项目自写；用赛题图片代替课堂CIFAR10，缓存缩小后的RGB图片。
+    # 【来源】本项目自写；用赛题图片代替课堂CIFAR10；256图不全量缓存，以免占用约10GB内存。
     def __init__(self, image_paths, labels=None, training=False):
         self.image_paths = list(image_paths)
         self.labels = None if labels is None else list(labels)
         self.transform = create_transform(training)
-        self.cache = {}
 
     # 【来源】复用PyTorch Dataset接口；返回样本数。
     def __len__(self):
         return len(self.image_paths)
 
-    # 【来源】复用Dataset取样接口；新增JPEG草图解码及内存缓存。
+    # 【来源】复用Dataset取样接口；修改：整图等比例缩放补边，训练/验证/预测共用。
     def __getitem__(self, index):
-        if index not in self.cache:
-            with Image.open(self.image_paths[index]) as image:
-                image.draft("RGB", (IMAGE_SIZE, IMAGE_SIZE))
-                self.cache[index] = image.convert("RGB").resize(
-                    (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR)
-        x = self.transform(self.cache[index])
+        with Image.open(self.image_paths[index]) as image:
+            x = self.transform(letterbox(image))
         if self.labels is None:
             return x
         return x, torch.tensor(int(self.labels[index]), dtype=torch.long)
@@ -161,14 +161,14 @@ def has_model(model_name):
 
 
 # 【来源】复用03方案的权重读取；修改：从同一PTH取指定网络，仍严格核对结构。
-def load_model(path, model_name):
+def load_model(path, model_name, for_training=False):
     from model import ImageModel  # 避免循环导入。
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     checkpoint = checkpoint["models"][model_name]
     config = checkpoint["model_config"]
-    model = ImageModel(config["model_name"], config["image_size"])
-    if config != model.model_config:
-        raise ValueError("权重的模型结构或训练方案不匹配")
+    model = ImageModel(model_name)
+    if config != model.model_config and not (for_training and config.get("model_name") == model_name):
+        raise ValueError("权重的输入尺寸或训练方案不匹配；请先运行train.py完成迁移")
     model.load_state_dict(checkpoint["state_dict"])
     return model
 

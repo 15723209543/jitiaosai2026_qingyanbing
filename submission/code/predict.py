@@ -31,6 +31,7 @@ def collect_probabilities(dataset, models, stage):
     torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
     labels, scores, start = [], [[] for _ in models], time.time()
+    device = next(models[0].parameters()).device
     for model in models:
         model.eval()
     with torch.no_grad():
@@ -40,6 +41,7 @@ def collect_probabilities(dataset, models, stage):
             else:
                 x, y = batch
                 labels.extend(y.tolist())
+            x = x.to(device, non_blocking=True)
             for index, model in enumerate(models):
                 scores[index].extend(torch.softmax(model(x), dim=1)[:, 1].tolist())
             print_progress(stage, batch_idx, len(dataloader), start)
