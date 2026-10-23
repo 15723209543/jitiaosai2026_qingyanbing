@@ -19,7 +19,8 @@ PROJECT_DIR = Path(__file__).resolve().parents[2]
 VARIANT_DIR = Path(__file__).resolve().parents[1]
 MODEL_DIR = VARIANT_DIR / "model"
 MODEL_PATH = MODEL_DIR / "best_model.pth"
-OUTPUT_CSV = VARIANT_DIR / "results" / "submission.csv"
+# 新规程附录A要求 submission.csv 位于提交材料根目录；历史 results 原样保留。
+OUTPUT_CSV = VARIANT_DIR / "submission.csv"
 RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
 DATA_DIR = PROJECT_DIR / "glaucoma_first"
 TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
@@ -92,6 +93,20 @@ def load_images(csv_path, image_dir, labeled=True):
     return paths, labels
 
 
+# 【来源】本项目自写；修改：无 test.csv 时按文件名稳定排序，供预测和 cost.py 共用。
+def list_image_paths(image_dir):
+    image_dir = Path(image_dir)
+    if not image_dir.is_dir():
+        raise FileNotFoundError("图片文件夹不存在: %s" % image_dir)
+    paths = sorted((path for path in image_dir.rglob("*")
+                    if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}),
+                   key=lambda path: path.name.casefold())
+    names = [path.name for path in paths]
+    if not paths or len({name.casefold() for name in names}) != len(names):
+        raise ValueError("图片为空或存在同名图片，无法确定提交顺序")
+    return paths, names
+
+
 # 【来源】参考课堂create_dataset改写；官方train/valid严格分开。
 def load_train_data():
     train_paths, train_labels = load_images(TRAIN_CSV, TRAIN_DIR)
@@ -150,6 +165,18 @@ def model_path(model_name):
     if model_name not in ("resnet18", "densenet121"):
         raise ValueError("不支持的模型名")
     return MODEL_PATH
+
+
+# 【来源】本项目自写；新规程适配：两个分支均完成本配置验证后才允许生成最终CSV。
+def assert_inference_checkpoint_ready(path, model_names):
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    models = checkpoint.get("models", {})
+    for name in model_names:
+        entry = models.get(name, {})
+        validation = entry.get("validation") or {}
+        auroc = validation.get("auroc")
+        if not isinstance(auroc, (int, float)) or not math.isfinite(auroc):
+            raise RuntimeError("模型%s未完成验证，不可生成最终提交CSV" % name)
 
 
 # 【来源】本项目自写；检查单文件中是否已有指定网络的最佳参数。

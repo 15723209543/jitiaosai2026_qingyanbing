@@ -1,7 +1,7 @@
-# 本机jitiaosai已验证版本；原deepStudy与submission不变。
+# deepStudy当前环境实测版本；GPU主机需安装与CUDA版本匹配的PyTorch构建。
 torch==2.13.0
 torchvision==0.28.0
 Pillow>=10,<13
 numpy>=1.26,<3
-pandas>=2.2,<3
+pandas>=2.2,<4
 scikit-learn>=1.5,<2
