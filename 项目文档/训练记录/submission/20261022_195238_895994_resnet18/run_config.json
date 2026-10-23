@@ -1,0 +1,23 @@
+{
+  "variant": "submission",
+  "model_name": "resnet18",
+  "model_file": "C:\\Users\\LENOVO\\Desktop\\计算机能力挑战赛——大数据挑战赛\\submission\\model\\best_model.pth",
+  "selection_metric": "validation_auroc",
+  "training_recipe": "official_train_rgb256_letterbox_full_adamw_v1",
+  "best_validation": {
+    "epoch": 1,
+    "train_loss": 0.35240395712870687,
+    "train_accuracy": 0.9661063117752354,
+    "learning_rate": 2.9999999999999997e-05,
+    "accuracy": 0.9688835698409984,
+    "auroc": 0.8688064344790956,
+    "auprc": 0.28855019271662835,
+    "ap": 0.2908961478868927,
+    "recall": 0.17801047120418848,
+    "specificity": 0.995581477553906,
+    "tp": 34,
+    "tn": 5633,
+    "fp": 25,
+    "fn": 157
+  }
+}
