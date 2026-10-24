@@ -1,5 +1,7 @@
-# 预训练权重
+# 续训来源文件
 
-当前 `code/model.py` 对 ResNet-18 和 DenseNet-121 均使用 `weights=None`，从随机权重开始训练；本目录没有预训练权重文件。核验清单中 A2—A5 因此标为“不适用”，不能伪填公开链接、许可证或哈希。
+当前第二轮起点为previous_round_best_0.957992.pth，来源、哈希和优化器恢复说明见CONTINUATION_SOURCE.md。
 
-新规则允许符合许可证要求的非医学领域开源预训练权重。若后续改用 ImageNet 权重，须先核验公开来源、再分发许可、上游数据说明和 SHA-256，并把实际使用的权重及证明材料放入最终材料；需重新训练、验证、预测并更新清单，不能把当前模型谎报为 ImageNet 预训练模型。
+upstream_competition_initialization.pth为最初GitHub比赛检查点，说明见UPSTREAM_CHECKPOINT.md。两者均用于训练追溯，最终推理仅加载model/best_model.pth。
+
+本轮未使用ImageNet或外部医学预训练权重。

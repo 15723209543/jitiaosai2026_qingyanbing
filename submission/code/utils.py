@@ -30,7 +30,12 @@ EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 5, 5, 6
 WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
 WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
-RECIPE = "official_train_rgb256_letterbox_full_adamw_v1"
+RECIPE = "official_train_rgb256_letterbox_continuation_cosine_v2"
+
+
+def model_memory_format(model_name):
+    # DenseNet concatenations are substantially faster in NCHW on this GPU.
+    return torch.contiguous_format if model_name == "densenet121" else torch.channels_last
 
 
 # 【来源】本项目自写；修改：保持长宽比例，将完整眼底图缩入256方框并补黑边，不裁剪、不拉伸。
@@ -170,6 +175,8 @@ def model_path(model_name):
 # 【来源】本项目自写；新规程适配：两个分支均完成本配置验证后才允许生成最终CSV。
 def assert_inference_checkpoint_ready(path, model_names):
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    if checkpoint.get("training_complete") is not True:
+        raise RuntimeError("本轮双模型完整训练尚未结束，不可生成最终提交CSV")
     models = checkpoint.get("models", {})
     for name in model_names:
         entry = models.get(name, {})

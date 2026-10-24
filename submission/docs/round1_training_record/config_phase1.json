@@ -1,0 +1,29 @@
+{
+  "epochs": 5,
+  "batch_size": 64,
+  "workers": 4,
+  "seed": 20261024,
+  "run_name": "20261024_upstream_dual",
+  "resume": false,
+  "recipe": "official_train_rgb256_letterbox_full_adamw_v1",
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "cuda": "12.8",
+  "source_commit": "1e9bf1e26573b130be76e63a52182d8a3a1da053",
+  "train_count": 51396,
+  "valid_count": 5849,
+  "validation_use": "checkpoint selection only",
+  "test_use": "final inference only",
+  "initialization": "upstream main v1.12.1 competition-trained best_model.pth; no external pretrained weights",
+  "training_precision": "AMP float16",
+  "inference_precision": "FP32",
+  "ensemble": "fixed arithmetic mean, threshold=0.5; no TTA",
+  "source_files_sha256": {
+    "submission\\code\\model.py": "e215df64ceb377c3f9c1b5f950ddb68d3f25068633bc8bbcfde5147a4bc65e53",
+    "submission\\code\\predict.py": "c90382b775f73be728396f26c328ec53d20b80348b6b9fe2c72cbe633b256381",
+    "submission\\code\\prepare.py": "e198cbb81862e914ef61edee0cfdb5a415111fe0168ee28a22e63b4394c06b47",
+    "submission\\code\\train.py": "525ee9c316f9ce577d49abceeeb259d74af656fb972c62c570d485d8903151c3",
+    "submission\\code\\utils.py": "782cbadfbdb2ab7682a0fb15de9f8953fad5e29c6addd98f657e9ea90efd24bf"
+  },
+  "initialization_sha256": "def7e5c5be79903cd863421156f0557786d03bc567722ffd083360c18418d1a6"
+}

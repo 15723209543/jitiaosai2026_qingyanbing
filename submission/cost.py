@@ -2,6 +2,8 @@
 
 import argparse
 import csv
+import hashlib
+import json
 import statistics
 import sys
 import tempfile
@@ -28,7 +30,7 @@ def benchmark_round(image_paths, models, output_path):
         for index, image_path in enumerate(image_paths):
             start = time.perf_counter()
             image = dataset[index].unsqueeze(0)
-            score = score_batch(image, models)[0]
+            score = round(score_batch(image, models)[0], 6)
             if next(models[0].parameters()).device.type == "cuda":
                 torch.cuda.synchronize()
             writer.writerow([image_path.name, "%.6f" % score, int(score >= 0.5)])
@@ -44,10 +46,10 @@ def compare_submission(submission_csv, scores):
         reader = csv.DictReader(file)
         if reader.fieldnames != ["Image_name", "Probability", "Pred_Label"]:
             raise ValueError("提交CSV字段必须为 Image_name,Probability,Pred_Label")
-        expected = {row["Image_name"]: row for row in reader}
+        expected = {row["Image_name"].casefold(): row for row in reader}
     mismatches = 0
     for name, score in scores.items():
-        row = expected.get(name)
+        row = expected.get(name.casefold())
         if row is None or abs(float(row["Probability"]) - round(score, 6)) > 0.000001 \
                 or int(row["Pred_Label"]) != int(score >= 0.5):
             mismatches += 1
@@ -55,7 +57,7 @@ def compare_submission(submission_csv, scores):
 
 
 # 【来源】根据2026新规程第7条自写；5张预热，100张连续跑3轮，先逐图平均再全体平均。
-def main(pictures_100, pictures_5, submission_csv):
+def main(pictures_100, pictures_5, submission_csv, report_json=None):
     measured_paths, _ = list_image_paths(pictures_100)
     warmup_paths, _ = list_image_paths(pictures_5)
     if len(measured_paths) != 100 or len(warmup_paths) != 5:
@@ -77,6 +79,15 @@ def main(pictures_100, pictures_5, submission_csv):
                  for index in range(len(measured_paths))]
     average_seconds = statistics.mean(per_image)
     mismatches = compare_submission(submission_csv, scores)
+    if report_json is not None:
+        report = {"device": str(device), "gpu": torch.cuda.get_device_name(0) if device.type == "cuda" else None,
+                  "precision": "FP32", "batch_size": 1, "warmup_count": 5, "measured_count": 100,
+                  "rounds": 3, "round_mean_seconds": [statistics.mean(r) for r in rounds],
+                  "per_image_mean_seconds": per_image, "average_seconds": average_seconds,
+                  "mismatches": mismatches, "sample_origin": "caller-provided; local samples are not organizer-specified samples",
+                  "csv_sha256": hashlib.sha256(Path(submission_csv).read_bytes()).hexdigest(),
+                  "official_hardware_verification": False}
+        Path(report_json).write_text(json.dumps(report, indent=2), encoding="utf-8")
     print("[CONCLUSION] 本机100张、batch=1串行、3轮；单张端到端平均耗时 %.6f 秒，"
           "%s100秒上限；与submission.csv比对不一致%d张；推理精度fp32。"
           "最终以主办方指定硬件复测为准。" %
@@ -92,5 +103,6 @@ if __name__ == "__main__":
     parser.add_argument("pictures_5", type=Path)
     parser.add_argument("--submission-csv", type=Path,
                         default=Path(__file__).resolve().parent / "submission.csv")
+    parser.add_argument("--report-json", type=Path, default=None)
     args = parser.parse_args()
-    main(args.pictures_100, args.pictures_5, args.submission_csv)
+    main(args.pictures_100, args.pictures_5, args.submission_csv, args.report_json)

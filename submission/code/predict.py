@@ -17,7 +17,7 @@ from model import MODEL_NAMES
 from utils import (BATCH_SIZE, CPU_THREADS, ImageDataset, OUTPUT_CSV, PREDICT_CPU_THREADS,
                    TEST_CSV, TEST_DIR, assert_inference_checkpoint_ready, calculate_metrics,
                    list_image_paths, load_images, load_model, model_path, print_progress,
-                   write_submission)
+                   write_submission, model_memory_format)
 
 
 # 【来源】本项目自写；修改①: 两个模型的阳性概率等权平均，不合并类别标签。
@@ -35,20 +35,27 @@ def score_batch(x, models):
     x = x.to(device, non_blocking=True)
     with torch.inference_mode():
         return average_probabilities(*[
-            torch.softmax(model(x), dim=1)[:, 1].tolist() for model in models
+            torch.softmax(model(x.contiguous(memory_format=model_memory_format(model.model_config["model_name"]))), dim=1)[:, 1].tolist() for model in models
         ])
 
 
 # 【来源】本项目自写；修改：模型只加载一次，在CPU或CUDA上固定为eval模式。
 def load_inference_models():
+    torch.set_num_threads(PREDICT_CPU_THREADS)
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
     path = model_path(MODEL_NAMES[0])
     if not path.is_file():
         raise FileNotFoundError("缺少模型参数, 请先运行train.py: %s" % path)
     assert_inference_checkpoint_ready(path, MODEL_NAMES)
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    selected_names = checkpoint.get("inference_selection", {}).get("model_names", list(MODEL_NAMES))
+    if not selected_names or len(set(selected_names)) != len(selected_names) or not set(selected_names) <= set(MODEL_NAMES):
+        raise ValueError("非法的验证选模配置")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if device.type == "cpu":
         torch.set_num_threads(PREDICT_CPU_THREADS)
-    models = [load_model(path, name).to(device).eval() for name in MODEL_NAMES]
+    models = [load_model(path, name).to(device=device, memory_format=model_memory_format(name)).eval() for name in selected_names]
     return models
 
 
@@ -57,7 +64,8 @@ def collect_probabilities(dataset, models, stage):
     if not models:
         raise ValueError("至少需要一个模型")
     torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=1 if stage == "test" else BATCH_SIZE,
+                            shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
     labels, scores, start = [], [], time.time()
     for model in models:
         model.eval()

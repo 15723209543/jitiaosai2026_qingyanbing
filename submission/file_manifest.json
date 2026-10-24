@@ -1,0 +1,283 @@
+{
+  "files": [
+    {
+      "path": "code/model.py",
+      "bytes": 2326,
+      "sha256": "e215df64ceb377c3f9c1b5f950ddb68d3f25068633bc8bbcfde5147a4bc65e53"
+    },
+    {
+      "path": "code/predict.py",
+      "bytes": 6390,
+      "sha256": "1fcb838a66be8296b1eff7e2c985cec58942a9a374096ffe9081fef2c2b3db56"
+    },
+    {
+      "path": "code/prepare.py",
+      "bytes": 3513,
+      "sha256": "e198cbb81862e914ef61edee0cfdb5a415111fe0168ee28a22e63b4394c06b47"
+    },
+    {
+      "path": "code/requirements.txt",
+      "bytes": 198,
+      "sha256": "e2d5c0190a332ef12e995b989b4139b4cba2477cbcc2c2b932d7e45fcaa28c42"
+    },
+    {
+      "path": "code/select_inference.py",
+      "bytes": 1040,
+      "sha256": "18db17d2799b5f040163e3d650dd0cacd1228f8a856647f7601db92dbad5a8b9"
+    },
+    {
+      "path": "code/train.py",
+      "bytes": 14415,
+      "sha256": "b62820b09c86700bf46fae57086fbd70b6bc492aaabcecc5bb7ec3b3caa13929"
+    },
+    {
+      "path": "code/training_core.py",
+      "bytes": 2476,
+      "sha256": "6c07d5ee5f3c709481cd4ef95b4909c824ecb757755c8bb03a7393555aadc929"
+    },
+    {
+      "path": "code/utils.py",
+      "bytes": 12500,
+      "sha256": "21cb0a9913da3e9853c688c52a8198f3fe6495329a68e24b28e0a9875a7b0b4c"
+    },
+    {
+      "path": "cost.py",
+      "bytes": 5655,
+      "sha256": "38a9c0c4c468b8fa9909bd36f4aa8d9b532fc7df0a876385e675a3254cd2ae2f"
+    },
+    {
+      "path": "docs/AI_HANDOFF.md",
+      "bytes": 8502,
+      "sha256": "4246d2ac6ae0ef282cc363caed23886a0fc1527810524d6b3ed06958c0fcf3f1"
+    },
+    {
+      "path": "docs/environment-lock.txt",
+      "bytes": 3014,
+      "sha256": "a40c83dc0159a38a2a8b3daade1a9b6b1470efa56d350f5ce58e2b3ca0335428"
+    },
+    {
+      "path": "docs/final_verification.json",
+      "bytes": 8077,
+      "sha256": "39abc3dc9e6fa751d685d02b06d0fe499c43029471a56f21f21aaa22e4574a91"
+    },
+    {
+      "path": "docs/local_timing.json",
+      "bytes": 3210,
+      "sha256": "5ba2bcb22f23c2e104ce39609ba3443222c64a20faedb4c4b48129a97f4a10da"
+    },
+    {
+      "path": "docs/round1_source/model.py",
+      "bytes": 2326,
+      "sha256": "e215df64ceb377c3f9c1b5f950ddb68d3f25068633bc8bbcfde5147a4bc65e53"
+    },
+    {
+      "path": "docs/round1_source/predict.py",
+      "bytes": 6390,
+      "sha256": "1fcb838a66be8296b1eff7e2c985cec58942a9a374096ffe9081fef2c2b3db56"
+    },
+    {
+      "path": "docs/round1_source/prepare.py",
+      "bytes": 3513,
+      "sha256": "e198cbb81862e914ef61edee0cfdb5a415111fe0168ee28a22e63b4394c06b47"
+    },
+    {
+      "path": "docs/round1_source/README.md",
+      "bytes": 313,
+      "sha256": "3bcb92c4bacb28e1372332b189eb005c39f382f3167865a1039dac7737347567"
+    },
+    {
+      "path": "docs/round1_source/requirements.txt",
+      "bytes": 198,
+      "sha256": "e2d5c0190a332ef12e995b989b4139b4cba2477cbcc2c2b932d7e45fcaa28c42"
+    },
+    {
+      "path": "docs/round1_source/select_inference.py",
+      "bytes": 2176,
+      "sha256": "f4c1afec221b5437195b513793082e46473021d4751a97b9b1f2f96770080780"
+    },
+    {
+      "path": "docs/round1_source/train.py",
+      "bytes": 11985,
+      "sha256": "7c61baee484145ac73bfb5288373b47824a6b7505708b30d49a89d97714fd826"
+    },
+    {
+      "path": "docs/round1_source/utils.py",
+      "bytes": 12491,
+      "sha256": "5b9d54186c1157975799a90afaf78feb13ce0cde503a898c3a788014fb0d9da1"
+    },
+    {
+      "path": "docs/round1_training_record/config.json",
+      "bytes": 1495,
+      "sha256": "6e414fff78e3c776349df576bafcf95bc99304fbc1e2dc9f5238d90e8e7e13c0"
+    },
+    {
+      "path": "docs/round1_training_record/config_phase1.json",
+      "bytes": 1396,
+      "sha256": "969d73b01a052e3b87779208e55673c4264e7a528425f370b74610ecbc3195ea"
+    },
+    {
+      "path": "docs/round1_training_record/densenet121_history.csv",
+      "bytes": 1286,
+      "sha256": "dc9fcd7384fd79345006c62f00a164ae341e75b54976454a64e037c14c028e2e"
+    },
+    {
+      "path": "docs/round1_training_record/execution_phases.json",
+      "bytes": 749,
+      "sha256": "56a80619814c0b0586b6ece60a905acb408b20d49594e898d4415c214d7301b1"
+    },
+    {
+      "path": "docs/round1_training_record/inference_selection.json",
+      "bytes": 1616,
+      "sha256": "766c8b6d071c06ee0b75fe3b32fa64ad5281e30805210012b99b5bc64bdcfdf1"
+    },
+    {
+      "path": "docs/round1_training_record/resnet18_history.csv",
+      "bytes": 1280,
+      "sha256": "2cb490f795cc8ce4b5539a690bb9956001ee36e27bd9f9daa8cdfa74ecc711c6"
+    },
+    {
+      "path": "docs/round1_training_record/TRAINING_COMPLETE.json",
+      "bytes": 1360,
+      "sha256": "3927af2664b2c41afd605ddf446393e65984b687c146d601cda528a6d752f684"
+    },
+    {
+      "path": "docs/round1_training_record/valid_predictions.csv",
+      "bytes": 516200,
+      "sha256": "7e3fbcda2523bb00968fad9b70ec20be95644b37cf70b0d9375e5efd34463430"
+    },
+    {
+      "path": "docs/round1_training_record/validation_metrics.json",
+      "bytes": 1222,
+      "sha256": "bb402530c7b50b4d83668ad56d9f0f6c47419de8431e31d2b73602265a8d8f3b"
+    },
+    {
+      "path": "docs/training_record/baseline_metrics.json",
+      "bytes": 1646,
+      "sha256": "64343917fe577b1daa24c3c93dc3857eaa929561f0b31a61afb8fe3c1dd9a1b7"
+    },
+    {
+      "path": "docs/training_record/config.json",
+      "bytes": 1571,
+      "sha256": "bfef7bea7db1f983855b870afa3a21340e2191405387343ae2cc2706b7e09c50"
+    },
+    {
+      "path": "docs/training_record/densenet121_history.csv",
+      "bytes": 2315,
+      "sha256": "d990d5849504d8776118b1b8b1cd89386e009639bc06fc0518d335a85cf9fc62"
+    },
+    {
+      "path": "docs/training_record/inference_selection.json",
+      "bytes": 1644,
+      "sha256": "a33f1c468ac7811819f8f589b95d9539273a3fd600ed99a98973b61f49015c1f"
+    },
+    {
+      "path": "docs/training_record/PROMOTED.json",
+      "bytes": 8077,
+      "sha256": "39abc3dc9e6fa751d685d02b06d0fe499c43029471a56f21f21aaa22e4574a91"
+    },
+    {
+      "path": "docs/training_record/resnet18_history.csv",
+      "bytes": 1577,
+      "sha256": "1b08dbf318d47db669a3d286c1341e2c5e08ec32886460fafca7cb4a5b8dd4c5"
+    },
+    {
+      "path": "docs/training_record/TRAINING_COMPLETE.json",
+      "bytes": 3989,
+      "sha256": "c4186c9c32d55b78d05d10c7822f46925a8dbe16bbd114adff222cfd09644b03"
+    },
+    {
+      "path": "docs/training_record/valid_predictions.csv",
+      "bytes": 523827,
+      "sha256": "a137053c632fee895bde963d13c9cefc612426bdda28d937986c289351947ae2"
+    },
+    {
+      "path": "docs/使用说明.md",
+      "bytes": 7097,
+      "sha256": "577d9e2d577ac8c43c382df2f39afc66382daa494e8ee955d207fbec0e01e48f"
+    },
+    {
+      "path": "docs/模型与资料调研_20261024.md",
+      "bytes": 4035,
+      "sha256": "77406945e9a43ecc1b03c55080b1d8680232179eb0617cb09f3db3697250fd95"
+    },
+    {
+      "path": "docs/第一轮_训练结果.md",
+      "bytes": 3671,
+      "sha256": "b63c78c0ff7e537e7436744d30d12f271acc11ce1d16a48e441e5283f36a506f"
+    },
+    {
+      "path": "docs/第二轮续训方案.md",
+      "bytes": 2231,
+      "sha256": "dc6a0a0822cdae8f794be05c736cd7ea1ff344698ef6ae5a998eb76debf238e5"
+    },
+    {
+      "path": "docs/第二轮续训结果.md",
+      "bytes": 2277,
+      "sha256": "4a096cf4da9a27de5a2ff2bad205d2928a848ee66c6a4e6bbd75d722a03c43d5"
+    },
+    {
+      "path": "docs/训练结果.md",
+      "bytes": 2277,
+      "sha256": "4a096cf4da9a27de5a2ff2bad205d2928a848ee66c6a4e6bbd75d722a03c43d5"
+    },
+    {
+      "path": "licenses/README.md",
+      "bytes": 236,
+      "sha256": "fbc1b438c2a24d05d0961994af5853a516a68b7e5fbf25e13ad6dc83dc635b5c"
+    },
+    {
+      "path": "licenses/torchvision-LICENSE.txt",
+      "bytes": 1517,
+      "sha256": "6502f676851cfe25f8af75531dfb32375b7325b73c37e7b43741fa422893e71d"
+    },
+    {
+      "path": "model/best_model.pth",
+      "bytes": 73188573,
+      "sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf"
+    },
+    {
+      "path": "pretrain_model/CONTINUATION_SOURCE.md",
+      "bytes": 664,
+      "sha256": "73f80dd1ce39412b456ffad95e82fdd88d229b3a15c8d39eba574d9fa5ad0670"
+    },
+    {
+      "path": "pretrain_model/previous_round_best_0.957992.pth",
+      "bytes": 73218397,
+      "sha256": "134650d23ce1f2c48bdf2e9abf612faff61b3ccf6cd0b39530cba8c1963b8eaf"
+    },
+    {
+      "path": "pretrain_model/README.md",
+      "bytes": 396,
+      "sha256": "140c7b3876f8f1adae62d36228e156aa11f5bcdf2a3c7f17607daa09aa01ae88"
+    },
+    {
+      "path": "pretrain_model/UPSTREAM_CHECKPOINT.md",
+      "bytes": 1345,
+      "sha256": "1c04397ebf029125ce80d642490141669aa86cf12705c4f980adc094be22f095"
+    },
+    {
+      "path": "pretrain_model/upstream_competition_initialization.pth",
+      "bytes": 73217565,
+      "sha256": "def7e5c5be79903cd863421156f0557786d03bc567722ffd083360c18418d1a6"
+    },
+    {
+      "path": "README.md",
+      "bytes": 436,
+      "sha256": "03ce94350c0609274705e7f6ee9fc52205567ed46265277ddfd73de7c8d1bcc4"
+    },
+    {
+      "path": "submission.csv",
+      "bytes": 158120,
+      "sha256": "e6ed53536e270a261dbb08c2e367a88076bb219a1dc08ccc74babe97af1ff489"
+    },
+    {
+      "path": "模型核验材料与数据申明清单.xlsx",
+      "bytes": 5551,
+      "sha256": "b0c3f77d8368c068dd0d29df19400e29af6d5f82928b34c4fe5f53a524c852b9"
+    }
+  ],
+  "inference_files": [
+    "model/best_model.pth"
+  ],
+  "inference_bytes": 73188573
+}
