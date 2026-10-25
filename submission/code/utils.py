@@ -30,7 +30,7 @@ EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 5, 5, 6
 WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
 WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
 CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
-RECIPE = "official_train_rgb256_letterbox_continuation_cosine_v2"
+RECIPE = "official_train_rgb256_frozen_encoder_focal_head_v10"
 
 
 def model_memory_format(model_name):

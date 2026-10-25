@@ -1,0 +1,10 @@
+{
+  "initial_predict_code_sha256": "1fcb838a66be8296b1eff7e2c985cec58942a9a374096ffe9081fef2c2b3db56",
+  "final_predict_code_sha256": "da6008057243255485edfd4d61c50cd42733eba46e98072d2c97249bbf2ee2ab",
+  "reason": "GPU transfer waiting without progress after approximately 2350/5855 samples",
+  "change": "synchronous input transfer; disable inference DataLoader pinned memory",
+  "model_changed": false,
+  "precision": "FP32",
+  "preprocessing_changed": false,
+  "requires_csv_and_timing_consistency_recheck": true
+}

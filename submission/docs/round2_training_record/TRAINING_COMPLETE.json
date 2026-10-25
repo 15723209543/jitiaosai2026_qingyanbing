@@ -1,0 +1,139 @@
+{
+  "completed": {
+    "resnet18": {
+      "additional_epochs": 5,
+      "stopped_early": true
+    },
+    "densenet121": {
+      "additional_epochs": 8,
+      "stopped_early": false
+    }
+  },
+  "selection": {
+    "model_names": [
+      "resnet18",
+      "densenet121"
+    ],
+    "metric": "official_validation_auroc",
+    "candidate_metrics": {
+      "resnet18": {
+        "accuracy": 0.9541802017438878,
+        "auroc": 0.957659913498748,
+        "auprc": 0.47522449513370285,
+        "ap": 0.4775911653510745,
+        "recall": 0.7015706806282722,
+        "specificity": 0.9627076705549664,
+        "tp": 134,
+        "tn": 5447,
+        "fp": 211,
+        "fn": 57
+      },
+      "densenet121": {
+        "accuracy": 0.9695674474269106,
+        "auroc": 0.9512741075510004,
+        "auprc": 0.6051749517325816,
+        "ap": 0.606215760008275,
+        "recall": 0.6858638743455497,
+        "specificity": 0.9791445740544362,
+        "tp": 131,
+        "tn": 5540,
+        "fp": 118,
+        "fn": 60
+      },
+      "fixed_mean_ensemble": {
+        "accuracy": 0.9661480594973499,
+        "auroc": 0.9624087841151573,
+        "auprc": 0.5781253575384546,
+        "ap": 0.5796460557173241,
+        "recall": 0.680628272251309,
+        "specificity": 0.9757864969954048,
+        "tp": 130,
+        "tn": 5521,
+        "fp": 137,
+        "fn": 61
+      }
+    },
+    "selected_candidate": "fixed_mean_ensemble",
+    "validation": {
+      "accuracy": 0.9661480594973499,
+      "auroc": 0.9624087841151573,
+      "auprc": 0.5781253575384546,
+      "ap": 0.5796460557173241,
+      "recall": 0.680628272251309,
+      "specificity": 0.9757864969954048,
+      "tp": 130,
+      "tn": 5521,
+      "fp": 137,
+      "fn": 61
+    },
+    "rule": "best validation AUROC across observed single branches and fixed equal-mean snapshots; no test data",
+    "threshold": 0.5,
+    "tta": false,
+    "inference_precision": "FP32"
+  },
+  "baseline": {
+    "model_names": [
+      "resnet18",
+      "densenet121"
+    ],
+    "metric": "official_validation_auroc",
+    "candidate_metrics": {
+      "resnet18": {
+        "accuracy": 0.9533253547614977,
+        "auroc": 0.9547154656613719,
+        "auprc": 0.4341793254927094,
+        "ap": 0.4373976229215946,
+        "recall": 0.675392670157068,
+        "specificity": 0.9627076705549664,
+        "tp": 129,
+        "tn": 5447,
+        "fp": 211,
+        "fn": 62
+      },
+      "densenet121": {
+        "accuracy": 0.9562318345016242,
+        "auroc": 0.9527398540545843,
+        "auprc": 0.5583487264992019,
+        "ap": 0.5597017195071606,
+        "recall": 0.7329842931937173,
+        "specificity": 0.9637681159420289,
+        "tp": 140,
+        "tn": 5453,
+        "fp": 205,
+        "fn": 51
+      },
+      "fixed_mean_ensemble": {
+        "accuracy": 0.9589673448452727,
+        "auroc": 0.9579921123590931,
+        "auprc": 0.5148974019585103,
+        "ap": 0.5171138868985439,
+        "recall": 0.7120418848167539,
+        "specificity": 0.9673029338989042,
+        "tp": 136,
+        "tn": 5473,
+        "fp": 185,
+        "fn": 55
+      }
+    },
+    "selected_candidate": "fixed_mean_ensemble",
+    "validation": {
+      "accuracy": 0.9589673448452727,
+      "auroc": 0.9579921123590931,
+      "auprc": 0.5148974019585103,
+      "ap": 0.5171138868985439,
+      "recall": 0.7120418848167539,
+      "specificity": 0.9673029338989042,
+      "tp": 136,
+      "tn": 5473,
+      "fp": 185,
+      "fn": 55
+    },
+    "rule": "best validation AUROC across observed single branches and fixed equal-mean snapshots; no test data",
+    "threshold": 0.5,
+    "tta": false,
+    "inference_precision": "FP32"
+  },
+  "model_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+  "source_checkpoint_sha256": "134650d23ce1f2c48bdf2e9abf612faff61b3ccf6cd0b39530cba8c1963b8eaf",
+  "training_complete": true
+}

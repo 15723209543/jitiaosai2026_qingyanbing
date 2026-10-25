@@ -1,0 +1,122 @@
+{
+  "local_cache_only": true,
+  "test_features_used": false,
+  "features": [
+    {
+      "shape": [
+        102792,
+        1024
+      ],
+      "current_source_sha256": "5ed7b0ff021c65920bd15651df4004be1381047060e78819553ff1e084627f9d",
+      "encoder_equality_verified": true,
+      "original": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+        "precision": "FP32",
+        "split": "train",
+        "image_size": 256,
+        "training_augmentation": false,
+        "excluded_train_indices": [],
+        "shape": [
+          51396,
+          1024
+        ],
+        "sha256": "982293efdd29c0c79989d1b78208aa6a783ffb98a3bbd7baaffff7082403d7b7"
+      },
+      "flipped": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "precision": "FP32",
+        "transform": "horizontal flip after RGB letterbox256 and normalization",
+        "excluded_indices": [],
+        "original_feature_sha256": "982293efdd29c0c79989d1b78208aa6a783ffb98a3bbd7baaffff7082403d7b7",
+        "shape": [
+          51396,
+          1024
+        ],
+        "sha256": "ea67e4028357b6596c47dc35e7fd6e3bdb2df8827fb51d815aad8138541dcb13"
+      },
+      "training_views_per_image": 2
+    },
+    {
+      "shape": [
+        5849,
+        1024
+      ],
+      "current_source_sha256": "5ed7b0ff021c65920bd15651df4004be1381047060e78819553ff1e084627f9d",
+      "encoder_equality_verified": true,
+      "original": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+        "precision": "FP32",
+        "split": "valid",
+        "image_size": 256,
+        "training_augmentation": false,
+        "excluded_train_indices": [],
+        "shape": [
+          5849,
+          1024
+        ],
+        "sha256": "5b6306f68255f6cf882ecc0a2ad687bd8a41f3ebc22427671d0691e7ea76ef28"
+      },
+      "validation_views_per_image": 1
+    },
+    {
+      "shape": [
+        102792,
+        512
+      ],
+      "current_source_sha256": "5ed7b0ff021c65920bd15651df4004be1381047060e78819553ff1e084627f9d",
+      "encoder_equality_verified": true,
+      "original": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+        "precision": "FP32",
+        "split": "train",
+        "image_size": 256,
+        "training_augmentation": false,
+        "excluded_train_indices": [],
+        "shape": [
+          51396,
+          512
+        ],
+        "sha256": "9e0852ac4237c1b4ed99b4eee589e1cab9e0c54d8829ce8c141289cf76b6a31c"
+      },
+      "flipped": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "precision": "FP32",
+        "transform": "horizontal flip after RGB letterbox256 and normalization",
+        "excluded_indices": [],
+        "original_feature_sha256": "9e0852ac4237c1b4ed99b4eee589e1cab9e0c54d8829ce8c141289cf76b6a31c",
+        "shape": [
+          51396,
+          512
+        ],
+        "sha256": "6e2a63d5a6e75f7334e7d1f31f90eafccb3ce50c75d2168c9fc74534fd2b76c8"
+      },
+      "training_views_per_image": 2
+    },
+    {
+      "shape": [
+        5849,
+        512
+      ],
+      "current_source_sha256": "5ed7b0ff021c65920bd15651df4004be1381047060e78819553ff1e084627f9d",
+      "encoder_equality_verified": true,
+      "original": {
+        "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+        "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+        "precision": "FP32",
+        "split": "valid",
+        "image_size": 256,
+        "training_augmentation": false,
+        "excluded_train_indices": [],
+        "shape": [
+          5849,
+          512
+        ],
+        "sha256": "7ff9037e66ef5ecb9a0e09d3669b349cf3e23f1b9ed35b961d160f9fe4226c7f"
+      },
+      "validation_views_per_image": 1
+    }
+  ]
+}

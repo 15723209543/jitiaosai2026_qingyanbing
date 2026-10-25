@@ -1,0 +1,203 @@
+{
+  "completed": {
+    "resnet18": {
+      "additional_epochs": 25,
+      "stopped_early": true,
+      "scope": "classification head only"
+    },
+    "densenet121": {
+      "additional_epochs": 6,
+      "stopped_early": true,
+      "scope": "classification head only"
+    }
+  },
+  "selection": {
+    "model_names": [
+      "resnet18",
+      "densenet121"
+    ],
+    "metric": "official_validation_auroc",
+    "candidate_metrics": {
+      "resnet18": {
+        "accuracy": 0.9541802017438878,
+        "auroc": 0.9579217861379615,
+        "auprc": 0.4758402845342317,
+        "ap": 0.47820755141497173,
+        "recall": 0.7015706806282722,
+        "specificity": 0.9627076705549664,
+        "tp": 134,
+        "tn": 5447,
+        "fp": 211,
+        "fn": 57
+      },
+      "densenet121": {
+        "accuracy": 0.9695674474269106,
+        "auroc": 0.9512741075510004,
+        "auprc": 0.6051749517325815,
+        "ap": 0.6062157600082749,
+        "recall": 0.6858638743455497,
+        "specificity": 0.9791445740544362,
+        "tp": 131,
+        "tn": 5540,
+        "fp": 118,
+        "fn": 60
+      },
+      "fixed_mean_ensemble": {
+        "accuracy": 0.966489998290306,
+        "auroc": 0.9627298788353236,
+        "auprc": 0.5780960345549043,
+        "ap": 0.5796355330434393,
+        "recall": 0.6858638743455497,
+        "specificity": 0.9759632378932485,
+        "tp": 131,
+        "tn": 5522,
+        "fp": 136,
+        "fn": 60
+      }
+    },
+    "selected_candidate": "fixed_mean_ensemble",
+    "validation": {
+      "accuracy": 0.966489998290306,
+      "auroc": 0.9627298788353236,
+      "auprc": 0.5780960345549043,
+      "ap": 0.5796355330434393,
+      "recall": 0.6858638743455497,
+      "specificity": 0.9759632378932485,
+      "tp": 131,
+      "tn": 5522,
+      "fp": 136,
+      "fn": 60
+    },
+    "threshold": 0.5,
+    "tta": false,
+    "inference_precision": "FP32",
+    "rule": "validation AUROC; single branches and fixed equal-mean snapshots; no test data"
+  },
+  "baseline": {
+    "model_names": [
+      "resnet18",
+      "densenet121"
+    ],
+    "metric": "official_validation_auroc",
+    "candidate_metrics": {
+      "resnet18": {
+        "accuracy": 0.9541802017438878,
+        "auroc": 0.9579217861379615,
+        "auprc": 0.4758402845342317,
+        "ap": 0.47820755141497173,
+        "recall": 0.7015706806282722,
+        "specificity": 0.9627076705549664,
+        "tp": 134,
+        "tn": 5447,
+        "fp": 211,
+        "fn": 57
+      },
+      "densenet121": {
+        "accuracy": 0.9695674474269106,
+        "auroc": 0.9512741075510004,
+        "auprc": 0.6051749517325815,
+        "ap": 0.6062157600082749,
+        "recall": 0.6858638743455497,
+        "specificity": 0.9791445740544362,
+        "tp": 131,
+        "tn": 5540,
+        "fp": 118,
+        "fn": 60
+      },
+      "fixed_mean_ensemble": {
+        "accuracy": 0.966489998290306,
+        "auroc": 0.9627298788353236,
+        "auprc": 0.5780960345549043,
+        "ap": 0.5796355330434393,
+        "recall": 0.6858638743455497,
+        "specificity": 0.9759632378932485,
+        "tp": 131,
+        "tn": 5522,
+        "fp": 136,
+        "fn": 60
+      }
+    },
+    "selected_candidate": "fixed_mean_ensemble",
+    "validation": {
+      "accuracy": 0.966489998290306,
+      "auroc": 0.9627298788353236,
+      "auprc": 0.5780960345549043,
+      "ap": 0.5796355330434393,
+      "recall": 0.6858638743455497,
+      "specificity": 0.9759632378932485,
+      "tp": 131,
+      "tn": 5522,
+      "fp": 136,
+      "fn": 60
+    },
+    "threshold": 0.5,
+    "tta": false,
+    "inference_precision": "FP32",
+    "rule": "validation AUROC; single branches and fixed equal-mean snapshots; no test data"
+  },
+  "model_sha256": "2ec9e9ede7f3448706401fe2e026aef221ce596bb45a0c619b33ec0e651764b3",
+  "source_checkpoint_sha256": "5ed7b0ff021c65920bd15651df4004be1381047060e78819553ff1e084627f9d",
+  "training_complete": true,
+  "encoder_unchanged": true,
+  "recipe": "official_train_rgb256_frozen_encoder_pairwise_head_v5",
+  "post_selection": {
+    "sources": {
+      "resnet18": "champion",
+      "densenet121": "champion"
+    },
+    "improved_over_online_selection": false,
+    "trials": [
+      {
+        "sources": {
+          "resnet18": "baseline",
+          "densenet121": "baseline"
+        },
+        "candidate": "fixed_mean_ensemble",
+        "auroc": 0.9627298788353236
+      },
+      {
+        "sources": {
+          "resnet18": "baseline",
+          "densenet121": "baseline"
+        },
+        "candidate": "resnet18",
+        "auroc": 0.9579217861379615
+      },
+      {
+        "sources": {
+          "resnet18": "baseline",
+          "densenet121": "baseline"
+        },
+        "candidate": "densenet121",
+        "auroc": 0.9512741075510004
+      },
+      {
+        "sources": {
+          "resnet18": "best",
+          "densenet121": "baseline"
+        },
+        "candidate": "fixed_mean_ensemble",
+        "auroc": 0.9625189001719291
+      },
+      {
+        "sources": {
+          "resnet18": "best",
+          "densenet121": "baseline"
+        },
+        "candidate": "resnet18",
+        "auroc": 0.9581466449765794
+      },
+      {
+        "sources": {
+          "resnet18": "best",
+          "densenet121": "baseline"
+        },
+        "candidate": "densenet121",
+        "auroc": 0.9512741075510004
+      }
+    ],
+    "code_sha256": "19b2472dce66c5a6d355ae824b2ecb4b99e586db3c3597146ebba7aefb1ac10a",
+    "test_data_used": false,
+    "independent_fp32_validation_passed": true
+  }
+}

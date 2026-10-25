@@ -9,7 +9,10 @@ from model import MODEL_NAMES
 
 def select(run_dir):
     assert_inference_checkpoint_ready(MODEL_PATH,MODEL_NAMES)
-    record=json.loads((run_dir/'TRAINING_COMPLETE.json').read_text(encoding='utf-8'))
+    marker=run_dir/'POST_SELECTION_COMPLETE.json'
+    if not marker.exists():
+        marker=run_dir/'TRAINING_COMPLETE.json'
+    record=json.loads(marker.read_text(encoding='utf-8'))
     digest=hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()
     if digest!=record['model_sha256']:
         raise ValueError('Completed-run model hash does not match the inference checkpoint')
@@ -20,5 +23,5 @@ def select(run_dir):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
-    parser.add_argument('--run-dir',type=Path,default=PROJECT_DIR/'runs'/'20261024_continue_lr3e5')
+    parser.add_argument('--run-dir',type=Path,default=PROJECT_DIR/'runs'/'20261025_focal_head')
     select(parser.parse_args().run_dir)

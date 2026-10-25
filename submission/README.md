@@ -1,7 +1,7 @@
-# 第二轮续训后的青光眼模型
+# 使用说明
 
-验证AUROC 0.962409，高于第一轮0.957992。
+训练已按首次再提升条件停止。当前正式验证AUROC 0.964011。先发submission.csv即可，它是5,855张测试图的预测，不是模型文件。最终核验保留model/best_model.pth和完整ZIP。
 
-最终模型model/best_model.pth，预测submission.csv。先验证选模后锁定，256整图补边，0.5归一化，FP32推理，阈值0.5，无TTA。
+项目目录D:/青眼病/project。预测：`D:/青眼病/.venv/Scripts/python.exe submission/code/predict.py`。计时：`python submission/cost.py pictures_100 pictures_5`。推理FP32、batch1、固定等权、无TTA。
 
-预测：python code/predict.py。计时：python cost.py pictures_100 pictures_5。训练依赖本机保留的上一轮优化器状态，详见docs/使用说明.md与AI_HANDOFF.md。
+给人看的结果在训练结果.md，给AI的继续约定在AI_HANDOFF.md。请勿再次运行训练；如果未来重新授权，必须新建run、保存不可变起点，并核对优化器是否匹配最终权重。官方上传和指定设备复测由参赛者处理。

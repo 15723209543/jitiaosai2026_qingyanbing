@@ -1,0 +1,18 @@
+{
+  "cpu_fp32_function_preservation_passed": true,
+  "max_absolute_logit_difference": 0.0,
+  "new_residual_blocks": [
+    "network.layer1.2.",
+    "network.layer2.2.",
+    "network.layer2.3.",
+    "network.layer3.2.",
+    "network.layer3.3.",
+    "network.layer3.4.",
+    "network.layer3.5.",
+    "network.layer4.2."
+  ],
+  "copied_state_keys": 218,
+  "only_new_blocks_and_head_trainable": true,
+  "inherited_state_unchanged_after_optimizer_step": true,
+  "new_external_pretrained_weights_used": false
+}

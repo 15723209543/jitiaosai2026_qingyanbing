@@ -1,0 +1,9 @@
+{
+  "status": "stopped",
+  "reason": "first additional independently validated improvement achieved",
+  "reference_auroc": 0.9630444961403859,
+  "final_auroc": 0.9640114816809447,
+  "run": "20261025_focal_head",
+  "model_sha256": "543e9ae5bb904ccbba75666c740a85ac4039b65fd8f84dfc851f34382551ed76",
+  "csv_sha256": "fe98cf5d7a490e02a18ce7a908727d17cb1492b617f02c68ac573780951d958e"
+}

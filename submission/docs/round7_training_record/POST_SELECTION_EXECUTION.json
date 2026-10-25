@@ -1,0 +1,6 @@
+{
+  "validation_batch_size": 32,
+  "reason": "match full-network FP32 validation batch size in locked training probabilities",
+  "before_code_sha256": "5087904dc7601bd6c0d9d330d260996402a621e48327f7b39f0f1ae61309a88a",
+  "after_code_sha256": "b609c44b2221265f0215beeb7cc3bbb167fee8e1ba72f1cc0d05047a30c6488f"
+}

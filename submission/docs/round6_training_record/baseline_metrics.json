@@ -1,0 +1,62 @@
+{
+  "model_names": [
+    "resnet18",
+    "densenet121"
+  ],
+  "metric": "official_validation_auroc",
+  "candidate_metrics": {
+    "resnet18": {
+      "accuracy": 0.9541802017438878,
+      "auroc": 0.9579217861379615,
+      "auprc": 0.4758402845342317,
+      "ap": 0.47820755141497173,
+      "recall": 0.7015706806282722,
+      "specificity": 0.9627076705549664,
+      "tp": 134,
+      "tn": 5447,
+      "fp": 211,
+      "fn": 57
+    },
+    "densenet121": {
+      "accuracy": 0.9695674474269106,
+      "auroc": 0.9512741075510004,
+      "auprc": 0.6051749517325815,
+      "ap": 0.6062157600082749,
+      "recall": 0.6858638743455497,
+      "specificity": 0.9791445740544362,
+      "tp": 131,
+      "tn": 5540,
+      "fp": 118,
+      "fn": 60
+    },
+    "fixed_mean_ensemble": {
+      "accuracy": 0.966489998290306,
+      "auroc": 0.9627298788353236,
+      "auprc": 0.5780960345549043,
+      "ap": 0.5796355330434393,
+      "recall": 0.6858638743455497,
+      "specificity": 0.9759632378932485,
+      "tp": 131,
+      "tn": 5522,
+      "fp": 136,
+      "fn": 60
+    }
+  },
+  "selected_candidate": "fixed_mean_ensemble",
+  "validation": {
+    "accuracy": 0.966489998290306,
+    "auroc": 0.9627298788353236,
+    "auprc": 0.5780960345549043,
+    "ap": 0.5796355330434393,
+    "recall": 0.6858638743455497,
+    "specificity": 0.9759632378932485,
+    "tp": 131,
+    "tn": 5522,
+    "fp": 136,
+    "fn": 60
+  },
+  "threshold": 0.5,
+  "tta": false,
+  "inference_precision": "FP32",
+  "rule": "validation AUROC; single branches and fixed equal-mean snapshots; no test data"
+}

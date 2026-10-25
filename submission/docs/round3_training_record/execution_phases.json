@@ -1,0 +1,11 @@
+[
+  {
+    "phase": 1,
+    "result": "stopped before first batch completed; cuDNN algorithm search stalled in first convolution",
+    "completed_epochs": 0
+  },
+  {
+    "phase": 2,
+    "change": "cudnn.benchmark=False; same model/data/schedule; resume immutable baseline"
+  }
+]

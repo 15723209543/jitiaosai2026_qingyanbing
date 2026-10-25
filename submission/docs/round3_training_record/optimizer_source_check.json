@@ -1,0 +1,12 @@
+{
+  "resnet18": {
+    "last_epoch": 5,
+    "differing_tensors": 122,
+    "optimizer_reused": false
+  },
+  "densenet121": {
+    "last_epoch": 8,
+    "differing_tensors": 727,
+    "optimizer_reused": false
+  }
+}

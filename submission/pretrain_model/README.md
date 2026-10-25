@@ -1,7 +1,3 @@
-# 续训来源文件
+# 训练来源
 
-当前第二轮起点为previous_round_best_0.957992.pth，来源、哈希和优化器恢复说明见CONTINUATION_SOURCE.md。
-
-upstream_competition_initialization.pth为最初GitHub比赛检查点，说明见UPSTREAM_CHECKPOINT.md。两者均用于训练追溯，最终推理仅加载model/best_model.pth。
-
-本轮未使用ImageNet或外部医学预训练权重。
+本次源为previous_round_best_0.963044.pth；最终推理只加载model/best_model.pth。未使用外部预训练，历史来源文件只用于追溯，详见CONTINUATION_SOURCE.md。

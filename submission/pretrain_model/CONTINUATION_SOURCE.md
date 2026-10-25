@@ -1,9 +1,5 @@
-# 第二轮续训来源
+# 第十轮焦点分类头训练来源
 
-本轮从第一轮最佳比赛模型继续，未使用外部预训练。
+起点previous_round_best_0.963044.pth，SHA256 f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5。
 
-起点：previous_round_best_0.957992.pth，SHA-256 `134650d23ce1f2c48bdf2e9abf612faff61b3ccf6cd0b39530cba8c1963b8eaf`。
-
-底层GitHub源模型仍为v1.12.1，原始文件与来源见UPSTREAM_CHECKPOINT.md。第一轮代码与训练记录随材料保留。
-
-继续训练恢复了本机 runs/20261024_upstream_dual/*_last.pth 中与源参数匹配的优化器、AMP和随机状态。优化器恢复文件保留在本机，不纳入最终推理材料。完整训练复现需要先按第一轮代码完成5轮，得到匹配状态，再运行本轮代码。
+新建分类头AdamW与随机状态，冻结卷积与BN，FP32训练，仅在GPU训练分类头，学习率1e-4，未改变特征网络，未使用外部预训练。上游与早期来源文件仍供追溯。最终推理仅加载model/best_model.pth。

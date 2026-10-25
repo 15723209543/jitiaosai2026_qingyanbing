@@ -1,0 +1,40 @@
+{
+  "local_cache_only": true,
+  "legacy_densenet_retrained": false,
+  "features": [
+    {
+      "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+      "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+      "precision": "FP32",
+      "split": "train",
+      "image_size": 256,
+      "training_augmentation": false,
+      "excluded_train_indices": [],
+      "shape": [
+        51396,
+        512
+      ],
+      "sha256": "9e0852ac4237c1b4ed99b4eee589e1cab9e0c54d8829ce8c141289cf76b6a31c",
+      "reused_from": "D:\\\u9752\u773c\u75c5\\project\\runs\\20261025_frozen_head\\features\\resnet18_train.npy",
+      "current_checkpoint_sha256": "f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5",
+      "encoder_equality_verified": true
+    },
+    {
+      "encoder_source_sha256": "9e3b64198ba150ff6b65929dc38d274ccd2102a037976c6834d2e21632630ddf",
+      "recipe": "official_train_rgb256_frozen_encoder_regularized_head_v4",
+      "precision": "FP32",
+      "split": "valid",
+      "image_size": 256,
+      "training_augmentation": false,
+      "excluded_train_indices": [],
+      "shape": [
+        5849,
+        512
+      ],
+      "sha256": "7ff9037e66ef5ecb9a0e09d3669b349cf3e23f1b9ed35b961d160f9fe4226c7f",
+      "reused_from": "D:\\\u9752\u773c\u75c5\\project\\runs\\20261025_frozen_head\\features\\resnet18_valid.npy",
+      "current_checkpoint_sha256": "f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5",
+      "encoder_equality_verified": true
+    }
+  ]
+}

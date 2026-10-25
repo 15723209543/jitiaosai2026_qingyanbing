@@ -1,0 +1,185 @@
+{
+  "formal_best": {
+    "status": "stopped",
+    "reason": "first additional independently validated improvement achieved",
+    "reference_auroc": 0.9630444961403859,
+    "final_auroc": 0.9640114816809447,
+    "run": "20261025_focal_head",
+    "model_sha256": "543e9ae5bb904ccbba75666c740a85ac4039b65fd8f84dfc851f34382551ed76",
+    "csv_sha256": "fe98cf5d7a490e02a18ce7a908727d17cb1492b617f02c68ac573780951d958e"
+  },
+  "experiments": [
+    {
+      "round": 5,
+      "run": "20261025_rank_head",
+      "variant": "continuation_rank",
+      "status": "complete_not_promoted",
+      "auroc": 0.9627298788353236,
+      "head_epochs": {
+        "resnet18": {
+          "additional_epochs": 25,
+          "stopped_early": true,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 6,
+          "stopped_early": true,
+          "scope": "classification head only"
+        }
+      },
+      "model_sha256": "2ec9e9ede7f3448706401fe2e026aef221ce596bb45a0c619b33ec0e651764b3",
+      "export_needed": false,
+      "completed": {
+        "resnet18": {
+          "additional_epochs": 25,
+          "stopped_early": true,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 6,
+          "stopped_early": true,
+          "scope": "classification head only"
+        }
+      }
+    },
+    {
+      "round": 6,
+      "run": "20261025_flip_head",
+      "variant": "continuation_flip",
+      "status": "promoted",
+      "auroc": 0.9630444961403859,
+      "model_sha256": "f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5",
+      "head_epochs": {
+        "resnet18": {
+          "additional_epochs": 27,
+          "stopped_early": true,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 8,
+          "stopped_early": true,
+          "scope": "classification head only"
+        }
+      },
+      "export_needed": false,
+      "completed": {
+        "resnet18": {
+          "additional_epochs": 27,
+          "stopped_early": true,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 8,
+          "stopped_early": true,
+          "scope": "classification head only"
+        }
+      }
+    },
+    {
+      "round": 7,
+      "run": "20261025_head384",
+      "variant": "continuation_384",
+      "status": "complete_not_promoted",
+      "prepare_log": "D:/青眼病/work/prepare384.log",
+      "auroc": 0.9229169095697329,
+      "model_sha256": "5d6847ccff02fb5325f3c557c8d650d55a78752c8a1d54cbb70723cab404a49a",
+      "head_epochs": {
+        "resnet18": {
+          "additional_epochs": 30,
+          "stopped_early": false,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 30,
+          "stopped_early": false,
+          "scope": "classification head only"
+        }
+      },
+      "export_needed": false,
+      "completed": {
+        "resnet18": {
+          "additional_epochs": 30,
+          "stopped_early": false,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 30,
+          "stopped_early": false,
+          "scope": "classification head only"
+        }
+      }
+    },
+    {
+      "round": 8,
+      "run": "20261025_deeper_kd",
+      "variant": "continuation_deeper",
+      "status": "complete_not_promoted",
+      "stop_at_first_improvement": true,
+      "auroc": 0.9630444961403859,
+      "model_sha256": "536ebe8a56ce754b18bc1ba751305b760f55c6fe906aba94a901980d43dead3d",
+      "head_epochs": {
+        "resnet34_graft": {
+          "epochs": 4,
+          "train_samples_per_epoch": 51396
+        }
+      },
+      "export_needed": false,
+      "completed": {
+        "resnet34_graft": {
+          "epochs": 4,
+          "train_samples_per_epoch": 51396
+        }
+      }
+    },
+    {
+      "round": 9,
+      "run": "20261025_deeper_rank",
+      "variant": "continuation_deeper_rank",
+      "status": "complete_not_promoted",
+      "stop_at_first_improvement": true,
+      "auroc": 0.9630444961403859,
+      "completed": {
+        "resnet34_graft": {
+          "epochs": 3,
+          "train_samples_per_epoch": 51396
+        }
+      }
+    },
+    {
+      "round": 10,
+      "run": "20261025_focal_head",
+      "variant": "continuation_focal",
+      "status": "promoted",
+      "stop_at_first_improvement": true,
+      "auroc": 0.9640114816809447,
+      "completed": {
+        "resnet18": {
+          "additional_epochs": 1,
+          "stopped_early": false,
+          "scope": "classification head only"
+        },
+        "densenet121": {
+          "additional_epochs": 0,
+          "stopped_early": false,
+          "scope": "unchanged legacy branch"
+        }
+      }
+    }
+  ],
+  "last_known_quota_remaining": {
+    "five_hour": 12,
+    "weekly": 86
+  },
+  "stop_below_percent": 10,
+  "updated_at": "2026-10-25T17:31:55.475993+08:00",
+  "quota_snapshot": {
+    "checked_at_utc": "2026-10-25T09:31:52.679Z",
+    "five_hour_remaining": 12,
+    "weekly_remaining": 86,
+    "ordinary_usage_allowed": true,
+    "stop_below_percent": 10,
+    "stop_new_experiments": false
+  },
+  "success_stop_reference": 0.9630444961403859,
+  "status": "stopped_after_first_improvement"
+}

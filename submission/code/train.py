@@ -1,11 +1,5 @@
-"""Continue the validated checkpoint with small LR; retain the best whole inference snapshot."""
-import argparse
-import copy
-import hashlib
-import json
-import math
-import random
-import time
+"""GPU classification-head fine-tuning on immutable FP32 source-encoder features."""
+import argparse,copy,hashlib,json,math,random,time
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -13,231 +7,200 @@ import torch
 from torch import nn
 from model import MODEL_NAMES
 from prepare import prepare
-from training_core import CachedDataset, loader, validate, atomic_save
-from utils import PROJECT_DIR, MODEL_PATH, RECIPE, calculate_metrics, load_model, model_memory_format, save_model
+from training_core import CachedDataset,loader,validate,atomic_save
+from utils import PROJECT_DIR,MODEL_PATH,RECIPE,load_model,model_memory_format,calculate_metrics
 
+SOURCE_SHA='f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5'
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-
-def candidates(probabilities, labels):
-    metrics = {n: calculate_metrics(labels, probabilities[n]) for n in MODEL_NAMES}
-    metrics['fixed_mean_ensemble'] = calculate_metrics(labels, np.mean([probabilities[n] for n in MODEL_NAMES],axis=0))
-    options = [('fixed_mean_ensemble', list(MODEL_NAMES)), *[(n,[n]) for n in MODEL_NAMES]]
-    key,names = max(options,key=lambda item: metrics[item[0]]['auroc'])
+def candidates(probabilities,labels):
+    metrics={n:calculate_metrics(labels,probabilities[n]) for n in MODEL_NAMES}
+    metrics['fixed_mean_ensemble']=calculate_metrics(labels,np.mean(list(probabilities.values()),axis=0))
+    key,names=max([('fixed_mean_ensemble',list(MODEL_NAMES)),*[(n,[n]) for n in MODEL_NAMES]],key=lambda p:metrics[p[0]]['auroc'])
     return {'model_names':names,'metric':'official_validation_auroc','candidate_metrics':metrics,
-            'selected_candidate':key,'validation':metrics[key],
-            'rule':'best validation AUROC across observed single branches and fixed equal-mean snapshots; no test data',
-            'threshold':0.5,'tta':False,'inference_precision':'FP32'}
+        'selected_candidate':key,'validation':metrics[key],'threshold':.5,'tta':False,
+        'inference_precision':'FP32','rule':'validation AUROC; single branches and fixed equal-mean snapshots; no test data'}
+def head_of(model,name):
+    return model.network.fc if name=='resnet18' else model.network.classifier
 
-def state_entry(model, metrics, epoch):
-    return {'state_dict': {k:v.detach().cpu().clone() for k,v in model.state_dict().items()},
-            'model_config':dict(model.model_config),'validation':metrics,'epoch':epoch,
-            'prior_local_training_epochs':5,'selection_metric':'validation_auroc'}
+@torch.inference_mode()
+def features(model,name,split,excluded,run_dir,workers):
+    original_run=PROJECT_DIR/'runs/20261025_frozen_head'
+    original_model=original_run/'baseline_snapshot/model/best_model.pth'
+    original_sha=digest(original_model)
+    original=torch.load(original_model,map_location='cpu',weights_only=True)['models'][name]['state_dict']
+    assert all(torch.equal(v.cpu(),original[k]) for k,v in model.state_dict().items()
+        if not k.startswith(('network.fc.','network.classifier.'))),'Reused encoder changed'
+    path=original_run/'features'/f'{name}_{split}.npy'
+    meta=json.loads(path.with_suffix('.json').read_text())
+    assert meta['encoder_source_sha256']==original_sha and meta['precision']=='FP32'
+    assert meta['image_size']==256 and not meta['training_augmentation']
+    assert meta['excluded_train_indices']==(list(excluded) if split=='train' else [])
+    assert digest(path)==meta['sha256']
+    values=np.load(path)
+    assert list(values.shape)==meta['shape'] and np.isfinite(values).all()
+    dest=run_dir/'features';dest.mkdir(exist_ok=True)
+    (dest/f'{name}_{split}.json').write_text(json.dumps({**meta,'reused_from':str(path),
+        'current_checkpoint_sha256':SOURCE_SHA,'encoder_equality_verified':True},indent=2),encoding='utf-8')
+    print(f'REUSE_FEATURES {name} {split} {values.shape} verified',flush=True)
+    return values
+
+def focal_loss_with_diagnostics(logits,labels,criterion):
+    probability=torch.softmax(logits,1).gather(1,labels[:,None]).squeeze(1)
+    ce=torch.nn.functional.cross_entropy(logits,labels,weight=criterion.weight,reduction='none')
+    loss=((1-probability)*ce).sum()/criterion.weight[labels].sum()
+    return loss,loss.detach(),criterion(logits,labels)
+
+@torch.inference_mode()
+def head_validation(head,x,y):
+    head.eval();values=[]
+    for start in range(0,len(x),512):values.extend(torch.softmax(head(x[start:start+512]),1)[:,1].cpu().tolist())
+    return calculate_metrics(y,values),values
+def entry(model,metrics,epoch):
+    return {'state_dict':{k:v.detach().cpu().clone() for k,v in model.state_dict().items()},
+        'model_config':dict(model.model_config),'validation':metrics,'epoch':epoch,
+        'training_scope':'classifier head only; encoder and BN frozen','selection_metric':'validation_auroc'}
 
 def run(args):
-    torch.set_num_threads(4)
-    torch.manual_seed(args.seed)
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    if not torch.cuda.is_available():
-        raise RuntimeError('CUDA GPU is required')
-    device=torch.device('cuda')
-    torch.backends.cudnn.benchmark=True
-    torch.backends.cudnn.allow_tf32=False
-    torch.backends.cuda.matmul.allow_tf32=False
-    source_run=PROJECT_DIR/'runs'/'20261024_upstream_dual'
-    run_dir=PROJECT_DIR/'runs'/args.run_name
-    run_dir.mkdir(parents=True,exist_ok=True)
-    baseline_path=run_dir/'baseline_snapshot'/'model'/'best_model.pth'
-    if not baseline_path.exists():
-        raise FileNotFoundError('Immutable baseline snapshot is required')
-    source_sha=digest(baseline_path)
-    if source_sha!='134650d23ce1f2c48bdf2e9abf612faff61b3ccf6cd0b39530cba8c1963b8eaf':
-        raise ValueError('Continuation source checkpoint differs from the verified previous round')
-    config={**vars(args),'recipe':RECIPE,'initialization_sha256':source_sha,'initialization':'previous verified best plus matching optimizer/scaler/RNG states',
-            'prior_local_epochs_each':5,'schedule':'small-LR cosine, no restart warmup','precision':'AMP FP16 training, FP32 validation/inference',
-            'validation_use':'checkpoint/snapshot selection only','test_use':'final fixed inference only',
-            'source_run':str(source_run),'gpu':torch.cuda.get_device_name(0),'torch':str(torch.__version__),
-            'source_files_sha256':{p.name:digest(p) for p in sorted(Path(__file__).parent.glob('*.py'))}}
+    torch.set_num_threads(4);torch.manual_seed(args.seed);np.random.seed(args.seed);random.seed(args.seed)
+    if not torch.cuda.is_available():raise RuntimeError('GPU required')
+    torch.cuda.manual_seed_all(args.seed)
+    torch.backends.cudnn.benchmark=False
+    torch.backends.cudnn.allow_tf32=False;torch.backends.cuda.matmul.allow_tf32=False
+    run_dir=PROJECT_DIR/'runs'/args.run_name;baseline=run_dir/'baseline_snapshot/model/best_model.pth'
+    assert digest(baseline)==SOURCE_SHA
+    config={**vars(args),'recipe':RECIPE,'source_checkpoint_sha256':SOURCE_SHA,
+        'initialization':'published competition best weights; fresh AdamW for heads',
+        'precision':'FP32 feature extraction, GPU head optimization and inference',
+        'training_scope':'classifier only; source encoder and BN buffers unchanged',
+        'objective':'class-weighted focal loss gamma1','feature_augmentation':False,'dropout':.2,'weight_decay':.01,
+        'validation_use':'selection only','test_use':'fixed final inference only',
+        'gpu':torch.cuda.get_device_name(0),'torch':str(torch.__version__),
+        'source_files_sha256':{p.name:digest(p) for p in Path(__file__).parent.glob('*.py')}}
     config_path=run_dir/'config.json'
     if config_path.exists():
-        if not args.resume:
-            raise FileExistsError('Use --resume for an existing continuation run')
-        previous=json.loads(config_path.read_text(encoding='utf-8'))
-        for k in ['recipe','initialization_sha256','max_epochs','min_epochs','patience','learning_rate','min_lr','batch_size','seed']:
-            if previous[k]!=config[k]:
-                raise ValueError('Resume configuration changed: '+k)
+        if not args.resume:raise FileExistsError('Use --resume for existing run')
+        previous=json.loads(config_path.read_text())
+        for k in ['recipe','source_checkpoint_sha256','max_epochs','min_epochs','patience','learning_rate','min_lr','batch_size','seed']:
+            assert previous[k]==config[k],k
     config_path.write_text(json.dumps(config,indent=2),encoding='utf-8')
-    audit=prepare()
-    train_ds=CachedDataset('train',True,audit['train_indices_excluded_exact_validation_duplicates'])
-    valid_ds=CachedDataset('valid')
-    valid_loader=loader(valid_ds,64,args.workers)
-    branch_path=run_dir/'branch_best.pth'
+    audit=prepare();excluded=audit['train_indices_excluded_exact_validation_duplicates']
+    train_ds=CachedDataset('train',False,excluded);valid_ds=CachedDataset('valid')
+    y=torch.tensor(train_ds.labels[train_ds.indices],device='cuda')
+    validation_loader=loader(valid_ds,64,args.workers);branch_path=run_dir/'branch_best.pth'
     if not branch_path.exists():
-        initial=torch.load(baseline_path,map_location='cpu',weights_only=True)
-        initial.pop('inference_selection',None)
-        initial['training_complete']=False
+        bundle=torch.load(baseline,map_location='cpu',weights_only=True)
+        for n in MODEL_NAMES:bundle['models'][n]['model_config']['recipe']=RECIPE
+        bundle['training_complete']=False;atomic_save(bundle,branch_path);probabilities={}
         for n in MODEL_NAMES:
-            initial['models'][n]['model_config']['recipe']=RECIPE
-        atomic_save(initial,branch_path)
-        probabilities={}
-        for n in MODEL_NAMES:
-            model=load_model(branch_path,n).to(device=device,memory_format=model_memory_format(n))
-            metrics,prob=validate(model,valid_loader,device)
-            probabilities[n]=prob
-            initial['models'][n]['validation']=metrics
-            np.save(run_dir/f'{n}_best_probabilities.npy',prob)
-            np.save(run_dir/f'{n}_baseline_probabilities.npy',prob)
+            model=load_model(branch_path,n).to(device='cuda',memory_format=model_memory_format(n))
+            metrics,prob=validate(model,validation_loader,torch.device('cuda'));probabilities[n]=prob
+            bundle['models'][n]['validation']=metrics
+            for tag in ['baseline','best','champion']:np.save(run_dir/f'{n}_{tag}_probabilities.npy',prob)
             del model
-        atomic_save(initial,branch_path)
-        selection=candidates(probabilities,valid_ds.labels)
-        initial['inference_selection']=selection
-        atomic_save(initial,MODEL_PATH)
-        for n in MODEL_NAMES:
-            np.save(run_dir/f'{n}_champion_probabilities.npy',probabilities[n])
+        selection=candidates(probabilities,valid_ds.labels);bundle['inference_selection']=selection
+        atomic_save(bundle,branch_path);atomic_save(bundle,MODEL_PATH)
         (run_dir/'baseline_metrics.json').write_text(json.dumps(selection,indent=2),encoding='utf-8')
         print('BASELINE '+json.dumps(selection),flush=True)
-    completed={}
+    criterion=nn.CrossEntropyLoss(weight=torch.tensor([1.,math.sqrt((len(y)-int(y.sum()))/int(y.sum()))],device='cuda'))
+    completed={n:{'additional_epochs':0,'stopped_early':False,'scope':'unchanged legacy branch'} for n in MODEL_NAMES}
+    stop_success=False
+    reference=json.loads((run_dir/'baseline_metrics.json').read_text())['validation']['auroc']
     for name in MODEL_NAMES:
+        source=load_model(branch_path,name)
+        train_features=features(source,name,'train',excluded,run_dir,args.workers)
+        valid_features=features(source,name,'valid',(),run_dir,args.workers)
+        x=torch.from_numpy(train_features).to('cuda');vx=torch.from_numpy(valid_features).to('cuda')
+        for parameter in source.parameters():parameter.requires_grad_(False)
+        head=head_of(source,name).to('cuda')
+        for parameter in head.parameters():parameter.requires_grad_(True)
+        optimizer=torch.optim.AdamW(head.parameters(),lr=args.learning_rate,weight_decay=.01)
+        history=[];start_epoch=0;no_improvement=0;stopped=False
         last_path=run_dir/f'{name}_last.pth'
-        best_bundle=torch.load(branch_path,map_location='cpu',weights_only=True)
-        model=load_model(branch_path,name).to(device=device,memory_format=model_memory_format(name))
-        optimizer=torch.optim.AdamW(model.parameters(),lr=args.learning_rate,weight_decay=1e-4)
-        scaler=torch.amp.GradScaler('cuda',init_scale=1024.)
-        history=[]
-        epoch_start=0
-        no_improvement=0
-        stopped=False
         if last_path.exists():
             state=torch.load(last_path,map_location='cpu',weights_only=False)
-            model.load_state_dict(state['model'])
-            epoch_start=state['epoch']
-            history=state['history']
-            no_improvement=state['no_improvement']
-            stopped=state.get('stopped_early',False)
+            head.load_state_dict(state['head']);optimizer.load_state_dict(state['optimizer'])
+            start_epoch=state['epoch'];history=state['history'];no_improvement=state['no_improvement'];stopped=state['stopped_early']
+            torch.set_rng_state(state['torch_rng']);torch.cuda.set_rng_state_all(state['cuda_rng'])
         else:
-            state=torch.load(source_run/f'{name}_last.pth',map_location='cpu',weights_only=False)
-            expected=torch.load(baseline_path,map_location='cpu',weights_only=True)['models'][name]['state_dict']
-            if not all(torch.equal(state['model'][k],expected[k]) for k in expected):
-                raise ValueError('Previous optimizer does not match the best source weights: '+name)
-            history=[{'epoch':0,'local_total_epoch':5,**best_bundle['models'][name]['validation']}]
-        optimizer.load_state_dict(state['optimizer'])
-        scaler.load_state_dict(state['scaler'])
-        torch.set_rng_state(state['torch_rng'])
-        torch.cuda.set_rng_state_all(state['cuda_rng'])
-        random.setstate(state['python_rng'])
-        np.random.set_state(state['numpy_rng'])
-        labels=train_ds.labels[train_ds.indices]
-        positives=int(labels.sum())
-        criterion=nn.CrossEntropyLoss(weight=torch.tensor([1.,math.sqrt((len(labels)-positives)/positives)],device=device))
-        print(f'TRAIN {name} start={epoch_start} max_additional_epochs={args.max_epochs} samples={len(train_ds)}',flush=True)
-        for epoch in range(epoch_start,args.max_epochs):
-            if stopped:
-                break
-            lr=args.min_lr+(args.learning_rate-args.min_lr)*(1+math.cos(math.pi*epoch/max(1,args.max_epochs-1)))/2
-            for group in optimizer.param_groups:
-                group['lr']=lr
-            batches=loader(train_ds,args.batch_size,args.workers,True,args.seed+5+epoch)
-            model.train()
-            total_loss,count,started=0.,0,time.perf_counter()
-            for step,(x,y) in enumerate(batches,1):
-                x=x.to(device,non_blocking=True,memory_format=model_memory_format(name))
-                y=y.to(device,non_blocking=True)
-                optimizer.zero_grad(set_to_none=True)
-                with torch.autocast('cuda',dtype=torch.float16):
-                    loss=criterion(model(x),y)
-                if not torch.isfinite(loss):
-                    raise FloatingPointError('Nonfinite loss')
-                scaler.scale(loss).backward()
-                scaler.unscale_(optimizer)
-                nn.utils.clip_grad_norm_(model.parameters(),5.)
-                scaler.step(optimizer)
-                scaler.update()
-                count+=len(y)
-                total_loss+=float(loss.detach())*len(y)
-                if step==1 or step%100==0 or step==len(batches):
-                    elapsed=time.perf_counter()-started
-                    print(f'{name} additional_epoch={epoch+1}/{args.max_epochs} batch={step}/{len(batches)} loss={total_loss/count:.5f} elapsed={elapsed:.1f}s',flush=True)
-            del batches
-            if count!=len(train_ds):
-                raise RuntimeError('Incomplete training epoch')
-            metrics,prob=validate(model,valid_loader,device)
-            before_branch=best_bundle['models'][name]['validation']['auroc']
-            branch_improved=metrics['auroc']>before_branch
-            other=next(n for n in MODEL_NAMES if n!=name)
-            pair={name:prob,other:np.load(run_dir/f'{other}_best_probabilities.npy').tolist()}
-            selection=candidates(pair,valid_ds.labels)
-            champion=torch.load(MODEL_PATH,map_location='cpu',weights_only=True)
-            before_global=champion['inference_selection']['validation']['auroc']
-            global_improved=selection['validation']['auroc']>before_global
-            if global_improved:
-                candidate=copy.deepcopy(best_bundle)
-                candidate['models'][name]=state_entry(model,metrics,epoch+1)
-                candidate['inference_selection']=selection
-                candidate['training_complete']=False
-                candidate['initialization_source_sha256']=source_sha
-                atomic_save(candidate,MODEL_PATH)
-                for n in MODEL_NAMES:
-                    np.save(run_dir/f'{n}_champion_probabilities.npy',pair[n])
+            torch.manual_seed(args.seed+MODEL_NAMES.index(name));torch.cuda.manual_seed_all(args.seed+MODEL_NAMES.index(name))
+        frozen={k:v.clone() for k,v in source.state_dict().items() if not k.startswith(('network.fc.','network.classifier.'))}
+        print(f'TRAIN_HEAD {name} start={start_epoch} samples={len(x)} feature_dim={x.shape[1]}',flush=True)
+        for epoch in range(start_epoch,args.max_epochs):
+            if stopped:break
+            started=time.perf_counter();lr=args.min_lr+(args.learning_rate-args.min_lr)*(1+math.cos(math.pi*epoch/max(1,args.max_epochs-1)))/2
+            for group in optimizer.param_groups:group['lr']=lr
+            head.train();indices=torch.randperm(len(x),device='cuda');loss_sum=0.;rank_sum=0.;ce_sum=0.;count=0
+            for batch in indices.split(args.batch_size):
+                optimizer.zero_grad(set_to_none=True);loss,rank_loss,ce_loss=focal_loss_with_diagnostics(head(x[batch]),y[batch],criterion)
+                if not torch.isfinite(loss):raise FloatingPointError('Nonfinite head loss')
+                loss.backward();nn.utils.clip_grad_norm_(head.parameters(),5.);optimizer.step()
+                loss_sum+=float(loss.detach())*len(batch);rank_sum+=float(rank_loss.detach())*len(batch);ce_sum+=float(ce_loss.detach())*len(batch);count+=len(batch)
+            assert count==len(train_ds)
+            metrics,prob=head_validation(head,vx,valid_ds.labels)
+            best=torch.load(branch_path,map_location='cpu',weights_only=True);before_branch=best['models'][name]['validation']['auroc']
+            other=next(n for n in MODEL_NAMES if n!=name);pair={name:prob,other:np.load(run_dir/f'{other}_best_probabilities.npy')}
+            selection=candidates(pair,valid_ds.labels);champion=torch.load(MODEL_PATH,map_location='cpu',weights_only=True)
+            before_global=champion['inference_selection']['validation']['auroc'];current_entry=entry(source,metrics,epoch+1)
+            assert all(torch.equal(v,source.state_dict()[k].cpu()) for k,v in frozen.items()),'Encoder changed'
+            if selection['validation']['auroc']>before_global:
+                best['models'][name]=current_entry;best['inference_selection']=selection;best['training_complete']=False
+                atomic_save(best,MODEL_PATH)
                 print('CHAMPION '+json.dumps({'model':name,'epoch':epoch+1,'selection':selection}),flush=True)
-            if branch_improved:
-                save_model(model,branch_path,metrics,epoch+1)
-                best_bundle=torch.load(branch_path,map_location='cpu',weights_only=True)
+            best=torch.load(branch_path,map_location='cpu',weights_only=True)
+            if metrics['auroc']>before_branch:
+                best['models'][name]=current_entry;atomic_save(best,branch_path)
                 np.save(run_dir/f'{name}_best_probabilities.npy',prob)
-            meaningful=(metrics['auroc']>before_branch+args.min_delta or selection['validation']['auroc']>before_global+args.min_delta)
-            no_improvement=0 if meaningful else no_improvement+1
-            stopped=epoch+1>=args.min_epochs and no_improvement>=args.patience
-            entry={'epoch':epoch+1,'local_total_epoch':6+epoch,'train_samples':count,'train_loss':total_loss/count,
-                   'learning_rate':lr,'epoch_seconds':time.perf_counter()-started,**metrics,
-                   'best_branch_auroc':best_bundle['models'][name]['validation']['auroc'],
-                   'best_global_auroc':max(before_global,selection['validation']['auroc']),
-                   'no_improvement':no_improvement,'stopped_early':stopped}
-            history.append(entry)
-            pd.DataFrame(history).to_csv(run_dir/f'{name}_history.csv',index=False)
-            atomic_save({'model':model.state_dict(),'optimizer':optimizer.state_dict(),'scaler':scaler.state_dict(),
-                         'epoch':epoch+1,'history':history,'no_improvement':no_improvement,'stopped_early':stopped,
-                         'torch_rng':torch.get_rng_state(),'cuda_rng':torch.cuda.get_rng_state_all(),
-                         'python_rng':random.getstate(),'numpy_rng':np.random.get_state()},last_path)
-            print('EPOCH_RESULT '+json.dumps({'model':name,**entry}),flush=True)
-        completed[name]={'additional_epochs':max(row['epoch'] for row in history),'stopped_early':stopped}
-        del model,optimizer,scaler
+                atomic_save({'head':head.state_dict(),'optimizer':optimizer.state_dict(),'epoch':epoch+1,
+                    'encoder_source_sha256':SOURCE_SHA},run_dir/f'{name}_best_head_optimizer.pth')
+            meaningful=metrics['auroc']>before_branch+args.min_delta or selection['validation']['auroc']>before_global+args.min_delta
+            no_improvement=0 if meaningful else no_improvement+1;stopped=epoch+1>=args.min_epochs and no_improvement>=args.patience
+            row={'epoch':epoch+1,'train_samples':count,'train_loss':loss_sum/count,'focal_loss':rank_sum/count,'ce_loss':ce_sum/count,'learning_rate':lr,
+                'epoch_seconds':time.perf_counter()-started,**metrics,'best_branch_auroc':max(before_branch,metrics['auroc']),
+                'best_global_auroc':max(before_global,selection['validation']['auroc']),'no_improvement':no_improvement,
+                'stopped_early':stopped,'encoder_unchanged':True}
+            history.append(row);pd.DataFrame(history).to_csv(run_dir/f'{name}_history.csv',index=False)
+            atomic_save({'head':head.state_dict(),'optimizer':optimizer.state_dict(),'epoch':epoch+1,'history':history,
+                'no_improvement':no_improvement,'stopped_early':stopped,'torch_rng':torch.get_rng_state(),
+                'cuda_rng':torch.cuda.get_rng_state_all()},last_path)
+            print('EPOCH_RESULT '+json.dumps({'model':name,**row}),flush=True)
+            if selection['validation']['auroc']>reference+1e-12:
+                stop_success=True
+                print('FIRST_IMPROVEMENT_STOP',flush=True)
+                break
+            if (run_dir/'STOP_AFTER_EPOCH').exists():
+                (run_dir/'BUDGET_STOPPED.json').write_text(json.dumps({'model':name,'epoch':epoch+1,'complete':False}),encoding='utf-8')
+                print('Stopped at checkpoint boundary for quota limit',flush=True)
+                return
+        completed[name]={'additional_epochs':len(history),'stopped_early':stopped,'scope':'classification head only'}
+        del source,head,optimizer,x,vx
         torch.cuda.empty_cache()
-    champion=torch.load(MODEL_PATH,map_location='cpu',weights_only=True)
-    actual_probabilities={}
+        if stop_success:break
+    champion=torch.load(MODEL_PATH,map_location='cpu',weights_only=True);actual={}
     for name in MODEL_NAMES:
-        model=load_model(MODEL_PATH,name).to(device=device,memory_format=model_memory_format(name))
-        metrics,prob=validate(model,valid_loader,device)
-        actual_probabilities[name]=prob
-        champion['models'][name]['validation']=metrics
-        np.save(run_dir/f'{name}_champion_probabilities.npy',prob)
-        del model
-    selection=candidates(actual_probabilities,valid_ds.labels)
-    champion['inference_selection']=selection
-    champion['training_complete']=True
-    champion['epochs_trained_each']={n:5+completed[n]['additional_epochs'] for n in MODEL_NAMES}
-    champion['additional_epochs_completed']={n:completed[n]['additional_epochs'] for n in MODEL_NAMES}
-    champion['initialization_source_sha256']=source_sha
-    atomic_save(champion,MODEL_PATH)
-    summary={'completed':completed,'selection':selection,'baseline':json.loads((run_dir/'baseline_metrics.json').read_text()),
-             'model_sha256':digest(MODEL_PATH),'source_checkpoint_sha256':source_sha,'training_complete':True}
+        model=load_model(MODEL_PATH,name).to(device='cuda',memory_format=model_memory_format(name))
+        metrics,prob=validate(model,validation_loader,torch.device('cuda'));champion['models'][name]['validation']=metrics
+        actual[name]=prob;np.save(run_dir/f'{name}_champion_probabilities.npy',prob);del model
+        model=load_model(branch_path,name).to(device='cuda',memory_format=model_memory_format(name))
+        metrics,prob=validate(model,validation_loader,torch.device('cuda'));np.save(run_dir/f'{name}_best_probabilities.npy',prob);del model
+    champion['inference_selection']=candidates(actual,valid_ds.labels);champion['training_complete']=True
+    champion['additional_head_epochs_completed']={n:v['additional_epochs'] for n,v in completed.items()}
+    champion['initialization_source_sha256']=SOURCE_SHA;atomic_save(champion,MODEL_PATH)
+    summary={'completed':completed,'selection':champion['inference_selection'],
+        'baseline':json.loads((run_dir/'baseline_metrics.json').read_text()),'model_sha256':digest(MODEL_PATH),
+        'source_checkpoint_sha256':SOURCE_SHA,'training_complete':True,'encoder_unchanged':True,'recipe':RECIPE}
     (run_dir/'TRAINING_COMPLETE.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
-    (run_dir/'inference_selection.json').write_text(json.dumps(selection,indent=2),encoding='utf-8')
+    (run_dir/'inference_selection.json').write_text(json.dumps(champion['inference_selection'],indent=2),encoding='utf-8')
     print('TRAINING_COMPLETE '+json.dumps(summary),flush=True)
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
-    parser.add_argument('--max-epochs',type=int,default=8)
-    parser.add_argument('--min-epochs',type=int,default=4)
-    parser.add_argument('--patience',type=int,default=3)
-    parser.add_argument('--min-delta',type=float,default=1e-5)
-    parser.add_argument('--learning-rate',type=float,default=3e-5)
-    parser.add_argument('--min-lr',type=float,default=1e-6)
-    parser.add_argument('--batch-size',type=int,default=64)
-    parser.add_argument('--workers',type=int,default=4)
-    parser.add_argument('--seed',type=int,default=20261024)
-    parser.add_argument('--run-name',default='20261024_continue_lr3e5')
-    parser.add_argument('--resume',action='store_true')
+    parser.add_argument('--run-name',default='20261025_focal_head')
+    parser.add_argument('--max-epochs',type=int,default=12);parser.add_argument('--min-epochs',type=int,default=1)
+    parser.add_argument('--patience',type=int,default=5);parser.add_argument('--min-delta',type=float,default=1e-5)
+    parser.add_argument('--learning-rate',type=float,default=1e-4);parser.add_argument('--min-lr',type=float,default=1e-5)
+    parser.add_argument('--batch-size',type=int,default=512);parser.add_argument('--workers',type=int,default=4)
+    parser.add_argument('--seed',type=int,default=2026102510);parser.add_argument('--resume',action='store_true')
     args=parser.parse_args()
-    if not 1<=args.min_epochs<=args.max_epochs or args.patience<1 or not 0<args.min_lr<=args.learning_rate:
-        parser.error('Invalid continuation schedule')
+    assert 1<=args.min_epochs<=args.max_epochs and args.patience>0 and 0<args.min_lr<=args.learning_rate
     run(args)

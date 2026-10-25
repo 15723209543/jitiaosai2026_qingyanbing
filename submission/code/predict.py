@@ -32,7 +32,7 @@ def score_batch(x, models):
     if not models:
         raise ValueError("至少需要一个模型")
     device = next(models[0].parameters()).device
-    x = x.to(device, non_blocking=True)
+    x = x.to(device, non_blocking=False)
     with torch.inference_mode():
         return average_probabilities(*[
             torch.softmax(model(x.contiguous(memory_format=model_memory_format(model.model_config["model_name"]))), dim=1)[:, 1].tolist() for model in models
@@ -65,7 +65,7 @@ def collect_probabilities(dataset, models, stage):
         raise ValueError("至少需要一个模型")
     torch.set_num_threads(CPU_THREADS if stage == "valid" else PREDICT_CPU_THREADS)
     dataloader = DataLoader(dataset, batch_size=1 if stage == "test" else BATCH_SIZE,
-                            shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+                            shuffle=False, num_workers=4, pin_memory=False)
     labels, scores, start = [], [], time.time()
     for model in models:
         model.eval()

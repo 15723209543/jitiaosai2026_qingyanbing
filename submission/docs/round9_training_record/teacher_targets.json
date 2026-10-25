@@ -1,0 +1,11 @@
+{
+  "source_sha256": "f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5",
+  "sha256": "4460c4286398aa52c74f0b06f1871b7c0ad95880d82a2e38584e57f90f9f8dcc",
+  "temperature": 2.0,
+  "training_only": true,
+  "test_or_validation_targets_used": false,
+  "feature_sha256": {
+    "resnet18": "9e0852ac4237c1b4ed99b4eee589e1cab9e0c54d8829ce8c141289cf76b6a31c",
+    "densenet121": "982293efdd29c0c79989d1b78208aa6a783ffb98a3bbd7baaffff7082403d7b7"
+  }
+}
