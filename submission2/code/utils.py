@@ -88,6 +88,61 @@ def read_records(split):
     return records
 
 
+def load_resume_checkpoint(path, model_names):
+    """【自写】只读已有最佳参数；校验配方和分支，拒绝把 Git LFS 指针当模型。"""
+    path = Path(path)
+    if not path.is_file():
+        return None
+    with path.open("rb") as file:
+        if file.read(48).startswith(b"version https://git-lfs.github.com/spec/v1"):
+            raise RuntimeError("当前文件只是 Git LFS 指针，请在训练机下载真实模型后再续训")
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") != RECIPE:
+        raise ValueError("已有模型配方与当前代码不一致，不能直接续训")
+    states = checkpoint.get("states")
+    best_metrics = checkpoint.get("best_metrics")
+    origins = checkpoint.get("pretraining")
+    if not all(isinstance(value, dict) for value in (states, best_metrics, origins)):
+        raise ValueError("已有模型缺少分支参数、验证指标或预训练来源")
+    if set(states) != set(best_metrics) or not set(states).issubset(model_names):
+        raise ValueError("已有模型分支和验证记录不一致")
+    if checkpoint.get("training_complete") and set(states) != set(model_names):
+        raise ValueError("标记为完成的模型缺少分支")
+    for name, state in states.items():
+        record = best_metrics[name]
+        if name not in origins or not state or not all(torch.is_tensor(value) for value in state.values()):
+            raise ValueError("已有模型参数或来源不完整: " + name)
+        if not isinstance(record, dict) or type(record.get("epoch")) is not int or record["epoch"] < 1:
+            raise ValueError("已有模型最佳轮次无效: " + name)
+        auc = record.get("auroc")
+        if not isinstance(auc, (int, float)) or not math.isfinite(auc) or not 0 <= auc <= 1:
+            raise ValueError("已有模型 AUROC 无效: " + name)
+    return checkpoint
+
+
+def resume_start_epoch(checkpoint, name):
+    """【自写】未训练分支从第 1 轮开始；已有分支从保存的最佳轮次下一轮开始。"""
+    return 1 if checkpoint is None or name not in checkpoint["states"] else checkpoint["best_metrics"][name]["epoch"] + 1
+
+
+def resume_baseline_auc(checkpoint, name, measured_auc):
+    """【自写】整套官方验证集复核后建立续训门槛；差异过大则保护旧权重。"""
+    saved_auc = checkpoint["best_metrics"][name]["auroc"]
+    if not math.isfinite(measured_auc) or abs(measured_auc - saved_auc) > 0.002:
+        raise ValueError(f"{name} 复核 AUROC 与旧权重记录不符: 当前{measured_auc:.6f}, 已存{saved_auc:.6f}")
+    return max(measured_auc, saved_auc)
+
+
+def restore_candidate_model(name, checkpoint, create_model, pretrain_dir):
+    """【自写】已有分支严格载入最佳参数；未训练分支才初始化非医学预训练权重。"""
+    if checkpoint is not None and name in checkpoint["states"]:
+        model, _ = create_model(name)
+        model.load_state_dict(checkpoint["states"][name], strict=True)
+        return model, checkpoint["pretraining"][name], True
+    model, origin = create_model(name, pretrain_dir)
+    return model, origin, False
+
+
 def print_progress(stage, index, total, started, detail=""):
     """【复用课堂 CNN 终端习惯】首批、每 25 批和末批打印本批进度。"""
     if should_log_batch(index, total):

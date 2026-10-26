@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader
 from model import MODEL_NAMES, create_model
 from utils import (BATCH_SIZE, DATA, FundusDataset, MODEL_PATH, NUM_WORKERS, RECIPE,
                    ROOT, batch_report, metrics, print_metrics, print_progress,
-                   read_records, should_log_batch)
+                   read_records, load_resume_checkpoint, restore_candidate_model,
+                   resume_baseline_auc, resume_start_epoch, should_log_batch)
 
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
@@ -136,15 +137,16 @@ def select_inference(best_states, valid_records, device):
 
 
 def train():
-    """【自写】先验证起点，再逐模型完整训练；只有 AUROC 严格提高才更新该分支。"""
+    """【自写】先复核已有最佳模型，再从最佳轮次续训；AUROC 提高才更新分支。"""
     if not torch.cuda.is_available():
         raise RuntimeError("本方案需 GPU。请在带 CUDA 的训练机安装匹配的 PyTorch，不要在此 CPU 机启动完整训练。")
-    if MODEL_PATH.exists():
-        raise FileExistsError(f"候选权重已存在，避免覆盖: {MODEL_PATH}。请先备份并明确处理后再训练。")
     set_seed()
     torch.backends.cudnn.benchmark = True
     device = torch.device("cuda:0")
     print("GPU训练已启用:", torch.cuda.get_device_name(0), "PyTorch:", torch.__version__, flush=True)
+    checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
+    if checkpoint is not None:
+        print("检测到已有最佳参数，先用完整官方验证集逐模型复核，再从最佳轮次继续；优化器将重新初始化。", flush=True)
     print("预训练许可正文:", ensure_license(), flush=True)
     train_records, valid_records = read_records("train"), read_records("valid")
     labels = [label for _, label in train_records]
@@ -155,26 +157,40 @@ def train():
     print(f"训练:{len(train_records)}张 阳性:{positives} 阴性:{negatives}; "
           f"官方验证:{len(valid_records)}张; pos_weight:{pos_weight.item():.3f}", flush=True)
     valid_loader = loader(valid_records, training=False)
-    best_states, best_metrics, origins = {}, {}, {}
+    best_states = dict(checkpoint["states"]) if checkpoint else {}
+    best_metrics = dict(checkpoint["best_metrics"]) if checkpoint else {}
+    origins = dict(checkpoint["pretraining"]) if checkpoint else {}
     for name in MODEL_NAMES:
         config = CONFIG[name]
         print("开始模型:", name, "配置:", config, flush=True)
-        model, origin = create_model(name, ROOT / "pretrain_model")
+        model, origin, resumed = restore_candidate_model(
+            name, checkpoint, create_model, ROOT / "pretrain_model")
         origins[name] = origin
         print("原权重:", origin["url"], "SHA256:", origin["sha256"], flush=True)
         model.to(device)
-        validate(model, valid_loader, device, name + " 训练前")
+        baseline, _ = validate(model, valid_loader, device, name + " 续训前复核" if resumed else name + " 训练前")
+        start_epoch = resume_start_epoch(checkpoint, name)
+        best_auc = resume_baseline_auc(checkpoint, name, baseline["auroc"]) if resumed else -1.0
+        if resumed:
+            print(f"{name} 已存最佳第{start_epoch - 1}轮，复核AUROC:{baseline['auroc']:.6f}，"
+                  f"续训选模门槛:{best_auc:.6f}；从第{start_epoch}轮继续。", flush=True)
+        if start_epoch > config["epochs"]:
+            print(f"{name} 已达到当前设置的{config['epochs']}轮，不重复训练，仍参与最终验证。", flush=True)
+            del model
+            torch.cuda.empty_cache()
+            continue
         classifier_ids = {id(parameter) for parameter in model.get_classifier().parameters()}
         optimizer = torch.optim.AdamW([
             {"params": [p for p in model.parameters() if id(p) not in classifier_ids],
              "lr": config["backbone_lr"]},
             {"params": [p for p in model.parameters() if id(p) in classifier_ids],
              "lr": config["head_lr"]}], weight_decay=config["weight_decay"])
-        schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config["epochs"])
+        schedule = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=config["epochs"] - start_epoch + 1)
         scaler = torch.amp.GradScaler("cuda")
         train_loader = loader(train_records, training=True)
-        best_auc, stale = -1.0, 0
-        for epoch in range(1, config["epochs"] + 1):
+        stale = 0
+        for epoch in range(start_epoch, config["epochs"] + 1):
             loss = train_epoch(model, train_loader, optimizer, scaler, pos_weight, device, epoch, name)
             print(f"{name} epoch:{epoch}, train_loss:{loss:.6f}", flush=True)
             result, _ = validate(model, valid_loader, device, f"{name} epoch:{epoch}")
