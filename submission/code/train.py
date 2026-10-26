@@ -21,9 +21,9 @@ from utils import (BATCH_SIZE, DATA, FundusDataset, MODEL_PATH, NUM_WORKERS, REC
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
     "convnext_tiny.fb_in1k": {"epochs": 1, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                               "weight_decay": 0.02, "patience": 4},# 20轮、4轮早停、0.02衰减、2e-5学习率、2e-4头学习率
+                               "weight_decay": 0.02, "patience": 4},  # 本次1轮；每次运行重新计数
     "efficientnetv2_rw_s.ra2_in1k": {"epochs": 1, "backbone_lr": 3e-5, "head_lr": 3e-4,
-                                      "weight_decay": 0.01, "patience": 5},# 20轮、5轮早停、0.01衰减、3e-5学习率、3e-4头学习率
+                                      "weight_decay": 0.01, "patience": 5},  # 本次1轮；每次运行重新计数
 }
 
 
@@ -115,7 +115,10 @@ def train_epoch(model, train_loader, optimizer, scaler, pos_weight, device, epoc
 def save_checkpoint(best_states, best_metrics, origins, selected=None):
     """【自写】两个分支统一保存到一个 PTH；仅最终双分支完备才允许预测。"""
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    checkpoint = {"recipe": RECIPE, "states": best_states, "best_metrics": best_metrics,
+    metrics_without_epochs = {name: {key: value for key, value in result.items()
+                                     if key != "epoch"}
+                              for name, result in best_metrics.items()}
+    checkpoint = {"recipe": RECIPE, "states": best_states, "best_metrics": metrics_without_epochs,
                   "pretraining": origins, "selection": selected,
                   "training_complete": selected is not None,
                   "torch_version": torch.__version__}
@@ -157,7 +160,7 @@ def train():
         torch.backends.cudnn.benchmark = True
     checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
     if checkpoint is not None:
-        print("检测到已有最佳参数，先用完整官方验证集逐模型复核，再从最佳轮次继续；优化器将重新初始化。", flush=True)
+        print("检测到已有最佳参数，先用完整官方验证集逐模型复核；本次训练从第1轮重新计数，优化器重新初始化。", flush=True)
     print("预训练许可正文:", ensure_license(), flush=True)
     train_records, valid_records = read_records("train"), read_records("valid")
     labels = [label for _, label in train_records]
@@ -169,7 +172,8 @@ def train():
           f"官方验证:{len(valid_records)}张; pos_weight:{pos_weight.item():.3f}", flush=True)
     valid_loader = loader(valid_records, training=False)
     best_states = dict(checkpoint["states"]) if checkpoint else {}
-    best_metrics = dict(checkpoint["best_metrics"]) if checkpoint else {}
+    best_metrics = ({name: {key: value for key, value in result.items() if key != "epoch"}
+                     for name, result in checkpoint["best_metrics"].items()} if checkpoint else {})
     origins = dict(checkpoint["pretraining"]) if checkpoint else {}
     for name in MODEL_NAMES:
         config = CONFIG[name]
@@ -183,13 +187,8 @@ def train():
         start_epoch = resume_start_epoch(checkpoint, name)
         best_auc = resume_baseline_auc(checkpoint, name, baseline["auroc"]) if resumed else -1.0
         if resumed:
-            print(f"{name} 已存最佳第{start_epoch - 1}轮，复核AUROC:{baseline['auroc']:.6f}，"
-                  f"续训选模门槛:{best_auc:.6f}；从第{start_epoch}轮继续。", flush=True)
-        if start_epoch > config["epochs"]:
-            print(f"{name} 已达到当前设置的{config['epochs']}轮，不重复训练，仍参与最终验证。", flush=True)
-            del model
-            torch.cuda.empty_cache()
-            continue
+            print(f"{name} 已载入上次最佳权重，复核AUROC:{baseline['auroc']:.6f}，"
+                  f"本次选模门槛:{best_auc:.6f}；从第1轮开始。", flush=True)
         classifier_ids = {id(parameter) for parameter in model.get_classifier().parameters()}
         optimizer = torch.optim.AdamW([
             {"params": [p for p in model.parameters() if id(p) not in classifier_ids],
@@ -209,7 +208,7 @@ def train():
                 best_auc, stale = result["auroc"], 0
                 best_states[name] = {key: value.detach().cpu().clone()
                                      for key, value in model.state_dict().items()}
-                best_metrics[name] = {"epoch": epoch, **result}
+                best_metrics[name] = result
                 save_checkpoint(best_states, best_metrics, origins)
                 print("验证 AUROC 提高，已保存该分支最佳参数。", flush=True)
             else:

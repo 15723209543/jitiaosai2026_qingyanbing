@@ -17,7 +17,7 @@ NAMES = ("convnext_tiny.fb_in1k", "efficientnetv2_rw_s.ra2_in1k")
 
 
 class ResumeCheckpointTests(unittest.TestCase):
-    def test_partial_checkpoint_retains_best_epoch_and_untrained_branch(self):
+    def test_each_run_starts_at_one_while_retaining_best_weights(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "best_model.pth"
             original = {"recipe": utils.RECIPE,
@@ -27,7 +27,7 @@ class ResumeCheckpointTests(unittest.TestCase):
                         "selection": None, "training_complete": False}
             torch.save(original, path)
             loaded = utils.load_resume_checkpoint(path, NAMES)
-            self.assertEqual(utils.resume_start_epoch(loaded, NAMES[0]), 8)
+            self.assertEqual(utils.resume_start_epoch(loaded, NAMES[0]), 1)
             self.assertEqual(utils.resume_start_epoch(loaded, NAMES[1]), 1)
             self.assertEqual(loaded["best_metrics"][NAMES[0]]["auroc"], 0.91)
             self.assertEqual(torch.load(path, weights_only=True)["states"][NAMES[0]]["weight"].item(), 3.0)
@@ -63,6 +63,17 @@ class ResumeCheckpointTests(unittest.TestCase):
             loaded = utils.load_resume_checkpoint(path, NAMES)
             self.assertEqual(loaded["best_metrics"][NAMES[0]]["epoch"], 7)
             self.assertEqual(path.read_bytes(), before)
+
+    def test_checkpoint_without_epoch_remains_loadable(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "best_model.pth"
+            torch.save({"recipe": utils.RECIPE,
+                        "states": {NAMES[0]: {"weight": torch.tensor([3.0])}},
+                        "best_metrics": {NAMES[0]: {"auroc": 0.91}},
+                        "pretraining": {NAMES[0]: {"url": "saved-origin"}},
+                        "selection": None, "training_complete": False}, path)
+            loaded = utils.load_resume_checkpoint(path, NAMES)
+            self.assertEqual(loaded["best_metrics"][NAMES[0]]["auroc"], 0.91)
 
     def test_full_validation_auc_sets_safe_starting_threshold(self):
         checkpoint = {"best_metrics": {NAMES[0]: {"auroc": 0.91}}}

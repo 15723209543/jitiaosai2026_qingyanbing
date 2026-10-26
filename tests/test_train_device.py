@@ -4,6 +4,7 @@ import contextlib
 import io
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 import torch
@@ -16,6 +17,22 @@ import train  # noqa: E402
 
 
 class TrainDeviceTests(unittest.TestCase):
+    def test_new_checkpoint_keeps_best_auc_but_no_epoch_number(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "best_model.pth"
+            old_path = train.MODEL_PATH
+            train.MODEL_PATH = path
+            try:
+                train.save_checkpoint({"example": {"weight": torch.tensor([1.0])}},
+                                      {"example": {"epoch": 7, "auroc": 0.91}},
+                                      {"example": {"url": "saved-origin"}})
+            finally:
+                train.MODEL_PATH = old_path
+            with torch.serialization.safe_globals([torch.torch_version.TorchVersion]):
+                checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+            self.assertEqual(checkpoint["best_metrics"]["example"]["auroc"], 0.91)
+            self.assertNotIn("epoch", checkpoint["best_metrics"]["example"])
+
     @unittest.skipIf(torch.cuda.is_available(), "该回归用例针对无 CUDA 的解释器")
     def test_cpu_device_is_reported_and_can_train_one_batch(self):
         output = io.StringIO()

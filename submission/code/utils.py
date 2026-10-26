@@ -115,7 +115,9 @@ def load_resume_checkpoint(path, model_names):
         record = best_metrics[name]
         if name not in origins or not state or not all(torch.is_tensor(value) for value in state.values()):
             raise ValueError("已有模型参数或来源不完整: " + name)
-        if not isinstance(record, dict) or type(record.get("epoch")) is not int or record["epoch"] < 1:
+        # 兼容旧权重中的 epoch；新权重只保存最佳参数和指标，不再记录轮次。
+        if not isinstance(record, dict) or ("epoch" in record and
+                                             (type(record["epoch"]) is not int or record["epoch"] < 1)):
             raise ValueError("已有模型最佳轮次无效: " + name)
         auc = record.get("auroc")
         if not isinstance(auc, (int, float)) or not math.isfinite(auc) or not 0 <= auc <= 1:
@@ -133,8 +135,8 @@ def inference_model_names(checkpoint, model_names):
 
 
 def resume_start_epoch(checkpoint, name):
-    """【自写】未训练分支从第 1 轮开始；已有分支从保存的最佳轮次下一轮开始。"""
-    return 1 if checkpoint is None or name not in checkpoint["states"] else checkpoint["best_metrics"][name]["epoch"] + 1
+    """【自写】每次启动的轮次均从 1 计数；旧权重只提供参数和 AUROC 门槛。"""
+    return 1
 
 
 def resume_baseline_auc(checkpoint, name, measured_auc):
