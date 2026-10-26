@@ -209,7 +209,7 @@ def write_submission(records, scores, output_path=OUTPUT_CSV):
     """【改自旧 utils.write_submission】仅预测脚本写三列、原顺序 CSV。"""
     if len(records) != len(scores) or not scores:
         raise ValueError("测试图片数与预测结果不一致")
-    output_path = Path(output_path)
+    output_path = Path(output_path).with_suffix(".csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
@@ -218,5 +218,8 @@ def write_submission(records, scores, output_path=OUTPUT_CSV):
             if not math.isfinite(float(score)) or not 0 <= float(score) <= 1:
                 raise ValueError("概率必须位于 0 到 1")
             score = round(float(score), 6)
-            writer.writerow([Path(path).name, f"{score:.6f}", int(score >= 0.5)])
+            image_path = Path(path)
+            # 官方 test.csv 使用 .jpg；磁盘上的原图可能是 .JPG，提交时仅规范后缀大小写。
+            image_name = image_path.with_suffix(image_path.suffix.lower()).name
+            writer.writerow([image_name, f"{score:.6f}", int(score >= 0.5)])
     return output_path

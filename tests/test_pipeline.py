@@ -41,5 +41,23 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual([row['Image_name'] for row in data], ['b.jpg', 'a.jpg'])
             self.assertEqual([row['Pred_Label'] for row in data], ['1', '0'])
 
+    def test_submission_image_suffix_matches_official_lowercase(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / 'submission.csv'
+            utils.write_submission([(Path('test_00000.JPG'), None),
+                                    (Path('Other.PNG'), None)], [0.8, 0.2], output)
+            import csv
+            with output.open(newline='', encoding='utf-8') as file:
+                rows = list(csv.DictReader(file))
+            self.assertEqual([row['Image_name'] for row in rows],
+                             ['test_00000.jpg', 'Other.png'])
+
+    def test_submission_output_filename_uses_lowercase_csv_suffix(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = utils.write_submission([(Path('test_00000.JPG'), None)],
+                                            [0.8], Path(folder) / 'submission.CSV')
+            self.assertEqual(output.name, 'submission.csv')
+            self.assertTrue(output.is_file())
+
 if __name__ == '__main__':
     unittest.main()

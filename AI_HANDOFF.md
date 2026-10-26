@@ -1,5 +1,7 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-26 CSV 后缀修复（本段优先）：官方 `glaucoma_first/test.csv` 的 5,855 个 `Image_name` 均以小写 `.jpg` 结尾，而磁盘图片均为大写 `.JPG`。旧 `write_submission` 直接写磁盘文件名，未来运行预测会产生不合官方名单的图片名；现改为只将输出图片名的后缀转小写，同时把输出文件后缀强制为 `.csv`。已只读核对 5,855 个新名称与官方 CSV 顺序逐行一致；25 项单元测试通过、1 项 CUDA 测试跳过。没有训练、预测或覆盖历史 `submission/submission.csv` 和 PTH；当前阶段性 PTH 仍不可用于最终预测。
+
 2026-10-26 轮次重置（本段优先）：`submission/code/train.py` 每次启动均载入已有最佳权重，先在完整官方验证集复核 AUROC，再从本次第 1 轮训练；`CONFIG` 的 `epochs` 是本次运行轮数，当前两分支均为 1。历史最佳 AUROC 仍作更新门槛，只有超过才保存新权重；新保存的 PTH 不再存 `epoch`，但保留 AUROC、配方、来源与选模信息。旧 PTH 含 `epoch` 仍可读，仅不再以其决定起始轮次。此次只改代码和文档，未启动完整训练、未改已有 PTH/CSV。以下“需把轮数设高于历史轮次”等历史说明已被本段取代。
 
 2026-10-26 设备修复：用户明确要求 CPU 也可训练。`submission/code/train.py` 现在先打印 CPU/GPU、PyTorch 与 CUDA 版本；有 CUDA 优先 GPU 并启用 AMP，无 CUDA 时用 CPU 且关闭 CUDA AMP/GradScaler，不再抛出“必须 GPU”。仅用极小合成批次验证 CPU 前后向，没有启动完整数据训练；已有 PTH/CSV 未改。注意工作树中 `CONFIG` 两个 `epochs` 均被用户改为 1，低于当前 PTH 记录的最佳轮次 6/3；这次设备修复保留该未提交修改，若用户希望继续训练，应先自行设定高于已完成轮次的目标值。
