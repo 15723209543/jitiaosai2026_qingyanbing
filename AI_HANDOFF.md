@@ -1,5 +1,7 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-26 设备修复：用户明确要求 CPU 也可训练。`submission/code/train.py` 现在先打印 CPU/GPU、PyTorch 与 CUDA 版本；有 CUDA 优先 GPU 并启用 AMP，无 CUDA 时用 CPU 且关闭 CUDA AMP/GradScaler，不再抛出“必须 GPU”。仅用极小合成批次验证 CPU 前后向，没有启动完整数据训练；已有 PTH/CSV 未改。注意工作树中 `CONFIG` 两个 `epochs` 均被用户改为 1，低于当前 PTH 记录的最佳轮次 6/3；这次设备修复保留该未提交修改，若用户希望继续训练，应先自行设定高于已完成轮次的目标值。
+
 2026-10-26 最新目录整理（本段优先于以下历史状态）：用户要求删除旧 `submission/`，把原 `submission2/` 改名为唯一的 `submission/`；数据 `glaucoma_first/` 在同级且未改动。提交目录严格只保留附录 A 所列七项（四 Python 文件加 requirements 在 code 内），没有 README、缓存或占位文件。旧方案 `submission/submission.csv` 作为历史最高提交 CSV 保留于新目录，但它不由新模型生成。旧正式源码/权重可由 Git 历史恢复。本机已从 LFS 取得新方案真实 200,822,431 字节阶段性 PTH，安全读取确认 `training_complete=False`、`selection=None`；ConvNeXt-Tiny 最佳第 6 轮记录 AUROC 0.984011，EfficientNetV2-S 最佳第 3 轮记录 0.965275。不得强行运行预测或将此阶段性 PTH 声称为最终模型；用户在 GPU 主机续训、整体验证选模后再运行 `submission/code/predict.py`。老师截图 `Unsupported operand 118` 的根因是旧 `submission/code/utils.py` 把以 `version ...` 开头的 Git LFS 指针送入 `torch.load`；新代码会先识别指针。真实入口测试另发现阶段性 `selection=None` 曾触发 `AttributeError`，现改为明确提示训练未完成。没有修改真实 PTH、没有训练或生成新 CSV。下文早期路径/状态仅供历史溯源。
 
 2026-10-26 旧权重读取兼容：用户的 GPU 机在 `load_resume_checkpoint` 处遇到 `Unsupported global: torch.torch_version.TorchVersion`。原因是旧 `save_checkpoint` 把 `torch.__version__` 对象写进 PTH，而新版 PyTorch 的 `weights_only=True` 默认不允许该类型。`submission2/code/utils.py` 现在使用局部 `torch.serialization.safe_globals([TorchVersion])` 继续安全加载；`predict.py` 复用相同检查点读取。没有改 `train.py` 的轮数配置、没有使用 `weights_only=False`、没有读取或改写真实 PTH。本机只有 LFS 指针；训练机实际续训仍需由用户验证。

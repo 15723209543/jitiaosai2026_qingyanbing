@@ -20,9 +20,9 @@ from utils import (BATCH_SIZE, DATA, FundusDataset, MODEL_PATH, NUM_WORKERS, REC
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
-    "convnext_tiny.fb_in1k": {"epochs": 20, "backbone_lr": 2e-5, "head_lr": 2e-4,
+    "convnext_tiny.fb_in1k": {"epochs": 1, "backbone_lr": 2e-5, "head_lr": 2e-4,
                                "weight_decay": 0.02, "patience": 4},# 20轮、4轮早停、0.02衰减、2e-5学习率、2e-4头学习率
-    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 20, "backbone_lr": 3e-5, "head_lr": 3e-4,
+    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 1, "backbone_lr": 3e-5, "head_lr": 3e-4,
                                       "weight_decay": 0.01, "patience": 5},# 20轮、5轮早停、0.01衰减、3e-5学习率、3e-4头学习率
 }
 
@@ -51,8 +51,20 @@ def ensure_license():
 def loader(records, training, batch_size=BATCH_SIZE):
     """【改自课堂 CNN DataLoader】每轮遍历全部官方训练图片，不做有放回抽样。"""
     return DataLoader(FundusDataset(records, training=training), batch_size=batch_size,
-                      shuffle=training, num_workers=NUM_WORKERS, pin_memory=True,
+                      shuffle=training, num_workers=NUM_WORKERS,
+                      pin_memory=torch.cuda.is_available(),
                       persistent_workers=NUM_WORKERS > 0)
+
+
+def select_device():
+    """【自写】启动时报告计算设备；有 CUDA 优先 GPU，否则允许 CPU 训练。"""
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if device.type == "cuda":
+        print("GPU训练已启用:", torch.cuda.get_device_name(0), flush=True)
+    else:
+        print("当前使用CPU训练（可继续运行，但完整训练会较慢）", flush=True)
+    print("PyTorch版本:", torch.__version__, "CUDA版本:", torch.version.cuda, flush=True)
+    return device
 
 
 def validate(model, valid_loader, device, title):
@@ -80,7 +92,8 @@ def train_epoch(model, train_loader, optimizer, scaler, pos_weight, device, epoc
         images = images.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
         optimizer.zero_grad(set_to_none=True)
-        with torch.autocast(device_type="cuda", dtype=torch.float16):
+        with torch.autocast(device_type=device.type, dtype=torch.float16,
+                            enabled=device.type == "cuda"):
             logits = model(images).flatten()
             bce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none",
                                                      pos_weight=pos_weight)
@@ -138,12 +151,10 @@ def select_inference(best_states, valid_records, device):
 
 def train():
     """【自写】先复核已有最佳模型，再从最佳轮次续训；AUROC 提高才更新分支。"""
-    if not torch.cuda.is_available():
-        raise RuntimeError("本方案需 GPU。请在带 CUDA 的训练机安装匹配的 PyTorch，不要在此 CPU 机启动完整训练。")
+    device = select_device()
     set_seed()
-    torch.backends.cudnn.benchmark = True
-    device = torch.device("cuda:0")
-    print("GPU训练已启用:", torch.cuda.get_device_name(0), "PyTorch:", torch.__version__, flush=True)
+    if device.type == "cuda":
+        torch.backends.cudnn.benchmark = True
     checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
     if checkpoint is not None:
         print("检测到已有最佳参数，先用完整官方验证集逐模型复核，再从最佳轮次继续；优化器将重新初始化。", flush=True)
@@ -187,7 +198,7 @@ def train():
              "lr": config["head_lr"]}], weight_decay=config["weight_decay"])
         schedule = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=config["epochs"] - start_epoch + 1)
-        scaler = torch.amp.GradScaler("cuda")
+        scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
         train_loader = loader(train_records, training=True)
         stale = 0
         for epoch in range(start_epoch, config["epochs"] + 1):
@@ -217,6 +228,6 @@ def train():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="GPU 全量训练；不生成测试 CSV")
+    parser = argparse.ArgumentParser(description="优先 GPU、无 CUDA 时用 CPU 全量训练；不生成测试 CSV")
     parser.parse_args()
     train()
