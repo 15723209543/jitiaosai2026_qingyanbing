@@ -18,10 +18,10 @@ from utils import (BATCH_SIZE, DATA, FundusDataset, MODEL_PATH, NUM_WORKERS, REC
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
-    "convnext_tiny.fb_in1k": {"epochs": 12, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                               "weight_decay": 0.02, "patience": 4},
-    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 14, "backbone_lr": 3e-5, "head_lr": 3e-4,
-                                      "weight_decay": 0.01, "patience": 5},
+    "convnext_tiny.fb_in1k": {"epochs": 20, "backbone_lr": 2e-5, "head_lr": 2e-4,
+                               "weight_decay": 0.02, "patience": 4},# 20轮、4轮早停、0.02衰减、2e-5学习率、2e-4头学习率
+    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 20, "backbone_lr": 3e-5, "head_lr": 3e-4,
+                                      "weight_decay": 0.01, "patience": 5},# 20轮、5轮早停、0.01衰减、3e-5学习率、3e-4头学习率
 }
 
 
