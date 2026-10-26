@@ -1,8 +1,0 @@
-{
-  "teacher_source_sha256": "f7d35a6bb77819750d4b59fdeac0f273b775578ed8ec1bf39e6bafa525a7f6f5",
-  "student_initialization_sha256": "ac74aaab44d6ce306af31c60ab851bd3b677c9e5e386d0376c9ca5dcab25b042",
-  "student_source_run": "20261025_deeper_kd",
-  "student_source_epoch": 4,
-  "objective": "0.5 pairwise logistic + 0.35 weighted CE + 0.15 T2 KD",
-  "batch_rule": "each training sample once; at least one positive per batch"
-}

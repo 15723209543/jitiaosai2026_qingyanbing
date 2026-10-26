@@ -1,3 +1,0 @@
-# 第一轮代码归档
-
-本目录用于追溯，不要直接在本目录运行。复现第一轮时，把这些文件恢复到独立副本的submission/code，再将最初GitHub检查点复制为model/best_model.pth。数据glaucoma_first与submission同级。完成第一轮后再按第二轮代码继续。
