@@ -10,7 +10,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "submission2_utils_for_resume_test", ROOT / "submission2" / "code" / "utils.py")
+    "submission_utils_for_resume_test", ROOT / "submission" / "code" / "utils.py")
 utils = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(utils)
 NAMES = ("convnext_tiny.fb_in1k", "efficientnetv2_rw_s.ra2_in1k")
@@ -70,6 +70,12 @@ class ResumeCheckpointTests(unittest.TestCase):
         self.assertEqual(utils.resume_baseline_auc(checkpoint, NAMES[0], 0.9099), 0.91)
         with self.assertRaisesRegex(ValueError, "复核 AUROC"):
             utils.resume_baseline_auc(checkpoint, NAMES[0], 0.85)
+
+    def test_incomplete_checkpoint_is_rejected_before_prediction(self):
+        checkpoint = {"training_complete": False, "selection": None,
+                      "states": {NAMES[0]: {"weight": torch.tensor([1.0])}}}
+        with self.assertRaisesRegex(RuntimeError, "模型未完成"):
+            utils.inference_model_names(checkpoint, NAMES)
 
     def test_saved_branch_loads_its_weights_without_redownloading_pretrain(self):
         source = torch.nn.Linear(1, 1)

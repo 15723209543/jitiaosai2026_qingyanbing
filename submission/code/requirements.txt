@@ -1,7 +1,9 @@
-# deepStudy当前环境实测版本；GPU主机需安装与CUDA版本匹配的PyTorch构建。
-torch==2.11.0
-torchvision==0.26.0
-Pillow==12.2.0
-numpy==2.4.6
-pandas==3.0.3
-scikit-learn==1.8.0
+# 在 GPU 主机先安装与驱动匹配的 CUDA 版 PyTorch，再安装其余依赖。
+torch>=2.3,<3
+torchvision>=0.18,<1
+timm>=1.0,<2
+huggingface_hub>=0.24,<2
+safetensors>=0.4,<1
+Pillow>=10,<13
+numpy>=1.26,<3
+scikit-learn>=1.4,<2

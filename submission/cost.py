@@ -1,108 +1,71 @@
-"""按新规程以batch=1测试端到端耗时；只做固定模型推理，不训练或调参。"""
+"""按规程：同一推理函数，5张预热，100张单张串行计时三轮。"""
 
 import argparse
 import csv
-import hashlib
-import json
 import statistics
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-CODE_DIR = Path(__file__).resolve().parent / "code"
-sys.path.insert(0, str(CODE_DIR))
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "code"))
 
 import torch
-
 from predict import load_inference_models, score_batch
-from utils import ImageDataset, list_image_paths
+from utils import FundusDataset
 
 
-# 【来源】根据2026新规程第7条自写；每张图片从读取到写出一行结果单独计时。
-def benchmark_round(image_paths, models, output_path):
-    scores, durations = {}, []
-    dataset = ImageDataset(image_paths)
-    output_path = Path(output_path)
-    with output_path.open("w", newline="", encoding="utf-8") as file:
+def list_images(directory, count):
+    """【改自旧 cost.list_image_paths】仅从指定计时目录取得确切数量的图片。"""
+    paths = sorted((p for p in Path(directory).rglob("*")
+                    if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}),
+                   key=lambda p: p.name.casefold())
+    if len(paths) != count or len({p.name.casefold() for p in paths}) != count:
+        raise ValueError(f"{directory} 应恰好有 {count} 张互不重名的图片")
+    return paths
+
+
+def run_round(paths, models, output_path):
+    """【改自旧 cost.benchmark_round】单张从读取图片到落盘 CSV 行完整计时。"""
+    dataset = FundusDataset([(p, None) for p in paths])
+    durations, scores = [], {}
+    with Path(output_path).open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["Image_name", "Probability", "Pred_Label"])
-        for index, image_path in enumerate(image_paths):
+        for index, path in enumerate(paths):
             start = time.perf_counter()
-            image = dataset[index].unsqueeze(0)
-            score = round(score_batch(image, models)[0], 6)
+            score = round(score_batch(dataset[index].unsqueeze(0), models)[0], 6)
             if next(models[0].parameters()).device.type == "cuda":
                 torch.cuda.synchronize()
-            writer.writerow([image_path.name, "%.6f" % score, int(score >= 0.5)])
+            writer.writerow([path.name, f"{score:.6f}", int(score >= 0.5)])
             file.flush()
             durations.append(time.perf_counter() - start)
-            scores[image_path.name] = score
-    return scores, durations
+            scores[path.name] = score
+    return durations, scores
 
 
-# 【来源】根据2026新规程第7条自写；核对同一份固定模型的最终提交结果。
-def compare_submission(submission_csv, scores):
-    with Path(submission_csv).open(newline="", encoding="utf-8-sig") as file:
-        reader = csv.DictReader(file)
-        if reader.fieldnames != ["Image_name", "Probability", "Pred_Label"]:
-            raise ValueError("提交CSV字段必须为 Image_name,Probability,Pred_Label")
-        expected = {row["Image_name"].casefold(): row for row in reader}
-    mismatches = 0
-    for name, score in scores.items():
-        row = expected.get(name.casefold())
-        if row is None or abs(float(row["Probability"]) - round(score, 6)) > 0.000001 \
-                or int(row["Pred_Label"]) != int(score >= 0.5):
-            mismatches += 1
-    return mismatches
-
-
-# 【来源】根据2026新规程第7条自写；5张预热，100张连续跑3轮，先逐图平均再全体平均。
-def main(pictures_100, pictures_5, submission_csv, report_json=None):
-    measured_paths, _ = list_image_paths(pictures_100)
-    warmup_paths, _ = list_image_paths(pictures_5)
-    if len(measured_paths) != 100 or len(warmup_paths) != 5:
-        raise ValueError("须提供100张计时图和5张预热图")
-    if not Path(submission_csv).is_file():
-        raise FileNotFoundError("先用当前模型生成最终submission.csv，再测一致性: %s" % submission_csv)
+def main(pictures_100, pictures_5):
+    """【改自旧 cost.main】逐图三轮取均值；官方指定硬件需另行复测。"""
+    measured = list_images(pictures_100, 100)
+    warmup = list_images(pictures_5, 5)
     models = load_inference_models()
-    device = next(models[0].parameters()).device
-    print("推理设备:%s, 精度:fp32, batch=1" % device, flush=True)
-    with tempfile.TemporaryDirectory() as directory:
-        benchmark_round(warmup_paths, models, Path(directory) / "warmup.csv")
-        rounds = []
-        for index in range(3):
-            scores, durations = benchmark_round(measured_paths, models,
-                                                 Path(directory) / ("round%d.csv" % (index + 1)))
-            rounds.append(durations)
-            print("第%d轮: %.6f秒/张" % (index + 1, statistics.mean(durations)), flush=True)
-    per_image = [statistics.mean(round_data[index] for round_data in rounds)
-                 for index in range(len(measured_paths))]
-    average_seconds = statistics.mean(per_image)
-    mismatches = compare_submission(submission_csv, scores)
-    if report_json is not None:
-        report = {"device": str(device), "gpu": torch.cuda.get_device_name(0) if device.type == "cuda" else None,
-                  "precision": "FP32", "batch_size": 1, "warmup_count": 5, "measured_count": 100,
-                  "rounds": 3, "round_mean_seconds": [statistics.mean(r) for r in rounds],
-                  "per_image_mean_seconds": per_image, "average_seconds": average_seconds,
-                  "mismatches": mismatches, "sample_origin": "caller-provided; local samples are not organizer-specified samples",
-                  "csv_sha256": hashlib.sha256(Path(submission_csv).read_bytes()).hexdigest(),
-                  "official_hardware_verification": False}
-        Path(report_json).write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print("[CONCLUSION] 本机100张、batch=1串行、3轮；单张端到端平均耗时 %.6f 秒，"
-          "%s100秒上限；与submission.csv比对不一致%d张；推理精度fp32。"
-          "最终以主办方指定硬件复测为准。" %
-          (average_seconds, "超过" if average_seconds > 100 else "未超过", mismatches), flush=True)
-    if mismatches:
-        raise ValueError("计时预测与最终提交CSV不一致")
-    return average_seconds
+    with tempfile.TemporaryDirectory() as temp:
+        run_round(warmup, models, Path(temp) / "warmup.csv")
+        rounds = [run_round(measured, models, Path(temp) / f"round{i}.csv")[0]
+                  for i in range(1, 4)]
+    per_image = [statistics.mean(values) for values in zip(*rounds)]
+    mean = statistics.mean(per_image)
+    print("端到端平均: %.6f秒/张, 测试设备:%s, FP32" %
+          (mean, next(models[0].parameters()).device), flush=True)
+    if mean >= 100:
+        raise RuntimeError("超过规程 100 秒/张限制")
+    return mean
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="新规程端到端计时与最终CSV一致性检查")
+    parser = argparse.ArgumentParser()
     parser.add_argument("pictures_100", type=Path)
     parser.add_argument("pictures_5", type=Path)
-    parser.add_argument("--submission-csv", type=Path,
-                        default=Path(__file__).resolve().parent / "submission.csv")
-    parser.add_argument("--report-json", type=Path, default=None)
     args = parser.parse_args()
-    main(args.pictures_100, args.pictures_5, args.submission_csv, args.report_json)
+    main(args.pictures_100, args.pictures_5)

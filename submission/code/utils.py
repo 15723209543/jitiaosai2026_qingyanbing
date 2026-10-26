@@ -1,45 +1,33 @@
-"""数据读取、指标、权重及CSV工具；训练/预测流程仍放在对应todo文件。"""
+"""四文件方案共用的数据、指标和 CSV 工具；不得从测试集拟合任何参数。"""
 
-# 导包
-import json
+import csv
 import math
 import time
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
 from PIL import Image
-from sklearn.metrics import auc, average_precision_score, confusion_matrix, precision_recall_curve, roc_auc_score
-from torch.utils.data import Dataset, WeightedRandomSampler
-from torchvision.transforms import ColorJitter, Compose, Normalize, RandomHorizontalFlip, ToTensor
+from sklearn.metrics import average_precision_score, confusion_matrix, roc_auc_score
+from torch.utils.data import Dataset
+from torchvision import transforms
 
 
-PROJECT_DIR = Path(__file__).resolve().parents[2]
-VARIANT_DIR = Path(__file__).resolve().parents[1]
-MODEL_DIR = VARIANT_DIR / "model"
-MODEL_PATH = MODEL_DIR / "best_model.pth"
-# 新规程附录A要求 submission.csv 位于提交材料根目录；历史 results 原样保留。
-OUTPUT_CSV = VARIANT_DIR / "submission.csv"
-RECORD_DIR = PROJECT_DIR / "项目文档" / "训练记录" / VARIANT_DIR.name
-DATA_DIR = PROJECT_DIR / "glaucoma_first"
-TRAIN_CSV, VALID_CSV, TEST_CSV = (DATA_DIR / f"{name}.csv" for name in ("train", "valid", "test"))
-TRAIN_DIR, VALID_DIR, TEST_DIR = (DATA_DIR / name for name in ("train", "valid", "test"))
-IMAGE_SIZE, BATCH_SIZE = 256, 16
-EPOCHS, MIN_EPOCHS, EARLY_STOPPING_PATIENCE = 5, 5, 6
-WARMUP_EPOCHS, LEARNING_RATE, MIN_LEARNING_RATE = 2, 3e-4, 1e-6
-WEIGHT_DECAY, MAX_GRAD_NORM = 1e-4, 5.0
-CPU_THREADS, PREDICT_CPU_THREADS, LOG_EVERY = 8, 4, 25
-RECIPE = "official_train_rgb256_frozen_encoder_focal_head_v10"
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT.parent / "glaucoma_first"
+MODEL_PATH = ROOT / "model" / "best_model.pth"
+OUTPUT_CSV = ROOT / "submission.csv"
+IMAGE_SIZE = 384
+BATCH_SIZE = 16
+NUM_WORKERS = 4
+LOG_EVERY = 25
+RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_v1"
+MEAN = (0.485, 0.456, 0.406)
+STD = (0.229, 0.224, 0.225)
 
 
-def model_memory_format(model_name):
-    # DenseNet concatenations are substantially faster in NCHW on this GPU.
-    return torch.contiguous_format if model_name == "densenet121" else torch.channels_last
-
-
-# 【来源】本项目自写；修改：保持长宽比例，将完整眼底图缩入256方框并补黑边，不裁剪、不拉伸。
 def letterbox(image):
+    """【改自旧 utils.letterbox】完整图像等比例缩到 384 方框，不裁剪、不拉伸。"""
     image = image.convert("RGB")
     image.thumbnail((IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS)
     result = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE))
@@ -47,200 +35,186 @@ def letterbox(image):
     return result
 
 
-# 【来源】本项目自写；复用课堂Resize/ToTensor/Normalize，随机增强只用于训练。
-def create_transform(training=False):
-    steps = []
-    if training:
-        steps += [RandomHorizontalFlip(0.5), ColorJitter(brightness=0.1, contrast=0.1)]
-    return Compose(steps + [ToTensor(), Normalize((0.5,) * 3, (0.5,) * 3)])
+class FundusDataset(Dataset):
+    """【改自课堂 CNN Dataset】只在训练分支施加轻量增强；验证/预测完全固定。"""
 
+    def __init__(self, records, training=False):
+        self.records = records
+        steps = []
+        if training:
+            steps += [transforms.RandomHorizontalFlip(),
+                      transforms.RandomRotation(8),
+                      transforms.ColorJitter(brightness=0.08, contrast=0.08, saturation=0.06)]
+        steps += [transforms.ToTensor(), transforms.Normalize(MEAN, STD)]
+        self.transform = transforms.Compose(steps)
 
-class ImageDataset(Dataset):
-    # 【来源】本项目自写；用赛题图片代替课堂CIFAR10；256图不全量缓存，以免占用约10GB内存。
-    def __init__(self, image_paths, labels=None, training=False):
-        self.image_paths = list(image_paths)
-        self.labels = None if labels is None else list(labels)
-        self.transform = create_transform(training)
-
-    # 【来源】复用PyTorch Dataset接口；返回样本数。
     def __len__(self):
-        return len(self.image_paths)
+        """【复用 PyTorch Dataset 接口】返回全部样本数，不抽样。"""
+        return len(self.records)
 
-    # 【来源】复用Dataset取样接口；修改：整图等比例缩放补边，训练/验证/预测共用。
     def __getitem__(self, index):
-        with Image.open(self.image_paths[index]) as image:
-            x = self.transform(letterbox(image))
-        if self.labels is None:
-            return x
-        return x, torch.tensor(int(self.labels[index]), dtype=torch.long)
+        """【改自课堂 CNN Dataset】读取一张完整眼底图及其官方标签。"""
+        path, label = self.records[index]
+        with Image.open(path) as image:
+            tensor = self.transform(letterbox(image))
+        return tensor if label is None else (tensor, torch.tensor(label, dtype=torch.float32))
 
 
-# 【来源】本项目自写；根据官方CSV逐行查找图片，兼容jpg/JPG大小写。
-def load_images(csv_path, image_dir, labeled=True):
-    if not csv_path.is_file() or not image_dir.is_dir():
-        raise FileNotFoundError("缺少官方数据: %s 或 %s" % (csv_path, image_dir))
-    data = pd.read_csv(csv_path)
-    if "Image_name" not in data or (labeled and "True_Label" not in data):
-        raise ValueError("官方CSV字段不完整")
-    actual = {path.name.casefold(): path for path in image_dir.rglob("*") if path.is_file()}
-    names = data["Image_name"].astype(str).tolist()
-    paths = []
-    for name in names:
-        path = actual.get(Path(name).name.casefold())
-        if path is None:
-            raise FileNotFoundError("找不到图片: %s" % name)
-        paths.append(path)
-    if not labeled:
-        return ImageDataset(paths), names
-    labels = data["True_Label"].astype(int).tolist()
-    if not set(labels) <= {0, 1}:
-        raise ValueError("标签只能为0或1")
-    return paths, labels
+def read_records(split):
+    """【改自旧 utils.load_images】严格依官方 CSV 顺序读取，不混用 train/valid/test。"""
+    if split not in {"train", "valid", "test"}:
+        raise ValueError("未知数据分组")
+    folder, csv_path = DATA / split, DATA / (split + ".csv")
+    if not folder.is_dir() or not csv_path.is_file():
+        raise FileNotFoundError(f"缺少官方数据: {folder} 或 {csv_path}")
+    paths = {p.name.casefold(): p for p in folder.rglob("*") if p.is_file()}
+    with csv_path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        if not reader.fieldnames or "Image_name" not in reader.fieldnames or (split != "test" and "True_Label" not in reader.fieldnames):
+            raise ValueError("官方 CSV 字段不完整")
+        records, names = [], set()
+        for row in reader:
+            name = Path(row["Image_name"]).name
+            key = name.casefold()
+            if key in names or key not in paths:
+                raise ValueError("图片重复或不存在: " + name)
+            names.add(key)
+            label = None if split == "test" else int(row["True_Label"])
+            if label is not None and label not in (0, 1):
+                raise ValueError("标签必须为 0 或 1")
+            records.append((paths[key], label))
+    if not records:
+        raise ValueError("空数据集: " + split)
+    return records
 
 
-# 【来源】本项目自写；修改：无 test.csv 时按文件名稳定排序，供预测和 cost.py 共用。
-def list_image_paths(image_dir):
-    image_dir = Path(image_dir)
-    if not image_dir.is_dir():
-        raise FileNotFoundError("图片文件夹不存在: %s" % image_dir)
-    paths = sorted((path for path in image_dir.rglob("*")
-                    if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}),
-                   key=lambda path: path.name.casefold())
-    names = [path.name for path in paths]
-    if not paths or len({name.casefold() for name in names}) != len(names):
-        raise ValueError("图片为空或存在同名图片，无法确定提交顺序")
-    return paths, names
+def load_resume_checkpoint(path, model_names):
+    """【自写】只读已有最佳参数；校验配方和分支，拒绝把 Git LFS 指针当模型。"""
+    path = Path(path)
+    if not path.is_file():
+        return None
+    with path.open("rb") as file:
+        if file.read(48).startswith(b"version https://git-lfs.github.com/spec/v1"):
+            raise RuntimeError("当前文件只是 Git LFS 指针，请在训练机下载真实模型后再续训")
+    # 【兼容旧 PTH】旧训练脚本把 torch.__version__（TorchVersion 对象）写入文件；
+    # 只临时放行这一种 PyTorch 内置类型，仍保持 weights_only=True，绝不执行任意 pickle。
+    with torch.serialization.safe_globals([torch.torch_version.TorchVersion]):
+        checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") != RECIPE:
+        raise ValueError("已有模型配方与当前代码不一致，不能直接续训")
+    states = checkpoint.get("states")
+    best_metrics = checkpoint.get("best_metrics")
+    origins = checkpoint.get("pretraining")
+    if not all(isinstance(value, dict) for value in (states, best_metrics, origins)):
+        raise ValueError("已有模型缺少分支参数、验证指标或预训练来源")
+    if set(states) != set(best_metrics) or not set(states).issubset(model_names):
+        raise ValueError("已有模型分支和验证记录不一致")
+    if checkpoint.get("training_complete") and set(states) != set(model_names):
+        raise ValueError("标记为完成的模型缺少分支")
+    for name, state in states.items():
+        record = best_metrics[name]
+        if name not in origins or not state or not all(torch.is_tensor(value) for value in state.values()):
+            raise ValueError("已有模型参数或来源不完整: " + name)
+        if not isinstance(record, dict) or type(record.get("epoch")) is not int or record["epoch"] < 1:
+            raise ValueError("已有模型最佳轮次无效: " + name)
+        auc = record.get("auroc")
+        if not isinstance(auc, (int, float)) or not math.isfinite(auc) or not 0 <= auc <= 1:
+            raise ValueError("已有模型 AUROC 无效: " + name)
+    return checkpoint
 
 
-# 【来源】参考课堂create_dataset改写；官方train/valid严格分开。
-def load_train_data():
-    train_paths, train_labels = load_images(TRAIN_CSV, TRAIN_DIR)
-    valid_paths, valid_labels = load_images(VALID_CSV, VALID_DIR)
-    return (ImageDataset(train_paths, train_labels, training=True),
-            ImageDataset(valid_paths, valid_labels))
+def inference_model_names(checkpoint, model_names):
+    """【自写】只接受已完成且选模有效的检查点；阶段性权重不能用于提交预测。"""
+    selection = checkpoint.get("selection") or {}
+    selected = selection.get("name") if isinstance(selection, dict) else None
+    if not checkpoint.get("training_complete") or selected not in (*model_names, "ensemble"):
+        raise RuntimeError("模型未完成最终验证选模；请先续训 train.py，不能用阶段性参数生成提交 CSV")
+    return tuple(model_names) if selected == "ensemble" else (selected,)
 
 
-# 【来源】本项目自写；按类别频数倒数进行有放回均衡采样。
-def create_sampler(labels, num_samples=None):
-    labels = torch.tensor(labels, dtype=torch.long)
-    counts = torch.bincount(labels, minlength=2).float()
-    if torch.any(counts == 0):
-        raise ValueError("训练集必须同时包含0和1")
-    return WeightedRandomSampler(1.0 / counts[labels],
-                                 len(labels) if num_samples is None else num_samples,
-                                 replacement=True)
+def resume_start_epoch(checkpoint, name):
+    """【自写】未训练分支从第 1 轮开始；已有分支从保存的最佳轮次下一轮开始。"""
+    return 1 if checkpoint is None or name not in checkpoint["states"] else checkpoint["best_metrics"][name]["epoch"] + 1
 
 
-# 【来源】本项目自写；延续课堂首批/中间/末批进度输出。
-def print_progress(stage, batch_idx, batch_count, start, detail=""):
-    if batch_idx == 1 or batch_idx % LOG_EVERY == 0 or batch_idx == batch_count:
-        elapsed = time.time() - start
-        remaining = elapsed / batch_idx * (batch_count - batch_idx)
-        print(f"{stage}, batch: {batch_idx}/{batch_count} ({batch_idx / batch_count:.1%}), "
-              f"time:{elapsed:.1f}s, remaining:{remaining / 60:.1f}min{detail}", flush=True)
+def resume_baseline_auc(checkpoint, name, measured_auc):
+    """【自写】整套官方验证集复核后建立续训门槛；差异过大则保护旧权重。"""
+    saved_auc = checkpoint["best_metrics"][name]["auroc"]
+    if not math.isfinite(measured_auc) or abs(measured_auc - saved_auc) > 0.002:
+        raise ValueError(f"{name} 复核 AUROC 与旧权重记录不符: 当前{measured_auc:.6f}, 已存{saved_auc:.6f}")
+    return max(measured_auc, saved_auc)
 
 
-# 【来源】本项目自写；验证指标使用阳性概率，AUROC与官方主指标一致。
-def calculate_metrics(labels, probabilities):
-    labels, probabilities = np.asarray(labels), np.asarray(probabilities)
-    if set(np.unique(labels)) != {0, 1} or not np.isfinite(probabilities).all():
-        raise ValueError("验证集必须含两类，概率须有限")
+def restore_candidate_model(name, checkpoint, create_model, pretrain_dir):
+    """【自写】已有分支严格载入最佳参数；未训练分支才初始化非医学预训练权重。"""
+    if checkpoint is not None and name in checkpoint["states"]:
+        model, _ = create_model(name)
+        model.load_state_dict(checkpoint["states"][name], strict=True)
+        return model, checkpoint["pretraining"][name], True
+    model, origin = create_model(name, pretrain_dir)
+    return model, origin, False
+
+
+def print_progress(stage, index, total, started, detail=""):
+    """【复用课堂 CNN 终端习惯】首批、每 25 批和末批打印本批进度。"""
+    if should_log_batch(index, total):
+        elapsed = time.time() - started
+        remaining = elapsed * (total - index) / max(index, 1) / 60
+        print(f"{stage}, batch: {index}/{total} ({index / total:.1%}), "
+              f"time:{elapsed:.1f}s, remaining:{remaining:.1f}min{detail}", flush=True)
+
+
+def should_log_batch(index, total):
+    """【自写】只在首批、每 25 批及末批统计，避免每批同步 GPU 拖慢训练。"""
+    return index == 1 or index % LOG_EVERY == 0 or index == total
+
+
+def batch_report(logits, targets):
+    """【自写】按当前批次的前向输出统计阳性、报阳、报对、误报和漏报；不累计。"""
+    predicted = logits.detach().flatten() >= 0  # sigmoid(logit) >= 0.5
+    positive = targets.detach().flatten().to(logits.device) >= 0.5
+    true_positive = predicted & positive
+    false_positive = predicted & ~positive
+    false_negative = ~predicted & positive
+    actual, reported, correct, wrong, missed = torch.stack((
+        positive.sum(), predicted.sum(), true_positive.sum(),
+        false_positive.sum(), false_negative.sum())).cpu().tolist()
+    return (f", 真实阳性:{actual}, 报阳:{reported}, 报对阳性:{correct}, "
+            f"误报:{wrong}, 漏报:{missed}")
+
+
+def metrics(labels, probabilities):
+    """【改自旧 utils.calculate_metrics】AUROC 只用官方验证真标签与连续阳性分数。"""
+    labels = np.asarray(labels, dtype=int)
+    probabilities = np.asarray(probabilities, dtype=float)
+    if set(labels.tolist()) != {0, 1} or len(labels) != len(probabilities) or not np.isfinite(probabilities).all():
+        raise ValueError("验证标签/预测分数无效")
     tn, fp, fn, tp = confusion_matrix(labels, probabilities >= 0.5, labels=[0, 1]).ravel()
-    precision, recall, _ = precision_recall_curve(labels, probabilities)
-    return {"accuracy": float((tp + tn) / len(labels)),
-            "auroc": float(roc_auc_score(labels, probabilities)),
-            "auprc": float(auc(recall, precision)),
+    return {"auroc": float(roc_auc_score(labels, probabilities)),
             "ap": float(average_precision_score(labels, probabilities)),
-            "recall": float(tp / (tp + fn)), "specificity": float(tn / (tn + fp)),
-            "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)}
+            "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn),
+            "recall": float(tp / (tp + fn)), "specificity": float(tn / (tn + fp))}
 
 
-# 【来源】本项目自写；前两轮预热，余弦下降，不用训练准确率调整学习率。
-def get_learning_rate(epoch):
-    if not 1 <= epoch <= EPOCHS:
-        raise ValueError("epoch超出范围")
-    if epoch <= WARMUP_EPOCHS:
-        return LEARNING_RATE * (0.1 + 0.9 * (epoch - 1) / (WARMUP_EPOCHS - 1))
-    progress = (epoch - WARMUP_EPOCHS) / (EPOCHS - WARMUP_EPOCHS)
-    return MIN_LEARNING_RATE + (LEARNING_RATE - MIN_LEARNING_RATE) * (1 + math.cos(math.pi * progress)) / 2
+def print_metrics(title, result):
+    """【自写】只显示主指标和阳性检出/误报，避免总体准确率掩盖漏诊。"""
+    print(f"{title}: AUROC:{result['auroc']:.6f}, AP:{result['ap']:.6f}, "
+          f"真实阳性:{result['tp'] + result['fn']}, 报对阳性:{result['tp']}, "
+          f"误报:{result['fp']}, 漏报:{result['fn']}, 召回率:{result['recall']:.2%}", flush=True)
 
 
-# 【来源】复用03方案的模型路径；修改：两个网络统一装入一份best_model.pth。
-def model_path(model_name):
-    if model_name not in ("resnet18", "densenet121"):
-        raise ValueError("不支持的模型名")
-    return MODEL_PATH
-
-
-# 【来源】本项目自写；新规程适配：两个分支均完成本配置验证后才允许生成最终CSV。
-def assert_inference_checkpoint_ready(path, model_names):
-    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    if checkpoint.get("training_complete") is not True:
-        raise RuntimeError("本轮双模型完整训练尚未结束，不可生成最终提交CSV")
-    models = checkpoint.get("models", {})
-    for name in model_names:
-        entry = models.get(name, {})
-        validation = entry.get("validation") or {}
-        auroc = validation.get("auroc")
-        if not isinstance(auroc, (int, float)) or not math.isfinite(auroc):
-            raise RuntimeError("模型%s未完成验证，不可生成最终提交CSV" % name)
-
-
-# 【来源】本项目自写；检查单文件中是否已有指定网络的最佳参数。
-def has_model(model_name):
-    if not MODEL_PATH.is_file():
-        return False
-    checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
-    return model_name in checkpoint.get("models", {})
-
-
-# 【来源】复用03方案的权重读取；修改：从同一PTH取指定网络，仍严格核对结构。
-def load_model(path, model_name, for_training=False):
-    from model import ImageModel  # 避免循环导入。
-    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    checkpoint = checkpoint["models"][model_name]
-    config = checkpoint["model_config"]
-    model = ImageModel(model_name)
-    if config != model.model_config and not (for_training and config.get("model_name") == model_name):
-        raise ValueError("权重的输入尺寸或训练方案不匹配；请先运行train.py完成迁移")
-    model.load_state_dict(checkpoint["state_dict"])
-    return model
-
-
-# 【来源】复用课堂torch.save及03方案的AUROC选模；修改：原子更新单文件内对应网络。
-def save_model(model, path, metrics, epoch):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    checkpoint = ({"models": torch.load(path, map_location="cpu", weights_only=True)["models"]}
-                  if path.is_file() else {"models": {}})
-    checkpoint["models"][model.model_config["model_name"]] = {
-        "state_dict": model.state_dict(), "model_config": model.model_config,
-        "validation": metrics, "epoch": epoch, "selection_metric": "validation_auroc"}
-    torch.save(checkpoint, temporary)
-    temporary.replace(path)
-
-
-# 【来源】本项目自写；训练历史只写项目文档，不混入提交results目录。
-def save_training_record(run_dir, history, model_name):
-    run_dir.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(history).fillna("").to_csv(run_dir / "training_history.csv", index=False, encoding="utf-8")
-    (run_dir / "run_config.json").write_text(json.dumps({
-        "variant": VARIANT_DIR.name, "model_name": model_name, "model_file": str(model_path(model_name)),
-        "selection_metric": "validation_auroc", "training_recipe": RECIPE,
-        "best_validation": max(history, key=lambda row: row["auroc"]) if history else None,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-# 【来源】本项目自写；按官网字段保存可直接上传的UTF-8三列CSV。
-def write_submission(image_names, probabilities, output_csv=OUTPUT_CSV):
-    probabilities = np.round(np.asarray(probabilities), 6)
-    if len(image_names) != len(probabilities) or not np.isfinite(probabilities).all():
-        raise ValueError("图片数量或概率无效")
-    if not ((probabilities >= 0) & (probabilities <= 1)).all():
-        raise ValueError("概率必须在0和1之间")
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"Image_name": [Path(name).name for name in image_names],
-                  "Probability": ["%.6f" % value for value in probabilities],
-                  "Pred_Label": (probabilities >= 0.5).astype(int)}).to_csv(
-                      output_csv, index=False, encoding="utf-8")
-    return output_csv
+def write_submission(records, scores, output_path=OUTPUT_CSV):
+    """【改自旧 utils.write_submission】仅预测脚本写三列、原顺序 CSV。"""
+    if len(records) != len(scores) or not scores:
+        raise ValueError("测试图片数与预测结果不一致")
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Image_name", "Probability", "Pred_Label"])
+        for (path, _), score in zip(records, scores):
+            if not math.isfinite(float(score)) or not 0 <= float(score) <= 1:
+                raise ValueError("概率必须位于 0 到 1")
+            score = round(float(score), 6)
+            writer.writerow([Path(path).name, f"{score:.6f}", int(score >= 0.5)])
+    return output_path

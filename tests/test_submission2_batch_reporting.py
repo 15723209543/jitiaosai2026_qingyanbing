@@ -9,7 +9,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "submission2_utils_for_batch_test", ROOT / "submission2" / "code" / "utils.py")
+    "submission_utils_for_batch_test", ROOT / "submission" / "code" / "utils.py")
 utils = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(utils)
 

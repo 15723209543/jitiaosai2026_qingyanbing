@@ -8,7 +8,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CANDIDATE = ROOT / "submission2"
+CANDIDATE = ROOT / "submission"
 
 
 class Submission2ContractTests(unittest.TestCase):
