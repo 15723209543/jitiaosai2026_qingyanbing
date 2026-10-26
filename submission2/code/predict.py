@@ -9,14 +9,15 @@ from torch.utils.data import DataLoader
 
 from model import MODEL_NAMES, create_model
 from utils import (BATCH_SIZE, FundusDataset, MODEL_PATH, OUTPUT_CSV, RECIPE,
-                   metrics, print_metrics, print_progress, read_records, write_submission)
+                   load_resume_checkpoint, metrics, print_metrics, print_progress,
+                   read_records, write_submission)
 
 
 def load_inference_models():
     """【改自旧 predict.load_inference_models】仅加载验证选中的分支，不下载预训练权重。"""
     if not MODEL_PATH.is_file():
         raise FileNotFoundError("尚未生成训练完成的模型: " + str(MODEL_PATH))
-    checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
+    checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
     selected = checkpoint.get("selection", {}).get("name")
     if checkpoint.get("recipe") != RECIPE or not checkpoint.get("training_complete") \
             or selected not in (*MODEL_NAMES, "ensemble"):

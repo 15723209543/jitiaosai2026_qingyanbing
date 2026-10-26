@@ -49,6 +49,21 @@ class ResumeCheckpointTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Git LFS"):
                 utils.load_resume_checkpoint(path, NAMES)
 
+    def test_legacy_torch_version_object_loads_in_restricted_mode(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "best_model.pth"
+            old = {"recipe": utils.RECIPE,
+                   "states": {NAMES[0]: {"weight": torch.tensor([3.0])}},
+                   "best_metrics": {NAMES[0]: {"epoch": 7, "auroc": 0.91}},
+                   "pretraining": {NAMES[0]: {"url": "saved-origin"}},
+                   "selection": None, "training_complete": False,
+                   "torch_version": torch.__version__}
+            torch.save(old, path)
+            before = path.read_bytes()
+            loaded = utils.load_resume_checkpoint(path, NAMES)
+            self.assertEqual(loaded["best_metrics"][NAMES[0]]["epoch"], 7)
+            self.assertEqual(path.read_bytes(), before)
+
     def test_full_validation_auc_sets_safe_starting_threshold(self):
         checkpoint = {"best_metrics": {NAMES[0]: {"auroc": 0.91}}}
         self.assertEqual(utils.resume_baseline_auc(checkpoint, NAMES[0], 0.9102), 0.9102)

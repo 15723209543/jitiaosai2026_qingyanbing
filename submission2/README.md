@@ -24,6 +24,8 @@
 1. 安装适配 CUDA 的 PyTorch，然后安装 `code/requirements.txt`。建议先用一张图确认 `timm`、`safetensors` 和 GPU 可用。
 2. 从项目根目录运行 `python submission2/code/train.py`。需要访问公开模型卡与 Apache 官方许可页面。`train.py` 不写测试 CSV。训练与验证均在首批、每 25 批及末批打印**当前批次**的真实阳性、报阳、报对、误报、漏报；整轮验证结束再打印 AUROC 与召回等汇总。最佳权重存入一个 `model/best_model.pth`。
 3. 如果训练机上已有真实的阶段性 `best_model.pth`，再次运行 `train.py` 会先读取它，用**全部官方验证图**逐模型复核 AUROC，再从各模型已保存的最佳轮次下一轮继续。未保存过参数的模型从第 1 轮开始。只有新验证 AUROC 严格高于已存最佳才原子更新 PTH；复核分数差异过大、配方不一致或文件只是 Git LFS 指针时立即停止，不覆盖已有权重。旧 PTH 没有优化器状态，因此这是从最佳权重重新初始化优化器的续训，**不是精确恢复中断的那一批**；中断前仍建议另存 PTH。若某分支最佳轮次已达到当前设定轮数，就跳过该分支训练，但仍参与最后验证。
+
+旧 PTH 中的 `torch_version` 曾保存为 PyTorch 的 `TorchVersion` 对象；读取端现仅临时允许这一种内置类型，仍保持 `weights_only=True`，训练和预测都能读取该格式。此兼容修复未改 `train.py` 的模型轮数配置或现有 PTH。
 4. 核对官方验证 AUROC、阳性召回、误报及模型大小；若未优于当前正式验证 AUROC **0.964011**，不要替换当前 `submission/`。**0.99 是待检验目标，不保证达到。**
 5. 仅当决定提交此候选时，运行 `python submission2/code/predict.py` 生成候选根目录的 `submission.csv`，检查 5,855 行、列顺序和官方 test.csv 顺序。运行 `python submission2/cost.py <100张计时图目录> <5张预热图目录>`；须在官方指定设备复测。
 6. 最终材料还需按规程补齐核验表格、模型卡/论文、原始权重 SHA-256、许可证全文与数据声明；**不要直接把此未训练完成的目录打包提交。**

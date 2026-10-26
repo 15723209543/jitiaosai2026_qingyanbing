@@ -1,5 +1,7 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-26 旧权重读取兼容：用户的 GPU 机在 `load_resume_checkpoint` 处遇到 `Unsupported global: torch.torch_version.TorchVersion`。原因是旧 `save_checkpoint` 把 `torch.__version__` 对象写进 PTH，而新版 PyTorch 的 `weights_only=True` 默认不允许该类型。`submission2/code/utils.py` 现在使用局部 `torch.serialization.safe_globals([TorchVersion])` 继续安全加载；`predict.py` 复用相同检查点读取。没有改 `train.py` 的轮数配置、没有使用 `weights_only=False`、没有读取或改写真实 PTH。本机只有 LFS 指针；训练机实际续训仍需由用户验证。
+
 2026-10-26 续训修复：用户在另一台 GPU 电脑运行 `submission2/code/train.py` 遇到已有 PTH 即 `FileExistsError`。已改为读取阶段性单文件检查点，校验配方/分支，逐模型先跑全部官方验证集复核 AUROC，差异超过 0.002 则拒绝覆盖；保存过的模型从最佳轮次下一轮继续，未保存的从第 1 轮开始。旧 PTH 无优化器/调度器状态，只能从最佳参数暖启动，非精确批次恢复；仅新 AUROC 提高才更新 PTH。本地仍只有 133–134 字节 LFS 指针，未下载真实模型、未启动训练。
 
 2026-10-26 后续：已快进到远端 `af41300`，只跳过 Git LFS 实际权重下载；本机 `submission2/model/best_model.pth` 和两个原始预训练 `model.safetensors` 各为 133–134 字节指针。远端有用户上传的阶段性候选模型，不能当作训练完成。候选 `train.py` 当前不能续训且发现现有 PTH 会拒绝重启。此次仅恢复 `submission2` 训练与验证按首批/每25批/末批输出当前批次真实阳性、报阳、报对、误报、漏报；未改训练损失、选模和官方 train/valid 划分，也未下载模型或启动训练。原官方验证集不得混入训练，见 `submission2/README.md`。

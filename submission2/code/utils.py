@@ -96,7 +96,10 @@ def load_resume_checkpoint(path, model_names):
     with path.open("rb") as file:
         if file.read(48).startswith(b"version https://git-lfs.github.com/spec/v1"):
             raise RuntimeError("当前文件只是 Git LFS 指针，请在训练机下载真实模型后再续训")
-    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    # 【兼容旧 PTH】旧训练脚本把 torch.__version__（TorchVersion 对象）写入文件；
+    # 只临时放行这一种 PyTorch 内置类型，仍保持 weights_only=True，绝不执行任意 pickle。
+    with torch.serialization.safe_globals([torch.torch_version.TorchVersion]):
+        checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     if not isinstance(checkpoint, dict) or checkpoint.get("recipe") != RECIPE:
         raise ValueError("已有模型配方与当前代码不一致，不能直接续训")
     states = checkpoint.get("states")
