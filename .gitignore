@@ -11,3 +11,5 @@ work/
 runs/
 submission/pretrain_model/checkpoints/
 submission/model/*.pth
+submission2/model/*.tmp
+submission2/pretrain_model/**/.cache/

@@ -1,5 +1,7 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-26 新请求：用户要求独立预训练优化方案并由其本人训练。当前新增 `submission2/` 四文件候选（ConvNeXt-Tiny + EfficientNetV2-S，ImageNet-1K，384 整图等比补边），未训练、未生成候选 PTH/CSV，不得声称 AUROC≥0.99。原 `submission/` 权重和 CSV 未修改；最新用户给的 `submission (4).csv` 与现有正式 CSV SHA-256 相同。当前机器正式 PTH 是 133 字节 LFS 指针，不能在本机推理，需 GPU 主机拉取完整对象。赛规允许有来源、许可、SHA-256、全文和数据说明的非医学权重；候选训练时下载并记录。详见 `docs/预训练候选方案_20261026.md`。不要自动启动训练；用户明确自行训练。原先“停止训练”约定对助手仍有效。
+
 用户最后要求：“再训练得到更好的一次就立刻停了，我想睡觉了。”已达成。不要自行启动任何新实验，不要为了此前额度目标继续消耗额度。
 
 正式AUROC 0.963044496140 → 0.964011481681。PTH SHA256 543e9ae5bb904ccbba75666c740a85ac4039b65fd8f84dfc851f34382551ed76；CSV SHA256 fe98cf5d7a490e02a18ce7a908727d17cb1492b617f02c68ac573780951d958e。正式文件submission/model/best_model.pth及submission/submission.csv。
