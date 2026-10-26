@@ -90,11 +90,30 @@ def read_records(split):
 
 def print_progress(stage, index, total, started, detail=""):
     """【复用课堂 CNN 终端习惯】首批、每 25 批和末批打印本批进度。"""
-    if index == 1 or index % LOG_EVERY == 0 or index == total:
+    if should_log_batch(index, total):
         elapsed = time.time() - started
         remaining = elapsed * (total - index) / max(index, 1) / 60
         print(f"{stage}, batch: {index}/{total} ({index / total:.1%}), "
               f"time:{elapsed:.1f}s, remaining:{remaining:.1f}min{detail}", flush=True)
+
+
+def should_log_batch(index, total):
+    """【自写】只在首批、每 25 批及末批统计，避免每批同步 GPU 拖慢训练。"""
+    return index == 1 or index % LOG_EVERY == 0 or index == total
+
+
+def batch_report(logits, targets):
+    """【自写】按当前批次的前向输出统计阳性、报阳、报对、误报和漏报；不累计。"""
+    predicted = logits.detach().flatten() >= 0  # sigmoid(logit) >= 0.5
+    positive = targets.detach().flatten().to(logits.device) >= 0.5
+    true_positive = predicted & positive
+    false_positive = predicted & ~positive
+    false_negative = ~predicted & positive
+    actual, reported, correct, wrong, missed = torch.stack((
+        positive.sum(), predicted.sum(), true_positive.sum(),
+        false_positive.sum(), false_negative.sum())).cpu().tolist()
+    return (f", 真实阳性:{actual}, 报阳:{reported}, 报对阳性:{correct}, "
+            f"误报:{wrong}, 漏报:{missed}")
 
 
 def metrics(labels, probabilities):

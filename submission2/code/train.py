@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 
 from model import MODEL_NAMES, create_model
 from utils import (BATCH_SIZE, DATA, FundusDataset, MODEL_PATH, NUM_WORKERS, RECIPE,
-                   ROOT, metrics, print_metrics, print_progress, read_records)
+                   ROOT, batch_report, metrics, print_metrics, print_progress,
+                   read_records, should_log_batch)
 
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
@@ -62,7 +63,9 @@ def validate(model, valid_loader, device, title):
             logits = model(images.to(device, non_blocking=True)).flatten()
             scores.extend(torch.sigmoid(logits).cpu().tolist())
             labels.extend(targets.tolist())
-            print_progress("valid", index, len(valid_loader), started)
+            if should_log_batch(index, len(valid_loader)):
+                print_progress("valid", index, len(valid_loader), started,
+                               batch_report(logits, targets))
     result = metrics(labels, scores)
     print_metrics(title, result)
     return result, np.asarray(scores)
@@ -89,8 +92,9 @@ def train_epoch(model, train_loader, optimizer, scaler, pos_weight, device, epoc
         scaler.step(optimizer)
         scaler.update()
         total_loss += loss.item()
-        print_progress(f"{name} epoch:{epoch} train", index, len(train_loader), started,
-                       f", loss:{loss.item():.5f}")
+        if should_log_batch(index, len(train_loader)):
+            print_progress(f"{name} epoch:{epoch} train", index, len(train_loader), started,
+                           f", loss:{loss.item():.5f}" + batch_report(logits, targets))
     return total_loss / len(train_loader)
 
 
