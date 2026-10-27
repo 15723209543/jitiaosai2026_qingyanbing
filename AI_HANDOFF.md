@@ -1,5 +1,9 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-27 额外数据实验后续：用户明确要求追加阶段保持启用、调用上下各空五行，并打印当前训练数据集；完成测试后提交推送，前一段“等待批准”已被此要求取代。两套原始数据目录均通过 `.gitignore` 排除，提交时必须只暂存源码、测试与说明文档，不能提交数据、模型或用户新放入的 PDF。仍未执行真实训练。
+
+2026-10-27 额外数据实验（未提交）：用户在 `glaucoma_first_my/` 放入带 YOLO TXT 标签的 3,209 张眼底图，并表示组委会允许此数据；许可原文未独立核验。`submission2/code/train.py` 增加独立追加阶段：先将原 `glaucoma_first/train` 完成两分支官方训练/验证，再把 `glaucoma_first_my/train`、`valid`、`test` 三部分**全部仅作额外训练**；TXT 第一项 0→青光眼阳性标签1，1→阴性标签0，后续坐标忽略。该阶段默认每分支1轮，注释 `train()` 末尾唯一的 `train_my_stage(...)` 调用即可关闭；始终只用官方 `glaucoma_first/valid` 比较 AUROC、更新最佳分支。没有运行真实训练、没有修改权重/CSV，新增原始数据与用户新放入的 PDF 均保持本地未跟踪，等待用户批准后才提交代码。需要注意项目 `AGENTS.md` 的旧比赛规则表述仍与用户新说明冲突，最终参赛使用前应由用户核对许可原文。
+
 2026-10-27 新实验（本段优先）：远端 v1.15.1 已同步到本地；`submission/` 是用户官网 97.82 分的旧方案，原代码/CSV 均未在本实验改动。本机 `submission/model/best_model.pth` 仅为 134 字节 Git LFS 指针，不能据此在本机训练/预测；GPU 训练机须取得真实权重。新建 `submission2/`，从 `submission/` 四文件代码与 `cost.py` 复制，配方 `imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2`：训练批次包含正负且每轮覆盖完整 train，少数类循环补位；focal 加 0.1 倍成对 logistic AUC 排序损失。候选 PTH 优先续训；候选不存在时只读旧 `submission/model/best_model.pth` 暖启动，先在全部官方 valid 复核，旧权重绝不覆盖。新 PTH/CSV 分别只会写到 `submission2/model/` 和 `submission2/submission.csv`；当前没有训练、没有候选 PTH/CSV，也不能宣称 AUROC 或官网分数改善。提交目录的模型、原始预训练文件、核验工作簿和 CSV 需在用户训练及验证后再补齐，不能以旧结果冒充新模型。
 
 2026-10-26 CSV 后缀修复（本段优先）：官方 `glaucoma_first/test.csv` 的 5,855 个 `Image_name` 均以小写 `.jpg` 结尾，而磁盘图片均为大写 `.JPG`。旧 `write_submission` 直接写磁盘文件名，未来运行预测会产生不合官方名单的图片名；现改为只将输出图片名的后缀转小写，同时把输出文件后缀强制为 `.csv`。已只读核对 5,855 个新名称与官方 CSV 顺序逐行一致；25 项单元测试通过、1 项 CUDA 测试跳过。没有训练、预测或覆盖历史 `submission/submission.csv` 和 PTH；当前阶段性 PTH 仍不可用于最终预测。
