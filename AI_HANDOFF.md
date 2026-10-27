@@ -1,5 +1,7 @@
 # AI交接：已完成首次再提升并停止
 
+2026-10-27 新实验（本段优先）：远端 v1.15.1 已同步到本地；`submission/` 是用户官网 97.82 分的旧方案，原代码/CSV 均未在本实验改动。本机 `submission/model/best_model.pth` 仅为 134 字节 Git LFS 指针，不能据此在本机训练/预测；GPU 训练机须取得真实权重。新建 `submission2/`，从 `submission/` 四文件代码与 `cost.py` 复制，配方 `imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2`：训练批次包含正负且每轮覆盖完整 train，少数类循环补位；focal 加 0.1 倍成对 logistic AUC 排序损失。候选 PTH 优先续训；候选不存在时只读旧 `submission/model/best_model.pth` 暖启动，先在全部官方 valid 复核，旧权重绝不覆盖。新 PTH/CSV 分别只会写到 `submission2/model/` 和 `submission2/submission.csv`；当前没有训练、没有候选 PTH/CSV，也不能宣称 AUROC 或官网分数改善。提交目录的模型、原始预训练文件、核验工作簿和 CSV 需在用户训练及验证后再补齐，不能以旧结果冒充新模型。
+
 2026-10-26 CSV 后缀修复（本段优先）：官方 `glaucoma_first/test.csv` 的 5,855 个 `Image_name` 均以小写 `.jpg` 结尾，而磁盘图片均为大写 `.JPG`。旧 `write_submission` 直接写磁盘文件名，未来运行预测会产生不合官方名单的图片名；现改为只将输出图片名的后缀转小写，同时把输出文件后缀强制为 `.csv`。已只读核对 5,855 个新名称与官方 CSV 顺序逐行一致；25 项单元测试通过、1 项 CUDA 测试跳过。没有训练、预测或覆盖历史 `submission/submission.csv` 和 PTH；当前阶段性 PTH 仍不可用于最终预测。
 
 2026-10-26 轮次重置（本段优先）：`submission/code/train.py` 每次启动均载入已有最佳权重，先在完整官方验证集复核 AUROC，再从本次第 1 轮训练；`CONFIG` 的 `epochs` 是本次运行轮数，当前两分支均为 1。历史最佳 AUROC 仍作更新门槛，只有超过才保存新权重；新保存的 PTH 不再存 `epoch`，但保留 AUROC、配方、来源与选模信息。旧 PTH 含 `epoch` 仍可读，仅不再以其决定起始轮次。此次只改代码和文档，未启动完整训练、未改已有 PTH/CSV。以下“需把轮数设高于历史轮次”等历史说明已被本段取代。

@@ -10,10 +10,10 @@ SUBMISSION = ROOT / "submission"
 
 
 class SubmissionLayoutTests(unittest.TestCase):
-    def test_only_candidate_promoted_to_official_submission(self):
+    def test_official_submission_remains_unchanged_with_separate_experiment(self):
         self.assertTrue((ROOT / "glaucoma_first").is_dir())
         self.assertTrue(SUBMISSION.is_dir())
-        self.assertFalse((ROOT / "submission2").exists())
+        self.assertTrue((ROOT / "submission2" / "code").is_dir())
         self.assertEqual(
             {path.name for path in SUBMISSION.iterdir()},
             {"code", "model", "pretrain_model", "licenses", "cost.py",

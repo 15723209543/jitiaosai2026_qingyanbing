@@ -2,13 +2,12 @@
 
 import ast
 import csv
-import hashlib
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CANDIDATE = ROOT / "submission"
+CANDIDATE = ROOT / "submission2"
 
 
 class Submission2ContractTests(unittest.TestCase):
@@ -30,16 +29,13 @@ class Submission2ContractTests(unittest.TestCase):
         self.assertNotIn("RandomHorizontalFlip", predict)
         self.assertIn("write_submission", predict)
 
-    def test_latest_csv_is_preserved(self):
-        latest = Path("C:/Users/LENOVO/Downloads/submission (4).csv")
+    def test_official_csv_is_preserved_and_candidate_does_not_prewrite_one(self):
         official = ROOT / "submission" / "submission.csv"
-        if latest.is_file():
-            self.assertEqual(hashlib.sha256(latest.read_bytes()).digest(),
-                             hashlib.sha256(official.read_bytes()).digest())
         with official.open(newline="", encoding="utf-8-sig") as file:
             rows = list(csv.DictReader(file))
         self.assertEqual(len(rows), 5855)
         self.assertEqual(list(rows[0]), ["Image_name", "Probability", "Pred_Label"])
+        self.assertFalse((CANDIDATE / "submission.csv").exists())
 
 
 if __name__ == "__main__":
