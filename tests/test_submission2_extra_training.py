@@ -69,7 +69,7 @@ class ExternalRecordsTests(unittest.TestCase):
 
 
 class ExternalTrainingStageTests(unittest.TestCase):
-    def test_external_epoch_starts_from_best_state_and_selects_on_official_valid(self):
+    def test_each_epoch_trains_official_then_extra_then_validates_once(self):
         class TinyModel(torch.nn.Module):
             def __init__(self):
                 super().__init__()
@@ -84,35 +84,46 @@ class ExternalTrainingStageTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(dir=ROOT) as folder:
             root = Path(folder)
+            official_positive = root / "official_positive.jpg"
+            official_negative = root / "official_negative.jpg"
             extra_positive = root / "extra_positive.jpg"
             extra_negative = root / "extra_negative.jpg"
             valid_positive = root / "valid_positive.jpg"
+            valid_positive2 = root / "valid_positive2.jpg"
             valid_negative = root / "valid_negative.jpg"
-            for path, color in ((extra_positive, "white"), (extra_negative, "black"),
-                                (valid_positive, "white"), (valid_negative, "black")):
+            for path, color in ((official_positive, "white"), (official_negative, "black"),
+                                (extra_positive, "white"), (extra_negative, "black"),
+                                (valid_positive, "white"), (valid_positive2, "white"),
+                                (valid_negative, "black")):
                 Image.new("RGB", (8, 8), color).save(path)
-            initial = TinyModel().state_dict()
-            states = {"tiny": {key: value.clone() for key, value in initial.items()}}
-            best = {"tiny": {"auroc": 0.5}}
-            origins = {"tiny": {"url": "synthetic", "sha256": "synthetic"}}
-            with patch.object(TRAIN, "MODEL_NAMES", ("tiny",)), \
-                 patch.object(TRAIN, "CONFIG", {"tiny": {"backbone_lr": 1e-3,
-                                                       "head_lr": 1e-2,
-                                                       "weight_decay": 0.0,
-                                                       "auc_weight": 0.1}}), \
-                 patch.object(TRAIN, "NUM_WORKERS", 0), \
-                 patch.object(TRAIN, "MODEL_PATH", root / "model" / "best_model.pth"), \
-                 patch.object(TRAIN, "create_model", side_effect=lambda name: (TinyModel(), None)):
+            model = TinyModel()
+            optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+            scaler = torch.amp.GradScaler("cuda", enabled=False)
+            with patch.object(TRAIN, "NUM_WORKERS", 0):
+                official_loader = TRAIN.loader([(official_positive, 1), (official_negative, 0)], True)
+                extra_loader = TRAIN.loader([(extra_positive, 1), (extra_negative, 0)], True)
+                valid_loader = TRAIN.loader([(valid_positive, 1), (valid_positive2, 1),
+                                             (valid_negative, 0)], False)
                 output = io.StringIO()
                 with redirect_stdout(output):
-                    TRAIN.train_my_stage(states, best, origins,
-                                         [(valid_positive, 1), (valid_negative, 0)],
-                                         [(extra_positive, 1), (extra_negative, 0)],
-                                         torch.device("cpu"), epochs=1)
-                self.assertIn("当前使用 glaucoma_first_my 额外训练集训练", output.getvalue())
-            self.assertEqual(best["tiny"]["auroc"], 1.0)
-            self.assertNotEqual(states["tiny"]["head.weight"].abs().sum().item(), 0.0)
-            self.assertTrue((root / "model" / "best_model.pth").is_file())
+                    for epoch in (1, 2):
+                        result = TRAIN.train_round(model, official_loader, extra_loader,
+                                                   valid_loader, optimizer, scaler,
+                                                   torch.tensor(1.0), torch.tensor(1.0),
+                                                   torch.device("cpu"), epoch, "tiny", 0.1)
+            text = output.getvalue()
+            first_official = text.index("当前使用 glaucoma_first 官方训练集训练")
+            first_extra = text.index("当前使用 glaucoma_first_my 额外训练集训练")
+            first_valid = text.index("valid, batch:")
+            second_official = text.index("当前使用 glaucoma_first 官方训练集训练", first_official + 1)
+            second_extra = text.index("当前使用 glaucoma_first_my 额外训练集训练", first_extra + 1)
+            second_valid = text.index("valid, batch:", first_valid + 1)
+            self.assertTrue(first_official < first_extra < first_valid <
+                            second_official < second_extra < second_valid)
+            self.assertEqual(text.count("valid, batch:"), 2)
+            self.assertIn("真实阳性:2", text)
+            self.assertIn("auroc", result)
+            self.assertGreater(model.head.weight.abs().sum().item(), 0.0)
 
 
 if __name__ == "__main__":

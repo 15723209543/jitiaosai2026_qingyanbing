@@ -153,8 +153,9 @@ def select_inference(best_states, valid_records, device):
     return {"name": selected, "validation": measured[selected]}
 
 
-# 【额外训练代码块】以下轮数、读取和训练仅属于 glaucoma_first_my；注释 train() 末尾的调用即可关闭。
-MY_EPOCHS = 1
+# 【额外训练单独开关】默认 False；注释 MY_DATA_ENABLED = True 那一行即可关闭。
+MY_DATA_ENABLED = False
+MY_DATA_ENABLED = True
 
 
 def read_my_records(root=ROOT.parent / "glaucoma_first_my"):
@@ -179,52 +180,32 @@ def read_my_records(root=ROOT.parent / "glaucoma_first_my"):
     return records
 
 
-def train_my_stage(best_states, best_metrics, origins, valid_records, my_records, device,
-                   epochs=MY_EPOCHS):
-    """【自写】官方数据全部训练完后，再用额外三组图片作训练；仍只以官方 valid AUROC 更新。"""
-    labels = [label for _, label in my_records]
-    if set(labels) != {0, 1} or epochs < 1:
-        raise ValueError("额外训练需要正负两类图片，且轮数至少为 1")
-    print("当前使用 glaucoma_first_my 额外训练集训练（train/valid/test 全部只作训练）", flush=True)
-    print(f"开始独立额外训练: {len(my_records)}张，阳性:{sum(labels)}，"
-          f"阴性:{len(labels) - sum(labels)}；官方验证集仍为{len(valid_records)}张。", flush=True)
-    my_loader = loader(my_records, training=True)
-    valid_loader = loader(valid_records, training=False)
-    pos_weight = torch.tensor(min(10.0, ((len(labels) - sum(labels)) / sum(labels)) ** 0.5),
-                              device=device)
-    for name in MODEL_NAMES:
-        model, _ = create_model(name)
-        model.load_state_dict(best_states[name], strict=True)
-        model.to(device)
-        config = CONFIG[name]
-        classifier_ids = {id(parameter) for parameter in model.get_classifier().parameters()}
-        optimizer = torch.optim.AdamW([
-            {"params": [p for p in model.parameters() if id(p) not in classifier_ids],
-             "lr": config["backbone_lr"]},
-            {"params": [p for p in model.parameters() if id(p) in classifier_ids],
-             "lr": config["head_lr"]}], weight_decay=config["weight_decay"])
-        schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
-        scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
-        best_auc = best_metrics[name]["auroc"]
-        for epoch in range(1, epochs + 1):
-            my_loader.batch_sampler.set_epoch(epoch)
-            loss = train_epoch(model, my_loader, optimizer, scaler, pos_weight, device,
-                               epoch, name + " glaucoma_first_my", config["auc_weight"])
-            print(f"{name} 额外数据 epoch:{epoch}, train_loss:{loss:.6f}", flush=True)
-            result, _ = validate(model, valid_loader, device, f"{name} 额外数据 epoch:{epoch}")
-            if result["auroc"] > best_auc:
-                best_auc = result["auroc"]
-                best_states[name] = {key: value.detach().cpu().clone()
-                                     for key, value in model.state_dict().items()}
-                best_metrics[name] = result
-                save_checkpoint(best_states, best_metrics, origins)
-                print("额外训练后官方验证 AUROC 提高，已保存该分支最佳参数。", flush=True)
-            else:
-                print("额外训练后官方验证 AUROC 未提高，保留原最佳参数。", flush=True)
-            schedule.step()
-        del model, optimizer, schedule, scaler
-        torch.cuda.empty_cache()
-    del my_loader, valid_loader
+def train_round(model, train_loader, my_loader, valid_loader, optimizer, scaler, pos_weight,
+                my_pos_weight, device, epoch, name, auc_weight):
+    """【自写】同一轮依次训练官方、额外数据，再仅用官方验证集评估一次。"""
+    train_loader.batch_sampler.set_epoch(epoch)
+    print("当前使用 glaucoma_first 官方训练集训练", flush=True)
+    loss = train_epoch(model, train_loader, optimizer, scaler, pos_weight, device,
+                       epoch, name + " glaucoma_first", auc_weight)
+    print(f"{name} epoch:{epoch}, 官方训练损失:{loss:.6f}", flush=True)
+
+
+
+
+
+    if my_loader is not None:
+        my_loader.batch_sampler.set_epoch(epoch)
+        print("当前使用 glaucoma_first_my 额外训练集训练", flush=True)
+        my_loss = train_epoch(model, my_loader, optimizer, scaler, my_pos_weight, device,
+                              epoch, name + " glaucoma_first_my", auc_weight)
+        print(f"{name} epoch:{epoch}, 额外训练损失:{my_loss:.6f}", flush=True)
+
+
+
+
+
+    result, _ = validate(model, valid_loader, device, f"{name} epoch:{epoch}")
+    return result
 
 
 def train():
@@ -249,8 +230,18 @@ def train():
     pos_weight = torch.tensor(min(10.0, (BATCH_SIZE - 1) ** 0.5), device=device)
     print(f"训练:{len(train_records)}张 阳性:{positives} 阴性:{negatives}; "
           f"官方验证:{len(valid_records)}张; pos_weight:{pos_weight.item():.3f}", flush=True)
-    print("当前使用 glaucoma_first 官方训练集训练；glaucoma_first/valid 仅作验证", flush=True)
     valid_loader = loader(valid_records, training=False)
+    my_loader, my_pos_weight = None, None
+    if MY_DATA_ENABLED:
+        my_records = read_my_records()
+        my_labels = [label for _, label in my_records]
+        if set(my_labels) != {0, 1}:
+            raise ValueError("额外训练数据必须同时包含正负两类")
+        my_loader = loader(my_records, training=True)
+        my_pos_weight = torch.tensor(min(10.0, ((len(my_labels) - sum(my_labels)) /
+                                                sum(my_labels)) ** 0.5), device=device)
+        print(f"额外数据每轮也训练一次: {len(my_records)}张，阳性:{sum(my_labels)}，"
+              f"阴性:{len(my_labels) - sum(my_labels)}；只用官方验证集选模。", flush=True)
     best_states = dict(checkpoint["states"]) if checkpoint else {}
     best_metrics = ({name: {key: value for key, value in result.items() if key != "epoch"}
                      for name, result in checkpoint["best_metrics"].items()} if checkpoint else {})
@@ -281,11 +272,9 @@ def train():
         train_loader = loader(train_records, training=True)
         stale = 0
         for epoch in range(start_epoch, config["epochs"] + 1):
-            train_loader.batch_sampler.set_epoch(epoch)
-            loss = train_epoch(model, train_loader, optimizer, scaler, pos_weight, device,
-                               epoch, name + " glaucoma_first", config["auc_weight"])
-            print(f"{name} epoch:{epoch}, train_loss:{loss:.6f}", flush=True)
-            result, _ = validate(model, valid_loader, device, f"{name} epoch:{epoch}")
+            result = train_round(model, train_loader, my_loader, valid_loader, optimizer,
+                                 scaler, pos_weight, my_pos_weight, device, epoch, name,
+                                 config["auc_weight"])
             if result["auroc"] > best_auc:
                 best_auc, stale = result["auroc"], 0
                 best_states[name] = {key: value.detach().cpu().clone()
@@ -302,18 +291,7 @@ def train():
                 break
         del train_loader, optimizer, schedule, scaler, model
         torch.cuda.empty_cache()
-
-
-
-
-
-    # 【额外训练单独开关】只需注释下一行，即只运行上面的官方训练与验证。
-    train_my_stage(best_states, best_metrics, origins, valid_records, read_my_records(), device)
-
-
-
-
-
+    del my_loader
     selected = select_inference(best_states, valid_records, device)
     save_checkpoint(best_states, best_metrics, origins, selected)
     print(f"完整训练结束。最终单文件:{MODEL_PATH}, 大小:{MODEL_PATH.stat().st_size / 1e6:.1f}MB", flush=True)
