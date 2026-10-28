@@ -1,0 +1,7 @@
+{
+  "status": "paused_by_user_for_shutdown",
+  "checkpoint_branch": 0,
+  "checkpoint_epoch": 1,
+  "partial_efficientnet_epoch_not_saved": true,
+  "resume": "python submission/code/train.py --resume runs/continuation_20261028_223149 --extra-data D:/青眼病/青光眼检测数据集 --max-epochs 1"
+}

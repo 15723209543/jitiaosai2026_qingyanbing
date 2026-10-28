@@ -1,0 +1,36 @@
+{
+  "github_commit": "a64b008f67f9eb3030ffb8e251329ca92e3a4022",
+  "source_sha256": "288f8e0af64623fdb3a20bdc17fe3157b79cefa7c91e5d59d459d5b6d76f4813",
+  "recipe": "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v4_official_only_20261028_extra_v1",
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "timm": "1.0.30",
+  "max_epochs_per_branch": 1,
+  "stop": "first complete validation improvement over source",
+  "train": "official train then user-provided extra data; official valid selection only",
+  "precision": "AMP FP16 training; FP32 validation/inference",
+  "source_config": {
+    "convnext_tiny.fb_in1k": {
+      "epochs": 30,
+      "backbone_lr": 1.5e-05,
+      "head_lr": 0.00015,
+      "weight_decay": 0.02,
+      "patience": 10,
+      "auc_weight": 0.1
+    },
+    "efficientnetv2_rw_s.ra2_in1k": {
+      "epochs": 30,
+      "backbone_lr": 2e-05,
+      "head_lr": 0.0002,
+      "weight_decay": 0.01,
+      "patience": 10,
+      "auc_weight": 0.1
+    }
+  },
+  "extra_data_enabled": true,
+  "extra_data_root": "D:\\\u9752\u773c\u75c5\\\u9752\u5149\u773c\u68c0\u6d4b\u6570\u636e\u96c6",
+  "validation_in_training": false,
+  "tta": false,
+  "cache": "384 RGB LANCZOS fullframe pixels, hashes and sampled pixels verified",
+  "optimizer": "fresh AdamW warm start; exact optimizer/RNG resume at saved epoch boundaries",
+  "source_git_commit": "c7df43a556415a1ff29ac84b6bef632e4b80940a"
+}

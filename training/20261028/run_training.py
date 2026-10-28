@@ -79,23 +79,35 @@ def audit():
     write('data_audit.json',report)
 
 def run(args):
+    global RECIPE
     torch.set_num_threads(4);upstream.set_seed(20261028)
     assert torch.cuda.is_available()
     torch.backends.cudnn.benchmark=False
     torch.backends.cudnn.allow_tf32=False;torch.backends.cuda.matmul.allow_tf32=False
     u.DATA=PROJECT/'glaucoma_first'
     source=RUN/'source/submission/model/best_model.pth';assert sha(source)==SOURCE_SHA
+    source_recipes=(u.BASE_RECIPE,RECIPE,RECIPE+'_extra_v1')
+    extra_root=getattr(args,'extra_data',None)
+    if extra_root:RECIPE=RECIPE+'_extra_v1'
     config={'github_commit':'a64b008f67f9eb3030ffb8e251329ca92e3a4022','source_sha256':SOURCE_SHA,
         'recipe':RECIPE,'gpu':torch.cuda.get_device_name(0),'timm':__import__('timm').__version__,
         'max_epochs_per_branch':args.max_epochs,'stop':'first complete validation improvement over source',
-        'train':'official train only; no extra medical data; official valid selection only',
+        'train':('official train then user-provided extra data; official valid selection only' if extra_root else 'official train only; official valid selection only'),
         'precision':'AMP FP16 training; FP32 validation/inference','source_config':upstream.CONFIG,
-        'extra_data_enabled':False,'validation_in_training':False,'tta':False,
+        'extra_data_enabled':bool(extra_root),'extra_data_root':str(extra_root) if extra_root else None,'validation_in_training':False,'tta':False,
         'cache':'384 RGB LANCZOS fullframe pixels, hashes and sampled pixels verified',
         'optimizer':'fresh AdamW warm start; exact optimizer/RNG resume at saved epoch boundaries'}
     write('config.json',config)
     audit()
-    baseline=u.load_resume_checkpoint(source,MODEL_NAMES,recipe=(u.BASE_RECIPE,RECIPE))
+    baseline=u.load_resume_checkpoint(source,MODEL_NAMES,recipe=(*source_recipes,RECIPE))
+    extra_loader=None;extra_weight=None
+    if extra_root:
+        from extra_data import audit_extra
+        records,extra_report=audit_extra(extra_root,PROJECT,RUN)
+        ds=u.FundusDataset(records,training=True)
+        extra_loader=DataLoader(ds,batch_sampler=u.BalancedBatchSampler([y for p,y in records],batch_size=16),num_workers=4,persistent_workers=True,pin_memory=False)
+        extra_weight=torch.tensor(min(10.,math.sqrt(extra_report['negative']/extra_report['positive'])),device='cuda')
+        print('EXTRA_DATA '+json.dumps(extra_report),flush=True)
     train_ds=Cached('train',True);valid_ds=Cached('valid');vl=make_loader(valid_ds,False)
     checkpoint_path=RUN/'best_model.pth';progress_path=RUN/'progress.pth'
     if progress_path.exists() and not args.resume:raise RuntimeError('Use --resume')
@@ -135,13 +147,18 @@ def run(args):
             t=time.time();tl.batch_sampler.set_epoch(epoch+1)
             print(f'TRAIN_START {name} epoch={epoch+1}',flush=True)
             loss=upstream.train_epoch(m,tl,opt,scaler,torch.tensor(math.sqrt(15),device='cuda'),torch.device('cuda'),epoch+1,name,.1)
+            extra_loss=None
+            if extra_loader is not None:
+                extra_loader.batch_sampler.set_epoch(epoch+1)
+                print('TRAIN_EXTRA_START '+name,flush=True)
+                extra_loss=upstream.train_epoch(m,extra_loader,opt,scaler,extra_weight,torch.device('cuda'),epoch+1,name+' extra',.1)
             metric,p=validate(m,vl);trial={**vectors,name:p};chosen=selection(trial,valid_ds.labels)
             better=chosen['validation']['auroc']>best['selection']['validation']['auroc']
             if better:
                 best['states'][name]={k:v.detach().cpu().clone() for k,v in m.state_dict().items()}
                 best['best_metrics'][name]=metric;vectors[name]=p;np.save(RUN/f'{name}_best.npy',p)
                 best['selection']=chosen;best['training_complete']=True;save(best,checkpoint_path)
-            row={'branch':name,'epoch':epoch+1,'loss':loss,'seconds':time.time()-t,'validation':metric,'selection':chosen,
+            row={'branch':name,'epoch':epoch+1,'loss':loss,'extra_loss':extra_loss,'seconds':time.time()-t,'validation':metric,'selection':chosen,
                 'source_reference':reference,'global_improved':better}
             history.append(row);write('history.json',history);print('EPOCH_RESULT '+json.dumps(row),flush=True)
             # Keep NumPy RNG data as basic tensors/lists for weights_only-safe resume.
@@ -161,6 +178,9 @@ def run(args):
     final=selection(actual,valid_ds.labels)
     assert abs(final['validation']['auroc']-best['selection']['validation']['auroc'])<1e-10
     best['selection']=final;best['source_checkpoint_sha256']=SOURCE_SHA;best['training_complete']=True
+    best['attempted_recipe']=RECIPE
+    best['weights_retained_from_source']=not success
+    if not success:best['recipe']=baseline['recipe']
     save(best,checkpoint_path)
     report={'status':'stopped_after_improvement' if success else 'bounded_training_complete_no_improvement',
         'baseline':first,'final':final,'gain':final['validation']['auroc']-reference,'history':history,

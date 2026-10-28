@@ -1,5 +1,8 @@
 glaucoma_first/
 glaucoma_first_my/
+青光眼检测数据集/
+青光眼检测数据集.zip
+**/青光眼检测数据集/**
 .idea/
 __pycache__/
 *.py[cod]

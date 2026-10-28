@@ -13,6 +13,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--resume',type=Path,help='existing project runs/<name>')
     p.add_argument('--max-epochs',type=int,default=3)
+    p.add_argument('--extra-data',type=Path,help='local YOLO dataset root; never added to Git')
     args=p.parse_args()
     if args.max_epochs<1:raise ValueError('max-epochs must be positive')
     if args.resume:
@@ -32,6 +33,6 @@ def main():
     runner.SOURCE_SHA=hashlib.sha256((run/'source/submission/model/best_model.pth').read_bytes()).hexdigest()
     print('Project run:',run,flush=True)
     print('Official submission stays unchanged until a completed run is reviewed.',flush=True)
-    runner.run(argparse.Namespace(resume=bool(args.resume),max_epochs=args.max_epochs))
+    runner.run(argparse.Namespace(resume=bool(args.resume),max_epochs=args.max_epochs,extra_data=args.extra_data))
 
 if __name__=='__main__':main()

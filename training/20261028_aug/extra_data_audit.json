@@ -1,0 +1,21 @@
+{
+  "source_splits": {
+    "train": 2881,
+    "valid": 197,
+    "test": 131
+  },
+  "raw_images": 3209,
+  "usable_unique_images": 3091,
+  "positive": 1273,
+  "negative": 1818,
+  "excluded_exact_duplicates": 118,
+  "label_map": {
+    "0_Glaucoma": 1,
+    "1_No_Glaucoma": 0
+  },
+  "dataset_fingerprint": "82921dbe5fce817eca6ac13d552a96d6a25ca6c2f09fe474a7b77a039226cf2f",
+  "all_three_extra_splits_used_only_for_training": true,
+  "official_valid_and_test_not_trained": true,
+  "patient_level_overlap": "Cannot verify without source patient identifiers",
+  "data_publication": "No images, YOLO labels, raw filenames, ZIPs or per-image manifest to GitHub"
+}
