@@ -12,5 +12,10 @@ work/
 runs/
 submission/pretrain_model/checkpoints/
 submission/model/*.pth
+submission2/model/*.pth
+submission2/model/*.tmp
+submission3/model/*.pth
+submission3/model/*.tmp
+submission3/pretrain_model/
 submission/pretrain_model/**/.cache/
 历史归档_本地/

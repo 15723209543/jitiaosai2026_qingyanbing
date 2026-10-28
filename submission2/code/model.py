@@ -26,12 +26,12 @@ def create_model(name, pretrain_dir=None):
     if name not in MODEL_REPOS:
         raise ValueError("未知模型: " + name)
     if pretrain_dir is None:
-        return timm.create_model(name, pretrained=False, num_classes=1, drop_rate=0.1), None
+        return timm.create_model(name, pretrained=False, num_classes=1, drop_rate=0.05), None
     repo = MODEL_REPOS[name]
     revision = HfApi().model_info(repo).sha
     path = hf_hub_download(repo_id=repo, filename="model.safetensors", revision=revision,
                            local_dir=str(Path(pretrain_dir) / name))
-    model = timm.create_model(name, pretrained=False, num_classes=1000, drop_rate=0.1)
+    model = timm.create_model(name, pretrained=False, num_classes=1000, drop_rate=0.05)
     model.load_state_dict(load_file(path), strict=True)
     model.reset_classifier(num_classes=1)
     origin = {"name": name, "repo": repo, "revision": revision,

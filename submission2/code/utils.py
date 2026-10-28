@@ -25,8 +25,9 @@ BATCH_SIZE = 16
 NUM_WORKERS = 4
 LOG_EVERY = 25
 BASE_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_v1"
-PRIOR_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2"
-RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v3"
+PRIOR_RECIPES = ("imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2",
+                 "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v3")
+RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v4"
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 
@@ -197,7 +198,7 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
 def load_candidate_checkpoint(candidate_path, baseline_path, model_names, baseline_recipe=BASE_RECIPE):
     """【自写】新旧候选配方均可暖启动；正式旧权重始终只读。"""
     if Path(candidate_path).is_file():
-        return load_resume_checkpoint(candidate_path, model_names, recipe=(RECIPE, PRIOR_RECIPE))
+        return load_resume_checkpoint(candidate_path, model_names, recipe=(RECIPE, *PRIOR_RECIPES))
     return load_resume_checkpoint(baseline_path, model_names, recipe=baseline_recipe)
 
 
