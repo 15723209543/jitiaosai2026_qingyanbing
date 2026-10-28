@@ -61,8 +61,12 @@ def predict(output_csv=OUTPUT_CSV):
     """【改自旧 predict.predict】先报训练集内指标，再按官方 test.csv 原顺序写结果。"""
     models = load_inference_models()
     valid_records = fit_records()
+    # 验证集内复核
+    """
     labels, validation = collect(valid_records, models, "valid")
     print_metrics("训练集内复核（非独立验证，存在数据泄漏）", metrics(labels, validation))
+    """
+    # 测试集预测
     test_records = read_records("test")
     _, scores = collect(test_records, models, "test")
     result = write_submission(test_records, scores, output_csv)
@@ -71,7 +75,7 @@ def predict(output_csv=OUTPUT_CSV):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="训练集内复核后生成 submission.csv；不训练、无独立验证")
-    parser.add_argument("output_csv", nargs="?", type=Path, default=OUTPUT_CSV)
-    args = parser.parse_args()
-    predict(args.output_csv)
+    parser = argparse.ArgumentParser(description="训练集内复核后生成 submission.csv；不训练、无独立验证") # 仅用于复核，不训练
+    parser.add_argument("output_csv", nargs="?", type=Path, default=OUTPUT_CSV) # 输出文件路径
+    args = parser.parse_args() # 解析命令行参数
+    predict(args.output_csv) # 进行预测

@@ -21,10 +21,10 @@ from utils import (BASELINE_MODEL_PATH, BASE_RECIPE, BATCH_SIZE, BalancedBatchSa
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
-    "convnext_tiny.fb_in1k": {"epochs": 30, "backbone_lr": 1.5e-5, "head_lr": 1.5e-4,
-                               "weight_decay": 0.02, "patience": 10, "auc_weight": 0.1},
-    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 30, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                                      "weight_decay": 0.01, "patience": 10, "auc_weight": 0.1},
+    "convnext_tiny.fb_in1k": {"epochs": 1, "backbone_lr": 1.5e-5, "head_lr": 1.5e-4,
+                               "weight_decay": 0.02, "patience": 3, "auc_weight": 0.1},
+    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 1, "backbone_lr": 2e-5, "head_lr": 2e-4,
+                                      "weight_decay": 0.01, "patience": 3, "auc_weight": 0.1},
 }
 
 

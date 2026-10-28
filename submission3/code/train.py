@@ -20,10 +20,10 @@ from utils import (BASELINE_MODEL_PATH, BASE_RECIPE, BATCH_SIZE, DATA, FundusDat
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
-    "convnext_tiny.fb_in1k": {"epochs": 30, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                               "weight_decay": 0.02, "patience": 8},  # 本次最多30轮；重新运行从第1轮计数
-    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 38, "backbone_lr": 3e-5, "head_lr": 3e-4,
-                                      "weight_decay": 0.01, "patience": 10},  # 本次最多38轮；重新运行从第1轮计数
+    "convnext_tiny.fb_in1k": {"epochs": 1, "backbone_lr": 2e-5, "head_lr": 2e-4,
+                               "weight_decay": 0.02, "patience": 3},  # 本次最多30轮；重新运行从第1轮计数
+    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 1, "backbone_lr": 3e-5, "head_lr": 3e-4,
+                                      "weight_decay": 0.01, "patience": 3},  # 本次最多38轮；重新运行从第1轮计数
 }
 
 
