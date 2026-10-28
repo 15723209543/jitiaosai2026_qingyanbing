@@ -21,10 +21,10 @@ from utils import (BASELINE_MODEL_PATH, BASE_RECIPE, BATCH_SIZE, BalancedBatchSa
 
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
-    "convnext_tiny.fb_in1k": {"epochs": 30, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                               "weight_decay": 0.02, "patience": 8, "auc_weight": 0.1},
-    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 38, "backbone_lr": 3e-5, "head_lr": 3e-4,
-                                      "weight_decay": 0.01, "patience": 10, "auc_weight": 0.1},
+    "convnext_tiny.fb_in1k": {"epochs": 30, "backbone_lr": 8e-6, "head_lr": 8e-5,
+                               "weight_decay": 0.02, "patience": 12, "auc_weight": 0.1},
+    "efficientnetv2_rw_s.ra2_in1k": {"epochs": 30, "backbone_lr": 1.2e-5, "head_lr": 1.2e-4,
+                                      "weight_decay": 0.01, "patience": 12, "auc_weight": 0.1},
 }
 
 
@@ -267,11 +267,14 @@ def train():
             {"params": [p for p in model.parameters() if id(p) in classifier_ids],
              "lr": config["head_lr"]}], weight_decay=config["weight_decay"])
         schedule = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=config["epochs"] - start_epoch + 1)
+            optimizer, T_max=config["epochs"] - start_epoch + 1, eta_min=1e-6)
         scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
         train_loader = loader(train_records, training=True)
         stale = 0
         for epoch in range(start_epoch, config["epochs"] + 1):
+            print(f"{name} 第{epoch}/{config['epochs']}轮, 主干学习率:{optimizer.param_groups[0]['lr']:.2e}, "
+                  f"分类头学习率:{optimizer.param_groups[1]['lr']:.2e}, 梯度截断:2.0, "
+                  "分类头Dropout:0.1", flush=True)
             result = train_round(model, train_loader, my_loader, valid_loader, optimizer,
                                  scaler, pos_weight, my_pos_weight, device, epoch, name,
                                  config["auc_weight"])

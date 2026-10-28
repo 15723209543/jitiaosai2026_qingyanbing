@@ -25,7 +25,8 @@ BATCH_SIZE = 16
 NUM_WORKERS = 4
 LOG_EVERY = 25
 BASE_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_v1"
-RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2"
+PRIOR_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2"
+RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v3"
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 
@@ -167,7 +168,8 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
     # 只临时放行这一种 PyTorch 内置类型，仍保持 weights_only=True，绝不执行任意 pickle。
     with torch.serialization.safe_globals([torch.torch_version.TorchVersion]):
         checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") != recipe:
+    accepted_recipes = (recipe,) if isinstance(recipe, str) else tuple(recipe)
+    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") not in accepted_recipes:
         raise ValueError("已有模型配方与当前代码不一致，不能直接续训")
     states = checkpoint.get("states")
     best_metrics = checkpoint.get("best_metrics")
@@ -193,9 +195,9 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
 
 
 def load_candidate_checkpoint(candidate_path, baseline_path, model_names, baseline_recipe=BASE_RECIPE):
-    """【自写】优先续训候选；否则只读正式最佳参数暖启动，绝不改写旧 PTH。"""
+    """【自写】新旧候选配方均可暖启动；正式旧权重始终只读。"""
     if Path(candidate_path).is_file():
-        return load_resume_checkpoint(candidate_path, model_names)
+        return load_resume_checkpoint(candidate_path, model_names, recipe=(RECIPE, PRIOR_RECIPE))
     return load_resume_checkpoint(baseline_path, model_names, recipe=baseline_recipe)
 
 

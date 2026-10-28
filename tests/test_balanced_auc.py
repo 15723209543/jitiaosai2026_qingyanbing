@@ -91,6 +91,34 @@ class AucLossTests(unittest.TestCase):
 
 
 class BootstrapTests(unittest.TestCase):
+    def test_previous_candidate_recipe_is_valid_warm_start_for_new_training_recipe(self):
+        name = "convnext_tiny.fb_in1k"
+        with tempfile.TemporaryDirectory(dir=ROOT) as folder:
+            old_path = Path(folder) / "formal.pth"
+            candidate_path = Path(folder) / "candidate.pth"
+            torch.save({"recipe": "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2",
+                        "states": {name: {"w": torch.tensor([3.0])}},
+                        "best_metrics": {name: {"auroc": 0.98}},
+                        "pretraining": {name: {"url": "existing-origin"}},
+                        "training_complete": False, "selection": None}, candidate_path)
+            checkpoint = utils.load_candidate_checkpoint(
+                candidate_path, old_path, (name,), "old-formal-recipe")
+            self.assertNotEqual(utils.RECIPE, checkpoint["recipe"])
+            self.assertEqual(checkpoint["states"][name]["w"].item(), 3.0)
+            self.assertEqual(checkpoint["recipe"],
+                             "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2")
+
+    def test_fine_tune_models_use_small_head_dropout_without_changing_checkpoint_keys(self):
+        for name in candidate_model.MODEL_NAMES:
+            model, origin = candidate_model.create_model(name)
+            self.assertIsNone(origin)
+            self.assertAlmostEqual(model.drop_rate, 0.1)
+            old_layout = candidate_model.timm.create_model(
+                name, pretrained=False, num_classes=1, drop_rate=0.0)
+            self.assertEqual(set(model.state_dict()), set(old_layout.state_dict()))
+            if name.startswith("convnext"):
+                self.assertAlmostEqual(model.head.drop.p, 0.1)
+
     def test_candidate_paths_are_separate_and_share_the_official_dataset(self):
         self.assertEqual(utils.DATA, ROOT / "glaucoma_first")
         self.assertEqual(utils.MODEL_PATH, ROOT / "submission2" / "model" / "best_model.pth")
