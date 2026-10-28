@@ -1,57 +1,42 @@
-"""
-案例: 复用课堂CNN的todo1、todo2接口；本方案同时使用两种独立CNN。
-本文件夹固定恢复历史得分最高的ResNet-18 + DenseNet-121双模型组合。
-"""
+"""ImageNet-1K 非医学预训练双骨干；仅训练脚本下载原始权重。"""
 
-# 导包
-import torch.nn as nn
-from torchvision import models
+import hashlib
+from pathlib import Path
 
-from utils import IMAGE_SIZE, RECIPE, load_train_data
+import timm
+from huggingface_hub import HfApi, hf_hub_download
+from safetensors.torch import load_file
 
 
-# 修改①: 固定历史03方案；两个网络独立训练，预测时平均阳性概率。
-MODEL_NAMES = ("resnet18", "densenet121")
-BUILDERS = {
-    "resnet18": models.resnet18,
-    "densenet121": models.densenet121,
-}
+MODEL_NAMES = ("convnext_tiny.fb_in1k", "efficientnetv2_rw_s.ra2_in1k")
+MODEL_REPOS = {name: "timm/" + name for name in MODEL_NAMES}
 
 
-# todo 1. 准备数据集.
-# 【来源】复用day07 CNN的create_dataset接口；读取官方train/valid。
-def create_dataset():
-    return load_train_data()
+def sha256_file(path):
+    """【自写】分块计算原始预训练权重 SHA-256，供赛后溯源。"""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as file:
+        for block in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
-# todo 2. 搭建(卷积)神经网络.
-class ImageModel(nn.Module):
-    # 【来源】复用day07 CNN的__init__位置；修改②: 选用CCF A论文对应的torchvision网络结构。
-    def __init__(self, model_name, image_size=IMAGE_SIZE):
-        super().__init__()
-        if model_name not in BUILDERS:
-            raise ValueError("不支持的模型: %s" % model_name)
-        self.image_size = image_size
-        self.model_config = {"model_name": model_name, "image_size": image_size, "recipe": RECIPE}
-        # 修改③: 只借用网络结构，weights=None，不下载或使用外部训练权重。
-        self.network = BUILDERS[model_name](weights=None)
-        if model_name == "resnet18":
-            last = self.network.fc
-            self.network.fc = nn.Sequential(nn.Dropout(0.2), nn.Linear(last.in_features, 2))
-        elif model_name == "densenet121":
-            last = self.network.classifier
-            self.network.classifier = nn.Sequential(nn.Dropout(0.2), nn.Linear(last.in_features, 2))
-
-    # 【来源】复用day07 CNN的forward接口；输出两类logits，交叉熵内计算softmax。
-    def forward(self, x):
-        return self.network(x)
-
-
-# 5. 测试: main只打印两种模型的结构和参数，不训练。
-if __name__ == "__main__":
-    for name in MODEL_NAMES:
-        print("模型:", name)
-        # 修改④: torchsummary不兼容DenseNet内部传入的list，直接打印结构与参数量。
-        model = ImageModel(name)
-        print(model)
-        print("Total params:", sum(p.numel() for p in model.parameters()))
+def create_model(name, pretrain_dir=None):
+    """【改自 timm 官方模型卡】先严格载入 ImageNet 原权重，再换成单输出青光眼头。"""
+    if name not in MODEL_REPOS:
+        raise ValueError("未知模型: " + name)
+    if pretrain_dir is None:
+        return timm.create_model(name, pretrained=False, num_classes=1, drop_rate=0.05), None
+    repo = MODEL_REPOS[name]
+    revision = HfApi().model_info(repo).sha
+    path = hf_hub_download(repo_id=repo, filename="model.safetensors", revision=revision,
+                           local_dir=str(Path(pretrain_dir) / name))
+    model = timm.create_model(name, pretrained=False, num_classes=1000, drop_rate=0.05)
+    model.load_state_dict(load_file(path), strict=True)
+    model.reset_classifier(num_classes=1)
+    origin = {"name": name, "repo": repo, "revision": revision,
+              "url": f"https://huggingface.co/{repo}/resolve/{revision}/model.safetensors",
+              "sha256": sha256_file(path), "license": "Apache-2.0",
+              "training_data": "ImageNet-1K",
+              "original_file": f"pretrain_model/{name}/model.safetensors"}
+    return model, origin

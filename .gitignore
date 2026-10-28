@@ -1,4 +1,5 @@
 glaucoma_first/
+glaucoma_first_my/
 .idea/
 __pycache__/
 *.py[cod]
@@ -11,3 +12,15 @@ work/
 runs/
 submission/pretrain_model/checkpoints/
 submission/model/*.pth
+submission2/model/*.pth
+submission2/model/*.tmp
+submission3/model/*.pth
+submission3/model/*.tmp
+submission3/pretrain_model/
+submission/pretrain_model/**/.cache/
+历史归档_本地/
+
+# The final reviewed checkpoint must be versioned via Git LFS.
+!submission/model/best_model.pth
+training/20261028/progress.pth
+training/20261028/*_last.pth

@@ -1,0 +1,14 @@
+{
+  "train": {
+    "count": 51396,
+    "positive": 1657,
+    "all_original_hashes_match": true,
+    "pixel_equality_samples": 24
+  },
+  "valid": {
+    "count": 5849,
+    "positive": 191,
+    "all_original_hashes_match": true,
+    "pixel_equality_samples": 24
+  }
+}

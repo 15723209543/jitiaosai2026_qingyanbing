@@ -1,6 +1,0 @@
-{
-  "gpu": "cuda",
-  "wrong_pair_loss": 4.0181498527526855,
-  "correct_pair_loss": 0.018149929121136665,
-  "gradient_direction_correct": true
-}

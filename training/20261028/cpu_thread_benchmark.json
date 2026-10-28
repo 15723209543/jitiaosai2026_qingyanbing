@@ -1,0 +1,10 @@
+{
+  "cpu_threads": 1,
+  "average_seconds_per_image": 0.1176606989998254,
+  "csv_mismatches": 0,
+  "warmup": 5,
+  "images": 100,
+  "repeats": 3,
+  "weights_changed": false,
+  "preprocessing_math_changed": false
+}

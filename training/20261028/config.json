@@ -1,0 +1,34 @@
+{
+  "github_commit": "a64b008f67f9eb3030ffb8e251329ca92e3a4022",
+  "source_sha256": "2b5a15db0246ee0858e06708105d6c9a36f5b1f028439b2925cb3cabd6ad865e",
+  "recipe": "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v4_official_only_20261028",
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "timm": "1.0.30",
+  "max_epochs_per_branch": 3,
+  "stop": "first complete validation improvement over source",
+  "train": "official train only; no extra medical data; official valid selection only",
+  "precision": "AMP FP16 training; FP32 validation/inference",
+  "source_config": {
+    "convnext_tiny.fb_in1k": {
+      "epochs": 30,
+      "backbone_lr": 1.5e-05,
+      "head_lr": 0.00015,
+      "weight_decay": 0.02,
+      "patience": 10,
+      "auc_weight": 0.1
+    },
+    "efficientnetv2_rw_s.ra2_in1k": {
+      "epochs": 30,
+      "backbone_lr": 2e-05,
+      "head_lr": 0.0002,
+      "weight_decay": 0.01,
+      "patience": 10,
+      "auc_weight": 0.1
+    }
+  },
+  "extra_data_enabled": false,
+  "validation_in_training": false,
+  "tta": false,
+  "cache": "384 RGB LANCZOS fullframe pixels, hashes and sampled pixels verified",
+  "optimizer": "fresh AdamW warm start; exact optimizer/RNG resume at saved epoch boundaries"
+}

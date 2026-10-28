@@ -1,29 +1,62 @@
-<!-- RUN_20261028_START -->
-2026-10-28 用户重新明确授权“在GitHub拉取最新模型，继续训练”，取代此前停止授权。已停止。基准AUROC 0.984618915，最终 0.985968994，增量 0.001350078。
+# 当前成果（2026-10-28）
 
-最终采用远端原ConvNeXt参数+本轮EfficientNetV2第1轮参数。ConvNeXt虽然实际训练3轮，但三轮均未采用，不能说最终模型包含其新参数；EfficientNetV2单支AUROC下降，但与原ConvNeXt的固定等权组合AUROC提高，故按预先规定的组合选模标准采用。完整网络独立重载复测已通过。
+正式模型、对应CSV及代码现在均在本仓库 `submission/`，不再只存在于被Git忽略的runs目录。
 
-本轮独立目录 runs/20261028_github_latest。来源 GitHub 15723209543/jitiaosai2026_qingyanbing，提交 a64b008f67f9eb3030ffb8e251329ca92e3a4022 (v1.15.6)，完整源权重SHA256 2b5a15db0246ee0858e06708105d6c9a36f5b1f028439b2925cb3cabd6ad865e，200822687字节。ConvNeXt-Tiny + EfficientNetV2-S，非医学ImageNet来源保留在PTH中。
+- `submission/model/best_model.pth`：ConvNeXt-Tiny原权重 + 本轮EfficientNetV2第1轮参数，固定等权组合。
+- `submission/submission.csv`：该模型的5855行预测，官方名称/顺序通过，实际交付predict/cost复测不一致0张。
+- 官方独立验证AUROC：0.984618915 → 0.985968994，增量0.001350078。这是验证指标，非官网成绩。
+- 本机端到端耗时0.127828秒/张，**尚未达到100毫秒要求**，不得宣称已通过速度限制；官方指定硬件复测未完成。
+- 模型SHA256：`288f8e0af64623fdb3a20bdc17fe3157b79cefa7c91e5d59d459d5b6d76f4813`；CSV SHA256：`b8800414ac2c39173cb51551b73a7f6fe47faff7a6ba63449194dd1e31579765`。
 
-采用最新submission2正负平衡批次+gamma1 focal+0.1成对AUC损失、分类头Dropout0.05和最新分支学习率。仅使用官方train51396张训练，valid5849张独立选模；不启用远端额外医学数据或train+valid混合实验。完整384整图等比补边，RGB、ImageNet归一化，AMP训练、FP32验证推理，无TTA。复用384无损像素缓存前校验全部原图SHA、文件名标签与抽样像素完全一致。
+基于[远端v1.15.6](https://github.com/15723209543/jitiaosai2026_qingyanbing/commit/a64b008f67f9eb3030ffb8e251329ca92e3a4022)，源模型SHA256 `2b5a15db0246ee0858e06708105d6c9a36f5b1f028439b2925cb3cabd6ad865e`。仅官方train51396张训练、valid5849张选模；无外部医学数据、valid并入训练或TTA。384整图等比补边，ImageNet归一化。AMP训练、FP32推理。ConvNeXt实际训练3轮均未采用；EfficientNetV2第1轮虽单支AUROC下降，与原ConvNeXt组合提升，按预定组合AUROC标准采用。首次提升后已停止。
 
-每轮平衡采样3316批、53055次图片访问，覆盖全部51396张唯一官方训练图；阳性图循环补位，不能把访问次数当成新增图片数。主干和分类头全部微调，梯度裁剪2.0；ConvNeXt学习率1.5e-5/1.5e-4，EfficientNetV2学习率2e-5/2e-4。固定3轮上限内使用相同低学习率，不沿用远端30轮余弦日程；这是本轮明确记录的运行配方变化。
+训练源码、不可变上游代码、基准权重和记录已纳入版本控制：`training/20261028/`。实际历史脚本为run_training_original.py，配置/逐轮结果/重载核验分别为config.json、history.json、TRAINING_COMPLETE.json和verification.json。优化器与大图缓存继续留在本机runs/work，不推送。
 
-每支最多3轮，按此前首次改善即停条件运行；只有官方验证AUROC更高才保存新全局最优。优化器从源最佳权重重新初始化，并非原训练精确续批。run_training.py --resume可从本轮已保存epoch边界恢复优化器/RNG。CPU及缓存与原图只读；同一时间只运行此GPU训练。旧正式submission和旧CSV均不覆盖。
+预测：`python submission/code/predict.py`。计时：`python submission/cost.py pictures_100 pictures_5`。两者共用FP32、batch1、单CPU线程、禁用TF32的推理函数。训练：`python submission/code/train.py` 会以当前正式权重创建独立run，最多每支3轮、首次验证提升停止；`--resume runs/<名称>`从已有轮次边界恢复。本次正式成果不会被训练中的临时文件覆盖，完成后需核验再晋升。
 
-实际日志 D:/青眼病/work/github_20261028_training.log；逐轮记录history.json，最终证据TRAINING_COMPLETE.json（存在时才算完成）。源码快照source/只作溯源，其中submission/model已恢复真实LFS对象；其余LFS文件可能仍为指针。重载权重只能weights_only=True并临时允许PyTorch自带TorchVersion类型，不用不安全反序列化。
+`submission2/`、`submission3/`是远端保留的另两条实验，不代表本轮成果；尤其submission3的train+valid集内结果不能称独立验证。本次未启动新训练、未上传官网。旧正式目录完整备份在本机runs/20261028_github_latest/legacy_submission_before_promotion；用户原提交0a099ea保留在合并历史及backup/before-sync-20261028-0a099ea分支。
 
-训练结束前不得用测试分数选模。若改善并完成核验，再导出独立2026-10-28成果。没有自动向GitHub推送或向官网提交。
+Git LFS管理PTH与safetensors。首次克隆后运行`git lfs pull`，避免把134字节指针当模型。大型原图、缓存、优化器、ZIP不提交。
 
-<!-- RUN_20261028_END -->
+## AI约定
+
+上段为当前权威状态。未经新训练授权不要重启训练。不要把本轮材料只放在被忽略的runs/work或Codex输出目录里；可交付源码、模型、CSV和文档应在项目版本控制内。下面是历史状态，不能覆盖当前状态。
 
 # AI交接：已完成首次再提升并停止
+
+2026-10-28 双路线新请求（本段优先）：用户明确要求 submission2 仅改微调参数，并从正式 submission 复制代码新建 submission3，把官方 train+valid 同时用于训练与训练集内 AUROC 选模。submission3 的指标存在数据泄漏，绝不可称独立验证或与 submission2 官方验证 AUROC 横比。两实验只写代码与合成数据测试，不在本机完整训练、不动正式 PTH/CSV；旧正式 PTH 在本机仍是134字节LFS指针。详情见 docs/双路线实验_20261028.md；须只提交源码、测试、说明，原始数据与用户未跟踪PDF不提交。
+
+2026-10-28 submission2 调参（本段优先）：用户报告 GPU 机约30轮未出现最佳权重更新，本机没有该轮日志/真实PTH，不能确认具体原因。当前代码原本已有梯度裁剪2.0，且早停8/10轮；现仅对 submission2 调小两分支学习率、分类头训练期Dropout 0.1、延长早停耐心到12轮，训练配方标识升级v3并兼容v2候选参数暖启动。旧 submission 权重/CSV和数据不动。尚未在真实数据上训练，提升未知；见 docs/训练停滞调参_20261028.md。此段完成后应提交推送代码与说明，不提交原始数据或用户未跟踪PDF。
+
+2026-10-27 额外数据顺序纠错（本段优先）：用户明确指定**每个模型每一轮**的顺序是 `glaucoma_first/train` → `glaucoma_first_my` 三组全作训练 → 仅 `glaucoma_first/valid` 验证一次 → 根据官方验证 AUROC 更新该分支；之前“所有官方轮次结束后才训练额外数据”的段落已过时。两段训练共用当轮模型和优化器；开关为 `MY_DATA_ENABLED=False` 加一行启用的 `MY_DATA_ENABLED=True`，注释启用行即可关闭。只改代码与说明、做合成数据测试，不在本机完整训练，不动已有 PTH/CSV，也不推送额外原始数据。
+
+2026-10-27 额外数据实验后续：用户明确要求追加阶段保持启用、调用上下各空五行，并打印当前训练数据集；完成测试后提交推送，前一段“等待批准”已被此要求取代。两套原始数据目录均通过 `.gitignore` 排除，提交时必须只暂存源码、测试与说明文档，不能提交数据、模型或用户新放入的 PDF。仍未执行真实训练。
+
+2026-10-27 额外数据实验（未提交）：用户在 `glaucoma_first_my/` 放入带 YOLO TXT 标签的 3,209 张眼底图，并表示组委会允许此数据；许可原文未独立核验。`submission2/code/train.py` 增加独立追加阶段：先将原 `glaucoma_first/train` 完成两分支官方训练/验证，再把 `glaucoma_first_my/train`、`valid`、`test` 三部分**全部仅作额外训练**；TXT 第一项 0→青光眼阳性标签1，1→阴性标签0，后续坐标忽略。该阶段默认每分支1轮，注释 `train()` 末尾唯一的 `train_my_stage(...)` 调用即可关闭；始终只用官方 `glaucoma_first/valid` 比较 AUROC、更新最佳分支。没有运行真实训练、没有修改权重/CSV，新增原始数据与用户新放入的 PDF 均保持本地未跟踪，等待用户批准后才提交代码。需要注意项目 `AGENTS.md` 的旧比赛规则表述仍与用户新说明冲突，最终参赛使用前应由用户核对许可原文。
+
+2026-10-27 新实验（本段优先）：远端 v1.15.1 已同步到本地；`submission/` 是用户官网 97.82 分的旧方案，原代码/CSV 均未在本实验改动。本机 `submission/model/best_model.pth` 仅为 134 字节 Git LFS 指针，不能据此在本机训练/预测；GPU 训练机须取得真实权重。新建 `submission2/`，从 `submission/` 四文件代码与 `cost.py` 复制，配方 `imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2`：训练批次包含正负且每轮覆盖完整 train，少数类循环补位；focal 加 0.1 倍成对 logistic AUC 排序损失。候选 PTH 优先续训；候选不存在时只读旧 `submission/model/best_model.pth` 暖启动，先在全部官方 valid 复核，旧权重绝不覆盖。新 PTH/CSV 分别只会写到 `submission2/model/` 和 `submission2/submission.csv`；当前没有训练、没有候选 PTH/CSV，也不能宣称 AUROC 或官网分数改善。提交目录的模型、原始预训练文件、核验工作簿和 CSV 需在用户训练及验证后再补齐，不能以旧结果冒充新模型。
+
+2026-10-26 CSV 后缀修复（本段优先）：官方 `glaucoma_first/test.csv` 的 5,855 个 `Image_name` 均以小写 `.jpg` 结尾，而磁盘图片均为大写 `.JPG`。旧 `write_submission` 直接写磁盘文件名，未来运行预测会产生不合官方名单的图片名；现改为只将输出图片名的后缀转小写，同时把输出文件后缀强制为 `.csv`。已只读核对 5,855 个新名称与官方 CSV 顺序逐行一致；25 项单元测试通过、1 项 CUDA 测试跳过。没有训练、预测或覆盖历史 `submission/submission.csv` 和 PTH；当前阶段性 PTH 仍不可用于最终预测。
+
+2026-10-26 轮次重置（本段优先）：`submission/code/train.py` 每次启动均载入已有最佳权重，先在完整官方验证集复核 AUROC，再从本次第 1 轮训练；`CONFIG` 的 `epochs` 是本次运行轮数，当前两分支均为 1。历史最佳 AUROC 仍作更新门槛，只有超过才保存新权重；新保存的 PTH 不再存 `epoch`，但保留 AUROC、配方、来源与选模信息。旧 PTH 含 `epoch` 仍可读，仅不再以其决定起始轮次。此次只改代码和文档，未启动完整训练、未改已有 PTH/CSV。以下“需把轮数设高于历史轮次”等历史说明已被本段取代。
+
+2026-10-26 设备修复：用户明确要求 CPU 也可训练。`submission/code/train.py` 现在先打印 CPU/GPU、PyTorch 与 CUDA 版本；有 CUDA 优先 GPU 并启用 AMP，无 CUDA 时用 CPU 且关闭 CUDA AMP/GradScaler，不再抛出“必须 GPU”。仅用极小合成批次验证 CPU 前后向，没有启动完整数据训练；已有 PTH/CSV 未改。注意工作树中 `CONFIG` 两个 `epochs` 均被用户改为 1，低于当前 PTH 记录的最佳轮次 6/3；这次设备修复保留该未提交修改，若用户希望继续训练，应先自行设定高于已完成轮次的目标值。
+
+2026-10-26 最新目录整理（本段优先于以下历史状态）：用户要求删除旧 `submission/`，把原 `submission2/` 改名为唯一的 `submission/`；数据 `glaucoma_first/` 在同级且未改动。提交目录严格只保留附录 A 所列七项（四 Python 文件加 requirements 在 code 内），没有 README、缓存或占位文件。旧方案 `submission/submission.csv` 作为历史最高提交 CSV 保留于新目录，但它不由新模型生成。旧正式源码/权重可由 Git 历史恢复。本机已从 LFS 取得新方案真实 200,822,431 字节阶段性 PTH，安全读取确认 `training_complete=False`、`selection=None`；ConvNeXt-Tiny 最佳第 6 轮记录 AUROC 0.984011，EfficientNetV2-S 最佳第 3 轮记录 0.965275。不得强行运行预测或将此阶段性 PTH 声称为最终模型；用户在 GPU 主机续训、整体验证选模后再运行 `submission/code/predict.py`。老师截图 `Unsupported operand 118` 的根因是旧 `submission/code/utils.py` 把以 `version ...` 开头的 Git LFS 指针送入 `torch.load`；新代码会先识别指针。真实入口测试另发现阶段性 `selection=None` 曾触发 `AttributeError`，现改为明确提示训练未完成。没有修改真实 PTH、没有训练或生成新 CSV。下文早期路径/状态仅供历史溯源。
+
+2026-10-26 旧权重读取兼容：用户的 GPU 机在 `load_resume_checkpoint` 处遇到 `Unsupported global: torch.torch_version.TorchVersion`。原因是旧 `save_checkpoint` 把 `torch.__version__` 对象写进 PTH，而新版 PyTorch 的 `weights_only=True` 默认不允许该类型。`submission2/code/utils.py` 现在使用局部 `torch.serialization.safe_globals([TorchVersion])` 继续安全加载；`predict.py` 复用相同检查点读取。没有改 `train.py` 的轮数配置、没有使用 `weights_only=False`、没有读取或改写真实 PTH。本机只有 LFS 指针；训练机实际续训仍需由用户验证。
+
+2026-10-26 续训修复：用户在另一台 GPU 电脑运行 `submission2/code/train.py` 遇到已有 PTH 即 `FileExistsError`。已改为读取阶段性单文件检查点，校验配方/分支，逐模型先跑全部官方验证集复核 AUROC，差异超过 0.002 则拒绝覆盖；保存过的模型从最佳轮次下一轮继续，未保存的从第 1 轮开始。旧 PTH 无优化器/调度器状态，只能从最佳参数暖启动，非精确批次恢复；仅新 AUROC 提高才更新 PTH。本地仍只有 133–134 字节 LFS 指针，未下载真实模型、未启动训练。
+
+2026-10-26 后续：已快进到远端 `af41300`，只跳过 Git LFS 实际权重下载；本机 `submission2/model/best_model.pth` 和两个原始预训练 `model.safetensors` 各为 133–134 字节指针。远端有用户上传的阶段性候选模型，不能当作训练完成。候选 `train.py` 当前不能续训且发现现有 PTH 会拒绝重启。此次仅恢复 `submission2` 训练与验证按首批/每25批/末批输出当前批次真实阳性、报阳、报对、误报、漏报；未改训练损失、选模和官方 train/valid 划分，也未下载模型或启动训练。原官方验证集不得混入训练，见 `submission2/README.md`。
+
+2026-10-26 新请求：用户要求独立预训练优化方案并由其本人训练。当前新增 `submission2/` 四文件候选（ConvNeXt-Tiny + EfficientNetV2-S，ImageNet-1K，384 整图等比补边），未训练、未生成候选 PTH/CSV，不得声称 AUROC≥0.99。原 `submission/` 权重和 CSV 未修改；最新用户给的 `submission (4).csv` 与现有正式 CSV SHA-256 相同。当前机器正式 PTH 是 133 字节 LFS 指针，不能在本机推理，需 GPU 主机拉取完整对象。赛规允许有来源、许可、SHA-256、全文和数据说明的非医学权重；候选训练时下载并记录。详见 `docs/预训练候选方案_20261026.md`。不要自动启动训练；用户明确自行训练。原先“停止训练”约定对助手仍有效。
 
 用户最后要求：“再训练得到更好的一次就立刻停了，我想睡觉了。”已达成。不要自行启动任何新实验，不要为了此前额度目标继续消耗额度。
 
 正式AUROC 0.963044496140 → 0.964011481681。PTH SHA256 543e9ae5bb904ccbba75666c740a85ac4039b65fd8f84dfc851f34382551ed76；CSV SHA256 fe98cf5d7a490e02a18ce7a908727d17cb1492b617f02c68ac573780951d958e。正式文件submission/model/best_model.pth及submission/submission.csv。
 
-最终第十轮仅训练ResNet18分类头1轮，DenseNet121沿用第六轮（本轮0轮）；主干/BN冻结，gamma1焦点损失，GPU FP32，51,396条原图训练特征，输入256。配方v10，代码continuation_focal/code及已同步submission/code。原特征来自第四轮缓存，复用前逐张量和文件SHA核对。未使用外部预训练或外部医学数据。
+最终第十轮仅训练ResNet18分类头1轮，DenseNet121沿用第六轮（本轮0轮）；主干/BN冻结，gamma1焦点损失，GPU FP32，51,396条原图训练特征，输入256。配方v10，现用代码在submission/code；原continuation_focal/code已移入本地清理备份ZIP，仍可由Git历史恢复。原特征来自第四轮缓存，复用前逐张量和文件SHA核对。未使用外部预训练或外部医学数据。
 
 权威记录runs/20261025_focal_head/TRAINING_COMPLETE.json、POST_SELECTION_COMPLETE.json、PROMOTED.json、resnet18_history.csv；completed中DenseNet=0是保留旧训练模型，不是随机模型。POST是首次提升锁定及完整网络重载验证，不继续搜索。最终PTH的additional_head_epochs_completed为1/0，epochs_trained_each是历史整网字段，不能混计。
 
@@ -32,8 +65,3 @@
 停止证据docs/STOPPED_AFTER_IMPROVEMENT.json，实验总账docs/continuous_experiments.json，最后额度docs/quota_snapshot.json。第5、7、8、9轮未提高组合，不晋升；保留源码和检查点，不删除原图/junction目标。详见AGENTS.md。新授权前先查进程，当前无训练应在运行。
 
 Windows推理已使用同步GPU拷贝和pin_memory=False，完整CSV复测通过。预测和cost共用score_batch，FP32、等权、无TTA。features/optimizer只保留本机，不入ZIP。不要重新运行旧轮的finalize脚本覆盖当前成果。
-
-
-## 最终推理核验与限制
-
-实际交付的predict.py与cost.py共用同一FP32/NCHW推理实现；CPU线程1、禁用TF32、batch1。5张预热、100张×3轮端到端（读取、预处理、推理、CSV写盘）均值0.127828秒/张，与5855行CSV比较不一致0张。本机复测尚未达到100毫秒/张，不能宣称已通过速度要求，官方指定设备仍待复测。训练已停止，AUROC提升已确认。未采用较慢且产生末位差异的channels-last试验；原训练权重及CSV未因此改变。

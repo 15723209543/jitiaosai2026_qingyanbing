@@ -1,6 +1,0 @@
-{
-  "all_unique_train_images_once": true,
-  "count": 51396,
-  "batches": 1607,
-  "minimum_positive_per_batch": 1
-}
