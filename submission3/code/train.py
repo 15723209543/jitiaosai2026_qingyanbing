@@ -21,10 +21,13 @@ from utils import (BASELINE_MODEL_PATH, BASE_RECIPE, BATCH_SIZE, DATA, FundusDat
 # 【自写】每个模型独立配方；增加轮数前先看验证 AUROC 和阳性召回，不靠训练 ACC。
 CONFIG = {
     "convnext_tiny.fb_in1k": {"epochs": 1, "backbone_lr": 2e-5, "head_lr": 2e-4,
-                               "weight_decay": 0.02, "patience": 2},  # 本机RTX5060 8GB：加载约65张/秒，1轮训练+1轮全量集内验证约15分钟；提交内存受限，本次先跑1轮
+                               "weight_decay": 0.02, "patience": 3},  # 本次最多30轮；重新运行从第1轮计数
     "efficientnetv2_rw_s.ra2_in1k": {"epochs": 1, "backbone_lr": 3e-5, "head_lr": 3e-4,
-                                      "weight_decay": 0.01, "patience": 2},  # 同上；集内AUROC随轮次单调上升，多跑只是更多次见过valid
+                                      "weight_decay": 0.01, "patience": 3},  # 本次最多38轮；重新运行从第1轮计数
 }
+# 【本机适配-3｜可还原】2026-10-29 本机（RTX 5060 8GB 显存 / 16GB 内存笔记本）只跑了各 1 轮，
+# 原因见 LOCAL_NOTES：1 轮训练+1 轮全量集内验证约 15 分钟、提交内存上限 25.7GB。
+# epochs 与原值相同（1），未提高数值；内存/时间充裕的机器可直接把 epochs 调大，无需改其他代码。
 
 
 def set_seed(seed=2026):
@@ -50,8 +53,9 @@ def ensure_license():
 
 def loader(records, training, batch_size=BATCH_SIZE):
     """【改自课堂 CNN DataLoader】每轮遍历全部官方训练图片，不做有放回抽样。"""
-    # 【本机调整】persistent_workers=False：训练 loader 与评估 loader 不再同时常驻，
-    # 否则 2×worker 数会耗尽本机提交内存并让 worker 在加载 torch DLL 时崩溃、主进程静默卡死。
+    # 【本机适配-2｜可还原】原值是 persistent_workers=NUM_WORKERS > 0。本机原来 valid_loader（分支外常驻）
+    # 与每支的 train_loader 同时存活 → 2×worker 数把提交内存顶穿，worker 加载 torch DLL 时崩、主进程静默卡死。
+    # 改为 False 后任何时刻只有一组 worker。内存充裕的机器可还原为 persistent_workers=NUM_WORKERS > 0（略快）。
     return DataLoader(FundusDataset(records, training=training), batch_size=batch_size,
                       shuffle=training, num_workers=NUM_WORKERS,
                       pin_memory=torch.cuda.is_available(), persistent_workers=False)

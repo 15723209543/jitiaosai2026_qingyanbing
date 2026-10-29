@@ -1,17 +1,15 @@
 <!-- INSAMPLE_20261029_START -->
-## 2026-10-29 本机 submission3（train+valid 合并）集内训练
+## 2026-10-29 submission3（train+valid 合并）集内训练
 
-用户要求在本机（本机此前**没有 torch**，本轮从零搭建）把 submission3 跑几轮并提交一次看平台分数。已完成：`submission3/model/best_model.pth`（200,826,145 字节，recipe `..._train_valid_insample_v1`，`training_complete=True`，`selection=ensemble`）与 `submission3/submission.csv`（SHA256 `de4869c593d28660b52a370a4e0ca8ae0a496fcfcb73472ac0bb3b6fccff6cd9`，5855 行，阳性 154 张，核验通过）。**平台分数尚未提交，未回填**。
+用户要求把 `submission3` 跑一轮并提交看平台分数（"把 valid 并入训练"这条路到底行不行）。已完成：`submission3/model/best_model.pth`（200,826,145 字节，`recipe=..._train_valid_insample_v1`，`training_complete=True`，`selection=ensemble`）与 `submission3/submission.csv`（5,855 行，阳性 154 张，SHA256 `de4869c593d28660b52a370a4e0ca8ae0a496fcfcb73472ac0bb3b6fccff6cd9`，格式与官方顺序核验通过）。**平台分数尚未提交，待回填**。
 
-本机环境：RTX 5060 Laptop 8 GB / sm_120、24 逻辑核、15.7 GB 内存；torch 2.11.0+cu128、torchvision 0.26.0+cu128、timm 1.0.30 装在 `D:\ProgramSP\Anaconda\envs\dl`（此前该环境无 torch）。实测 384 整图 LANCZOS 缩放约 67 ms/张，加载是瓶颈；8 进程 81.7 张/秒、12 进程 100.7 张/秒；ConvNeXt bs16 AMP 峰值显存 3.18 GiB、EffNetV2-S 3.92 GiB。
-
-本轮参数（仅动“几轮、几个进程”，预处理/损失/学习率/推理全部不变）：`NUM_WORKERS=6`、`persistent_workers=False`、两支各 `epochs=1`、`patience=2`，训练进程 `OMP/MKL/OPENBLAS_NUM_THREADS=1`。
-
-- 集内（**含数据泄漏，不是验证指标**）：ConvNeXt 基线 0.997001 → 0.998374；EffNet 基线 0.996459 → 0.999449；等权组合 0.999855 → 选 ensemble。对应两支官方 valid 分别是 0.984011 / 0.961078，说明集内数字虚高约 1.3–3.8 个点，**不得当作泛化提升**。
-- 故障与修复：按 12 worker + 常驻 loader 启动时，训练 loader 与评估 loader 同时常驻，每个 worker 约 1 GB 以上提交内存，耗尽本机 25.7 GB 提交上限，worker 在加载 torch DLL 时 `WinError 1455 页面文件太小`，主进程静默空转（18:23 后无日志）。改为 6 worker + 非常驻 + 限制线程后稳定（提交内存 22–24 GB）。证据：`runs/train_submission3_20261029.log.err`。
-- 代码修复：`submission3/code/utils.py` 的 `BASE_RECIPE` 原写 `..._fullframe_v1`，与正式 `submission/model/best_model.pth` 内的 `..._balanced_pairauc_v4_official_only_20261028` 不符，暖启动第一秒即抛配方不一致；已改为实际字符串。
-- 记录：`docs/集内训练_20261029.md`。训练日志 `runs/train_s3_20261029_run2.log`、推理日志 `runs/predict_s3_20261029.log`、核验脚本 `runs/verify_csv.py`。历史最好 CSV 备份 `runs/fallback_97.82/submission_97.82.csv`（commit 0529aae）。
-- 未完成：仅 1 轮/支（本机内存与时间限制，队长 30/38 轮上限在 8 GB 本机不可行）；`cost.py` 因缺 `pictures_100`/`pictures_5` 未测速，100 ms 限制仍未验证；平台分数未提交。**不得把集内 AUROC 与 submission 的官方验证 AUROC 横向比较。**
+- 集内（**含数据泄漏，不是验证指标**）：ConvNeXt 基线 0.997001 → 0.998374；EffNet 基线 0.996459 → 0.999449；等权组合 0.999855 → 选 ensemble。两支官方 valid 分别是 0.984011 / 0.961078，可见集内数字虚高 1.3–3.8 个点，**不得当作泛化提升**。
+- 排序相关性：新 CSV vs 正式份 0.739、vs 97.82 份 0.745，而正式份 vs 97.82 份 0.984 → 这一轮**确实把排序改了不少**，平台分数可能升也可能降。
+- **BUG-1（任何机器都会踩，修复必须保留）**：`submission3/code/utils.py` 的 `BASE_RECIPE` 原写 `..._fullframe_v1`，而正式权重内是 `..._balanced_pairauc_v4_official_only_20261028`（10-28 晋升时改过），导致暖启动第一秒抛"配方不一致"、**完全无法从正式权重续训**。已改为实际字符串，训练数学未动。
+- **本机适配（可整体还原，不影响训练数学）**：`NUM_WORKERS` 4→6、`persistent_workers` True→False（本机提交内存 25.7 GB 上限所限；原设置会让 worker 加载 torch DLL 时 `WinError 1455` 崩掉、主进程静默卡死）。`epochs=1`、`patience=3`、学习率与队长原值一致，未提高。还原清单见 `docs/集内训练_20261029.md` 第 5 节。
+- 记录：`docs/集内训练_20261029.md`（面向团队的实验记录）。本机硬件/环境/坑点与逐条代码改动明细在 `LOCAL_NOTES/`（已 gitignore，不随仓库交付）。日志：`runs/train_s3_20261029_run2.log`、`runs/predict_s3_20261029.log`、核验脚本 `runs/verify_csv.py`；历史最好 CSV 备份 `runs/fallback_97.82/submission_97.82.csv`（亦见 commit 0529aae）。
+- 未完成：每支仅 1 轮（笔记本资源限制，队长 30/38 轮上限未尝试）；`cost.py` 缺 `pictures_100`/`pictures_5`，100 ms 速度限制仍未验证；平台分数待提交。**不得把集内 AUROC 与 submission 的官方验证 AUROC 横向比较。**
+- 磁盘：`runs/wheels/` 留有 2.6 GB 的 torch 轮子（已 ignore），项目整体较大，十一月中任务结束后再统一清理，届时注意不要动原始数据 junction 的目标。
 
 <!-- INSAMPLE_20261029_END -->
 

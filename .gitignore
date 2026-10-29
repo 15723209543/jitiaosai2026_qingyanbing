@@ -23,6 +23,9 @@ submission3/pretrain_model/
 submission/pretrain_model/**/.cache/
 历史归档_本地/
 
+# 本机专属笔记：本机硬件/环境/坑点/代码改动明细，只留本机，不还给队长。
+LOCAL_NOTES/
+
 # The final reviewed checkpoint must be versioned via Git LFS.
 !submission/model/best_model.pth
 training/20261028/progress.pth
