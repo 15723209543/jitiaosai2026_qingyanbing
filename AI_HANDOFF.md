@@ -1,15 +1,18 @@
 <!-- INSAMPLE_20261029_START -->
 ## 2026-10-29 submission3（train+valid 合并）集内训练
 
-用户要求把 `submission3` 跑一轮并提交看平台分数（"把 valid 并入训练"这条路到底行不行）。已完成：`submission3/model/best_model.pth`（200,826,145 字节，`recipe=..._train_valid_insample_v1`，`training_complete=True`，`selection=ensemble`）与 `submission3/submission.csv`（5,855 行，阳性 154 张，SHA256 `de4869c593d28660b52a370a4e0ca8ae0a496fcfcb73472ac0bb3b6fccff6cd9`，格式与官方顺序核验通过）。**平台分数尚未提交，待回填**。
+用户要求把 `submission3` 跑一轮并提交看平台分数（"把 valid 并入训练"这条路到底行不行）。已完成并**已提交官网：平台 97.48**。产物：`submission3/model/best_model.pth`（200,826,145 字节，`recipe=..._train_valid_insample_v1`，`training_complete=True`，`selection=ensemble`）与 `submission3/submission.csv`（5,855 行，阳性 154 张，SHA256 `de4869c593d28660b52a370a4e0ca8ae0a496fcfcb73472ac0bb3b6fccff6cd9`，格式与官方顺序核验通过）。
 
-- 集内（**含数据泄漏，不是验证指标**）：ConvNeXt 基线 0.997001 → 0.998374；EffNet 基线 0.996459 → 0.999449；等权组合 0.999855 → 选 ensemble。两支官方 valid 分别是 0.984011 / 0.961078，可见集内数字虚高 1.3–3.8 个点，**不得当作泛化提升**。
-- 排序相关性：新 CSV vs 正式份 0.739、vs 97.82 份 0.745，而正式份 vs 97.82 份 0.984 → 这一轮**确实把排序改了不少**，平台分数可能升也可能降。
+- **三版对照（同测试集、同指标，分数可比）**：v1.15.1 = **97.82**（仅 train，30/38 轮 + valid 早停）；v1.16.4 = 97.22（仅 train，valid 0.98597）；v1.17.1 = **97.48**（train+valid 合并，两支各 1 轮）。详见 `docs/平台成绩台账.md`。
+- **判读**：相对 v1.16.4 涨 0.26，但该对比不干净（数据与训练量同时变）；相对 v1.15.1 仍**低 0.34**，且 v1.15.1 用的是一模一样的架构与学习率，差别只在 30/38 轮 + valid 早停。→ **合并 valid 救不回放弃 30 轮的损失**。
+- **关键量化**：官方 valid 仅 191 个阳性，其 AUROC 的 1 个标准误约 0.006（95% 区间 ±0.012）。v1.16.4 号称的 +0.00135 只有 0.2 个标准误，**低于噪声底**，当初按严格提升晋升的判断本身不成立。今后 valid 上 <0.005 的变化一律不算提升。
+- 集内（**含数据泄漏，不是验证指标**）：ConvNeXt 基线 0.997001 → 0.998374；EffNet 基线 0.996459 → 0.999449；等权组合 0.999855 → 选 ensemble。**不得当作泛化提升，也不得与官方验证 AUROC 横向比较。**
 - **BUG-1（任何机器都会踩，修复必须保留）**：`submission3/code/utils.py` 的 `BASE_RECIPE` 原写 `..._fullframe_v1`，而正式权重内是 `..._balanced_pairauc_v4_official_only_20261028`（10-28 晋升时改过），导致暖启动第一秒抛"配方不一致"、**完全无法从正式权重续训**。已改为实际字符串，训练数学未动。
 - **本机适配（可整体还原，不影响训练数学）**：`NUM_WORKERS` 4→6、`persistent_workers` True→False（本机提交内存 25.7 GB 上限所限；原设置会让 worker 加载 torch DLL 时 `WinError 1455` 崩掉、主进程静默卡死）。`epochs=1`、`patience=3`、学习率与队长原值一致，未提高。还原清单见 `docs/集内训练_20261029.md` 第 5 节。
-- 记录：`docs/集内训练_20261029.md`（面向团队的实验记录）。本机硬件/环境/坑点与逐条代码改动明细在 `LOCAL_NOTES/`（已 gitignore，不随仓库交付）。日志：`runs/train_s3_20261029_run2.log`、`runs/predict_s3_20261029.log`、核验脚本 `runs/verify_csv.py`；历史最好 CSV 备份 `runs/fallback_97.82/submission_97.82.csv`（亦见 commit 0529aae）。
-- 未完成：每支仅 1 轮（笔记本资源限制，队长 30/38 轮上限未尝试）；`cost.py` 缺 `pictures_100`/`pictures_5`，100 ms 速度限制仍未验证；平台分数待提交。**不得把集内 AUROC 与 submission 的官方验证 AUROC 横向比较。**
-- 磁盘：`runs/wheels/` 留有 2.6 GB 的 torch 轮子（已 ignore），项目整体较大，十一月中任务结束后再统一清理，届时注意不要动原始数据 junction 的目标。
+- **下一步建议**：要么恢复 30/38 轮 + valid 早停（97.82 的来源），要么做 5 折交叉验证（用满数据又保住干净尺子，约 3 小时，需分几个晚上）。**不要**在集内指标上继续加轮。最终交哪份 CSV（97.82 那份 vs 本轮）需队长按平台"取最高分/取最后一次"的规则定。
+- 记录：`docs/集内训练_20261029.md`（实验记录）、`docs/平台成绩台账.md`（历次提交与判读规则）。本机硬件/环境/坑点与逐条代码改动明细在 `LOCAL_NOTES/`（已 gitignore，不随仓库交付）。日志：`runs/train_s3_20261029_run2.log`、`runs/predict_s3_20261029.log`、核验脚本 `runs/verify_csv.py`；历史最好 CSV 备份 `runs/fallback_97.82/submission_97.82.csv`。
+- 未完成：每支仅 1 轮（笔记本资源限制，30/38 轮上限未尝试）；`cost.py` 缺 `pictures_100`/`pictures_5`，100 ms 速度限制仍未验证。
+- 清理备忘：仓库根目录 4 个 `hs_err_pid*.log` 是 10-28 误提交的 IDE/JVM 崩溃日志，无价值；`runs/wheels/` 留有 2.6 GB torch 轮子（已 ignore）。十一月中任务结束后统一清理，届时不要动原始数据 junction 的目标。
 
 <!-- INSAMPLE_20261029_END -->
 
