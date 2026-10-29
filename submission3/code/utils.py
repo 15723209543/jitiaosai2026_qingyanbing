@@ -20,9 +20,15 @@ BASELINE_MODEL_PATH = ROOT.parent / "submission" / "model" / "best_model.pth"
 OUTPUT_CSV = ROOT / "submission.csv"
 IMAGE_SIZE = 384
 BATCH_SIZE = 16
-NUM_WORKERS = 4
+# 【本机调整】原图 2592×1944～5184×3456，缩到 384 的 LANCZOS 约 67ms/张，加载是瓶颈。
+# 实测 8 进程 81.7 张/秒、12 进程 100.7 张/秒；但每个 worker 提交内存约 1 GB 以上，
+# 12 个常驻 worker 叠加第二个 loader 会耗尽本机 25.7 GB 提交上限（WinError 1455 页面文件太小），
+# 故取 6 并配合 train.py 中 persistent_workers=False，任何时刻只有一组 worker 存活。
+NUM_WORKERS = 6
 LOG_EVERY = 25
-BASE_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_v1"
+# 【本机修复】正式 submission/model/best_model.pth 内的实际配方是 v4 official_only（2026-10-28 晋升），
+# 原写的 ..._fullframe_v1 会让暖启动直接判定配方不符并退出；这里只改“识别正式权重”的字符串，不改任何训练数学。
+BASE_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v4_official_only_20261028"
 RECIPE = "imagenet1k_convnext_efficientv2_rgb384_train_valid_insample_v1"
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
