@@ -16,6 +16,7 @@ runs/
 submission/pretrain_model/checkpoints/
 submission/model/*.pth
 submission2/model/*.pth
+!submission2/model/best_model.pth
 submission2/model/*.tmp
 submission3/model/*.pth
 submission3/model/*.tmp

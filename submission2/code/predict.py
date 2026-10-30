@@ -1,4 +1,4 @@
-"""固定最佳推理方案：只读取已训练 PTH，预测官方 test 后生成三列 CSV。"""
+"""使用 submission4 已完成的检查点预测官方 test，生成三列提交 CSV。"""
 
 import argparse
 import time
@@ -8,70 +8,69 @@ import torch
 from torch.utils.data import DataLoader
 
 from model import MODEL_NAMES, create_model
-from utils import (BATCH_SIZE, FundusDataset, MODEL_PATH, OUTPUT_CSV,
-                   inference_model_names, load_resume_checkpoint, metrics, print_metrics, print_progress,
-                   read_records, write_submission)
+from utils import (FundusDataset, MODEL_PATH, NUM_WORKERS, OUTPUT_CSV,
+                   print_progress, read_records, write_submission)
+from joint_train import DAM_RECIPE, RECIPE, load_checkpoint
 
 
-def load_inference_models():
-    """【改自旧 predict.load_inference_models】仅加载验证选中的分支，不下载预训练权重。"""
-    if not MODEL_PATH.is_file():
-        raise FileNotFoundError("尚未生成训练完成的模型: " + str(MODEL_PATH))
-    checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
-    chosen = inference_model_names(checkpoint, MODEL_NAMES)
-    selected = checkpoint["selection"]["name"]
+def load_inference_models(checkpoint_path=MODEL_PATH):
+    """只载入已完成选模的本实验权重；不会下载或加载其他实验权重。"""
+    torch.set_num_threads(1)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.allow_tf32 = False
+    torch.backends.cuda.matmul.allow_tf32 = False
+    checkpoint_path = Path(checkpoint_path)
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError("尚未生成 submission4 最终权重: " + str(checkpoint_path))
+    checkpoint = load_checkpoint(checkpoint_path)
+    if checkpoint.get("recipe") not in (
+            RECIPE, DAM_RECIPE, "official_train_joint_heads_rgb384_focal_pairauc_v2"):
+        raise ValueError("权重不是统一训练入口产生的配方")
+    if checkpoint.get("selection", {}).get("name") != "ensemble":
+        raise ValueError("统一模型必须包含双骨干融合参数")
+    chosen = MODEL_NAMES
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     models = []
     for name in chosen:
         model, _ = create_model(name)
         model.load_state_dict(checkpoint["states"][name], strict=True)
         models.append(model.to(device).eval())
-    print("推理设备:", device, "固定方案:", selected, "FP32, 无TTA", flush=True)
+    sampling = checkpoint.get("sampling") or {}
+    print("推理设备:", device, "固定方案:", checkpoint["selection"]["name"],
+          "抽样模式:", sampling.get("mode", "未知"), "FP32, 无TTA", flush=True)
     return models
 
 
 def score_batch(images, models):
-    """【改自旧 predict.score_batch】概率先平均，不能对二值标签投票。"""
+    """预测和 cost.py 共用的 FP32 概率计算。"""
     if not models:
         raise ValueError("没有可用模型")
     device = next(models[0].parameters()).device
     with torch.inference_mode():
-        x = images.to(device, non_blocking=False)
-        scores = [torch.sigmoid(model(x).flatten()) for model in models]
-        return torch.stack(scores).mean(dim=0).cpu().tolist()
+        images = images.to(device, non_blocking=False)
+        probabilities = [torch.sigmoid(model(images).flatten()) for model in models]
+        return torch.stack(probabilities).mean(dim=0).cpu().tolist()
 
 
-def collect(records, models, stage):
-    """【改自课堂 CNN 测试循环】验证和预测用同一套无随机增强的推理。"""
-    dataset = FundusDataset(records, training=False)
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-    labels, scores, started = [], [], time.time()
-    for index, batch in enumerate(loader, 1):
-        if stage == "valid":
-            images, targets = batch
-            labels.extend(targets.tolist())
-        else:
-            images = batch
+def predict(output_csv=OUTPUT_CSV, checkpoint_path=MODEL_PATH):
+    """仅读取官方无标签 test；不在测试集调参。"""
+    models = load_inference_models(checkpoint_path)
+    records = read_records("test")
+    loader = DataLoader(FundusDataset(records, training=False), batch_size=1,
+                        shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False)
+    scores, started = [], time.time()
+    for index, images in enumerate(loader, 1):
         scores.extend(score_batch(images, models))
-        print_progress(stage, index, len(loader), started)
-    return labels, scores
-
-
-def predict(output_csv=OUTPUT_CSV):
-    """【改自旧 predict.predict】先只读验证展示指标，再按官方 test.csv 原顺序写结果。"""
-    models = load_inference_models()
-    valid_records = read_records("valid")
-    labels, validation = collect(valid_records, models, "valid")
-    print_metrics("固定模型验证", metrics(labels, validation))
-    test_records = read_records("test")
-    _, scores = collect(test_records, models, "test")
-    result = write_submission(test_records, scores, output_csv)
-    print(f"已输出:{result}, 测试图片:{len(test_records)}, 预测阳性:{sum(x >= 0.5 for x in scores)}", flush=True)
+        print_progress("test", index, len(loader), started)
+    result = write_submission(records, scores, output_csv)
+    print(f"已输出:{result}, 测试图片:{len(records)}, 预测阳性:{sum(x >= 0.5 for x in scores)}",
+          flush=True)
     return result
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="验证后生成可提交的 submission.csv；不训练")
+    parser = argparse.ArgumentParser(description="从已完成的 submission4 权重生成提交 CSV")
     parser.add_argument("output_csv", nargs="?", type=Path, default=OUTPUT_CSV)
+    parser.add_argument("--checkpoint", type=Path, default=MODEL_PATH)
     args = parser.parse_args()
-    predict(args.output_csv)
+    predict(args.output_csv, args.checkpoint)

@@ -9,8 +9,8 @@ from torch.utils.data import DataLoader
 
 from model import MODEL_NAMES, create_model
 from utils import (FundusDataset, MODEL_PATH, NUM_WORKERS, OUTPUT_CSV,
-                   inference_model_names, load_resume_checkpoint, print_progress,
-                   read_records, write_submission)
+                   print_progress, read_records, write_submission)
+from joint_train import DAM_RECIPE, RECIPE, load_checkpoint
 
 
 def load_inference_models(checkpoint_path=MODEL_PATH):
@@ -22,8 +22,13 @@ def load_inference_models(checkpoint_path=MODEL_PATH):
     checkpoint_path = Path(checkpoint_path)
     if not checkpoint_path.is_file():
         raise FileNotFoundError("尚未生成 submission4 最终权重: " + str(checkpoint_path))
-    checkpoint = load_resume_checkpoint(checkpoint_path, MODEL_NAMES)
-    chosen = inference_model_names(checkpoint, MODEL_NAMES)
+    checkpoint = load_checkpoint(checkpoint_path)
+    if checkpoint.get("recipe") not in (
+            RECIPE, DAM_RECIPE, "official_train_joint_heads_rgb384_focal_pairauc_v2"):
+        raise ValueError("权重不是统一训练入口产生的配方")
+    if checkpoint.get("selection", {}).get("name") != "ensemble":
+        raise ValueError("统一模型必须包含双骨干融合参数")
+    chosen = MODEL_NAMES
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     models = []
     for name in chosen:

@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "code"))
 
 import torch
 from predict import load_inference_models, score_batch
-from utils import FundusDataset
+from utils import FundusDataset, MODEL_PATH
 
 
 def list_images(directory, count):
@@ -45,11 +45,11 @@ def run_round(paths, models, output_path):
     return durations, scores
 
 
-def main(pictures_100, pictures_5):
+def main(pictures_100, pictures_5, checkpoint_path=MODEL_PATH):
     """【改自旧 cost.main】逐图三轮取均值；官方指定硬件需另行复测。"""
     measured = list_images(pictures_100, 100)
     warmup = list_images(pictures_5, 5)
-    models = load_inference_models()
+    models = load_inference_models(checkpoint_path)
     with tempfile.TemporaryDirectory() as temp:
         run_round(warmup, models, Path(temp) / "warmup.csv")
         rounds = [run_round(measured, models, Path(temp) / f"round{i}.csv")[0]
@@ -59,7 +59,7 @@ def main(pictures_100, pictures_5):
     print("端到端平均: %.6f秒/张, 测试设备:%s, FP32" %
           (mean, next(models[0].parameters()).device), flush=True)
     if mean >= 0.1:
-        raise RuntimeError("超过规程 100 毫秒/张限制")
+        raise RuntimeError("超过规程 0.1 秒/张限制")
     return mean
 
 
@@ -67,5 +67,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("pictures_100", type=Path)
     parser.add_argument("pictures_5", type=Path)
+    parser.add_argument("--checkpoint", type=Path, default=MODEL_PATH,
+                        help="指定与预测相同的已完成模型；默认 model/best_model.pth")
     args = parser.parse_args()
-    main(args.pictures_100, args.pictures_5)
+    main(args.pictures_100, args.pictures_5, args.checkpoint)

@@ -58,8 +58,8 @@ def main(pictures_100, pictures_5, checkpoint_path=MODEL_PATH):
     mean = statistics.mean(per_image)
     print("端到端平均: %.6f秒/张, 测试设备:%s, FP32" %
           (mean, next(models[0].parameters()).device), flush=True)
-    if mean >= 100:
-        raise RuntimeError("超过规程 100 秒/张限制")
+    if mean >= 0.1:
+        raise RuntimeError("超过规程 0.1 秒/张限制")
     return mean
 
 

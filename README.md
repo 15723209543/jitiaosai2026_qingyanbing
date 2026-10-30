@@ -1,3 +1,9 @@
+## 2026-10-30 当前工作
+
+旧 `submission2/3` 已作为两个完整 ZIP 归档到 [GitHub Release](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/tag/archive-V1.18.2-submission2-3)，本机 ZIP 在 `D:/青眼病题/历史归档_本地/`，不参与日常 Git push/pull。旧 `submission3/` 已从当前工作树移除；当前 `submission2/` 是新 AUC margin 候选代码。
+
+`submission4/code/joint_train.py` 统一 4/5：`--mode holdout` 表示 80/20，`--mode independent` 表示独立 80/80，`--percent` 可改。两个骨干在同一批次融合预测、共同训练两个分类头；8GB 显存下骨干冻结。官方 train 用于训练，官方 valid 仅用于 AUROC 晋升。新 `submission2` 基于 [ICCV 2021 AUC margin 思路](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html)，不是论文完整 PESG 实现。两份不同的候选 CSV 已生成，均未超过正式模型的官方 valid AUROC，故正式模型仍为 `submission/`。具体成绩、CSV 校验和见 `docs/训练结果.md`。
+
 <!-- EXTRA_20261028_START -->
 ## 2026-10-28 本地增强数据训练
 

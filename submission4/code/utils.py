@@ -23,7 +23,7 @@ IMAGE_SIZE = 384
 BATCH_SIZE = 16
 NUM_WORKERS = 4
 LOG_EVERY = 25
-RECIPE = "imagenet1k_convnext_efficientv2_rgb384_balanced_pairauc_holdout_fraction_v1"
+RECIPE = "official_train_joint_heads_rgb384_focal_pairauc_bf16_v3"
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 

@@ -1,3 +1,13 @@
+## 2026-10-30 15:20 起：归档、统一训练与今晚交付进行中
+
+- 用户要求旧 `submission2/3` 归档、新 4/5 以一个参数控制并联合训练，以及独立的新版 `submission2` 候选。旧目录已完整压缩到训练机 `D:/青眼病题/历史归档_本地/submission2_20261030.zip` 与 `submission3_20261030.zip`；[Release `archive-V1.18.2-submission2-3`](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/tag/archive-V1.18.2-submission2-3) 的两个 ZIP 资产均已核验为 `uploaded`。旧 Git 历史尚在。
+- `submission4/code/joint_train.py` 为统一实现；`submission4/code/train.py` 与 `submission5/code/train.py` 仅为入口。`--mode holdout|independent` 控制 80/20 或独立 80/80，`--percent` 可改。训练同一批次上两骨干平均概率的共同损失，单个 AdamW 优化两个分类头；8GB 显存约束下冻结两个已训练骨干。初始化使用正式 `submission/model/best_model.pth`。其原训练已覆盖官方 train，因此内部抽样验证不独立，**只有未参与训练的官方 valid AUROC 用于晋升**。
+- 新 `submission2` 复制同一双骨干融合训练框架，改用 focal + margin pairwise AUC surrogate。它受 ICCV 2021 DAM 论文启发，**不是原论文 PESG/min-max 的精确实现**。默认使用官方 train 全量与官方 valid 选模。图片建议中的 EfficientNet-B3、DenseNet384 仅作为后续架构候选，本轮为保证可运行和遵守权重来源，沿用已验证的非医学 ImageNet 初始化骨干与现有正式训练参数。
+- 旧 4/5 的独立训练进程已仅对本项目停止，保存的 `runs` 进度未删除；胸片项目进程未动。统一 4/5 首轮在训练机使用 `--mode holdout --percent 30 --epochs 1`（时间限制），运行日志 `D:/青眼病题/work/joint4_20261030.out.log`。是否完成、是否提高 AUROC、CSV 是否生成，必须查日志和真实文件，不可按计划推定。
+- 统一 4/5 首轮官方 valid：起点 0.9859689935，训练后 0.9859440092，未提高；候选只在 `runs/20261030_152201_379075/`，默认模型未晋升。新版 submission2 的两个 FP16 run 在约第 2753 批出现非有限损失，均以 `INVALID_RUN.txt` 标记作废。BF16、关闭梯度缩放的新配方 `runs/20261030_160656_195989/` 完成全量 3316 批，官方 valid AUROC **0.9856580776**，低于起点 **0.9859689935**，未晋升。
+- 后台顺序任务于北京时间 **17:26** 完成两份候选 CSV：`submission2/candidate_marginauc.csv`（SHA256 `5faee981ce5c0e7f68e2f023fd34d4bb46aaef45e13dec0a949ba2f0465b9044`）和 `submission4/candidate_joint.csv`（SHA256 `91654a68e149cde2c3fdb82a58465a74f373dd08e6611f28c915c5e762da6156`）。两份均已独立复核为 5855 行、官方顺序、概率与标签合法，且内容不同。统一 4/5 独立 80/80 run `runs/20261030_164052_879617/` 的两轮官方 valid AUROC 分别为 **0.9859218009** 和 **0.9858542508**，仍低于起点，最佳候选是第 1 轮，**未晋升**。两份 CSV 仅供比较，不得称为已提高的正式模型；对应 PTH 暂在本机忽略的 runs 中。
+- 版本号中间位固定 18；下一次 Git 提交为 `V1.18.3`。官方 test 仅做最终预测，不用于选模。
+
 <!-- FRACTIONAL_SUBMISSIONS_20261030_START -->
 ## 2026-10-30 submission4 / submission5 新抽样实验（待训练）
 

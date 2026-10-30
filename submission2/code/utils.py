@@ -1,4 +1,4 @@
-"""四文件方案共用的数据、指标和 CSV 工具；不得从测试集拟合任何参数。"""
+"""实验 4 共用的数据、指标和 CSV 工具；不得从测试集拟合参数。"""
 
 import csv
 import math
@@ -18,16 +18,12 @@ from torchvision import transforms
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT.parent / "glaucoma_first"
 MODEL_PATH = ROOT / "model" / "best_model.pth"
-BASELINE_MODEL_PATH = ROOT.parent / "submission" / "model" / "best_model.pth"
 OUTPUT_CSV = ROOT / "submission.csv"
 IMAGE_SIZE = 384
 BATCH_SIZE = 16
 NUM_WORKERS = 4
 LOG_EVERY = 25
-BASE_RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_v1"
-PRIOR_RECIPES = ("imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v2",
-                 "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v3")
-RECIPE = "imagenet1k_convnext_efficientv2_rgb384_fullframe_balanced_pairauc_v4"
+RECIPE = "official_train_joint_heads_rgb384_focal_marginauc_bf16_v2"
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 
@@ -67,7 +63,7 @@ class FundusDataset(Dataset):
 
 
 class BalancedBatchSampler(Sampler):
-    """【自写】每批至少一个正例和负例，每轮覆盖全部原图；少数类循环补位。"""
+    """沿用当前 submission 配方：每批有正负样本，每轮覆盖全部训练图。"""
 
     def __init__(self, labels, batch_size=BATCH_SIZE, seed=2026):
         self.labels = list(labels)
@@ -81,15 +77,12 @@ class BalancedBatchSampler(Sampler):
                          math.ceil(negative / (batch_size - 1)))
 
     def set_epoch(self, epoch):
-        """【自写】训练轮次改变时重排样本；同轮次和种子可复现。"""
         self.epoch = epoch
 
     def __len__(self):
-        """【复用 PyTorch Sampler 接口】返回本轮均衡批次数。"""
         return self.count
 
     def __iter__(self):
-        """【自写】先给每批正负各一张，再分配剩余原图，避免丢弃任一训练样本。"""
         rng = random.Random(self.seed + self.epoch)
         positive = [i for i, label in enumerate(self.labels) if label == 1]
         negative = [i for i, label in enumerate(self.labels) if label == 0]
@@ -110,7 +103,7 @@ class BalancedBatchSampler(Sampler):
 
 
 def pairwise_auc_loss(logits, targets):
-    """【参考 ICCV 2021 深度 AUC 优化思想，自写】正例 logit 应高于同批负例。"""
+    """沿用当前 submission 配方：正例 logit 应高于同批负例。"""
     logits, targets = logits.float().flatten(), targets.flatten()
     positive, negative = logits[targets >= 0.5], logits[targets < 0.5]
     if not positive.numel() or not negative.numel():
@@ -119,7 +112,7 @@ def pairwise_auc_loss(logits, targets):
 
 
 def classification_loss(logits, targets, pos_weight, auc_weight):
-    """【改自原 focal 损失】保留分类目标，并增加同批正负成对的排序目标。"""
+    """沿用当前 submission 配方：focal 损失加成对 AUC 排序损失。"""
     logits, targets = logits.float().flatten(), targets.float().flatten()
     weight = torch.as_tensor(pos_weight, dtype=logits.dtype, device=logits.device)
     bce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none", pos_weight=weight)
@@ -130,7 +123,7 @@ def classification_loss(logits, targets, pos_weight, auc_weight):
 
 
 def read_records(split):
-    """【改自旧 utils.load_images】严格依官方 CSV 顺序读取，不混用 train/valid/test。"""
+    """【改自旧 utils.load_images】严格依官方 CSV 顺序读取单个分组。"""
     if split not in {"train", "valid", "test"}:
         raise ValueError("未知数据分组")
     folder, csv_path = DATA / split, DATA / (split + ".csv")
@@ -157,6 +150,15 @@ def read_records(split):
     return records
 
 
+def fit_records():
+    """合并官方 train/valid，供实验 4 从全集构建固定随机划分。"""
+    records = read_records("train") + read_records("valid")
+    names = [path.name.casefold() for path, _ in records]
+    if len(names) != len(set(names)):
+        raise ValueError("官方 train/valid 合并后存在同名图片，无法安全计算训练集内指标")
+    return records
+
+
 def load_resume_checkpoint(path, model_names, recipe=RECIPE):
     """【自写】只读已有最佳参数；校验配方和分支，拒绝把 Git LFS 指针当模型。"""
     path = Path(path)
@@ -169,8 +171,7 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
     # 只临时放行这一种 PyTorch 内置类型，仍保持 weights_only=True，绝不执行任意 pickle。
     with torch.serialization.safe_globals([torch.torch_version.TorchVersion]):
         checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    accepted_recipes = (recipe,) if isinstance(recipe, str) else tuple(recipe)
-    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") not in accepted_recipes:
+    if not isinstance(checkpoint, dict) or checkpoint.get("recipe") != recipe:
         raise ValueError("已有模型配方与当前代码不一致，不能直接续训")
     states = checkpoint.get("states")
     best_metrics = checkpoint.get("best_metrics")
@@ -179,11 +180,22 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
         raise ValueError("已有模型缺少分支参数、验证指标或预训练来源")
     if set(states) != set(best_metrics) or not set(states).issubset(model_names):
         raise ValueError("已有模型分支和验证记录不一致")
+    sampling = checkpoint.get("sampling")
+    if not isinstance(sampling, dict) or sampling.get("mode") != "holdout":
+        raise ValueError("已有模型缺少实验 4 的 holdout 抽样记录")
+    if sampling.get("overlap_count") != 0 or not all(
+            isinstance(sampling.get(key), str) for key in
+            ("pool_sha256", "train_sha256", "valid_sha256")):
+        raise ValueError("已有模型的 holdout 划分记录无效")
+    if checkpoint.get("initialization") != "imagenet1k_only":
+        raise ValueError("已有模型并非从独立 ImageNet 初始权重训练")
     if checkpoint.get("training_complete") and set(states) != set(model_names):
         raise ValueError("标记为完成的模型缺少分支")
     for name, state in states.items():
         record = best_metrics[name]
-        if name not in origins or not state or not all(torch.is_tensor(value) for value in state.values()):
+        if (name not in origins or not isinstance(origins[name], dict) or
+                origins[name].get("training_data") != "ImageNet-1K" or
+                not state or not all(torch.is_tensor(value) for value in state.values())):
             raise ValueError("已有模型参数或来源不完整: " + name)
         # 兼容旧权重中的 epoch；新权重只保存最佳参数和指标，不再记录轮次。
         if not isinstance(record, dict) or ("epoch" in record and
@@ -192,14 +204,9 @@ def load_resume_checkpoint(path, model_names, recipe=RECIPE):
         auc = record.get("auroc")
         if not isinstance(auc, (int, float)) or not math.isfinite(auc) or not 0 <= auc <= 1:
             raise ValueError("已有模型 AUROC 无效: " + name)
+        if record.get("metric_scope") != "random_holdout":
+            raise ValueError("已有模型指标口径无效: " + name)
     return checkpoint
-
-
-def load_candidate_checkpoint(candidate_path, baseline_path, model_names, baseline_recipe=BASE_RECIPE):
-    """【自写】新旧候选配方均可暖启动；正式旧权重始终只读。"""
-    if Path(candidate_path).is_file():
-        return load_resume_checkpoint(candidate_path, model_names, recipe=(RECIPE, *PRIOR_RECIPES))
-    return load_resume_checkpoint(baseline_path, model_names, recipe=baseline_recipe)
 
 
 def inference_model_names(checkpoint, model_names):
@@ -209,29 +216,6 @@ def inference_model_names(checkpoint, model_names):
     if not checkpoint.get("training_complete") or selected not in (*model_names, "ensemble"):
         raise RuntimeError("模型未完成最终验证选模；请先续训 train.py，不能用阶段性参数生成提交 CSV")
     return tuple(model_names) if selected == "ensemble" else (selected,)
-
-
-def resume_start_epoch(checkpoint, name):
-    """【自写】每次启动的轮次均从 1 计数；旧权重只提供参数和 AUROC 门槛。"""
-    return 1
-
-
-def resume_baseline_auc(checkpoint, name, measured_auc):
-    """【自写】整套官方验证集复核后建立续训门槛；差异过大则保护旧权重。"""
-    saved_auc = checkpoint["best_metrics"][name]["auroc"]
-    if not math.isfinite(measured_auc) or abs(measured_auc - saved_auc) > 0.002:
-        raise ValueError(f"{name} 复核 AUROC 与旧权重记录不符: 当前{measured_auc:.6f}, 已存{saved_auc:.6f}")
-    return max(measured_auc, saved_auc)
-
-
-def restore_candidate_model(name, checkpoint, create_model, pretrain_dir):
-    """【自写】已有分支严格载入最佳参数；未训练分支才初始化非医学预训练权重。"""
-    if checkpoint is not None and name in checkpoint["states"]:
-        model, _ = create_model(name)
-        model.load_state_dict(checkpoint["states"][name], strict=True)
-        return model, checkpoint["pretraining"][name], True
-    model, origin = create_model(name, pretrain_dir)
-    return model, origin, False
 
 
 def print_progress(stage, index, total, started, detail=""):
