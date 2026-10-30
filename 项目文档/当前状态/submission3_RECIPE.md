@@ -1,6 +1,6 @@
-# submission4/5 联合训练配方
+# submission3 联合训练配方
 
-- 统一源码：`submission4/code/joint_train.py`；入口 `submission4/code/train.py` 和 `submission5/code/train.py`。后者默认 `--mode independent`，均把新运行写到 `submission4/runs`。
+- 统一源码：`submission3/code/joint_train.py`；统一入口 `submission3/code/train.py`，由 `--mode holdout|independent` 和 `--percent` 控制，两种模式的运行均写到 `submission3/runs`。
 - `--mode holdout --percent 80`：官方 train 内分层抽 80% 训练，余 20% 作诊断；`--mode independent --percent 80`：两份独立 80% 样本，允许重叠。百分比可通过 `DEFAULT_PERCENT` 或命令行设置。官方 valid 始终保留为唯一晋升指标。
 - 初始双骨干参数来自正式 `submission/model/best_model.pth`（其原始预训练仅为非医学 ImageNet）。两个骨干的原训练见过官方 train，因此这两种内部抽样的诊断分数均不作为独立泛化依据。
 - ConvNeXt-Tiny 与 EfficientNetV2-S 共用同一输入批次，融合概率为两支 sigmoid 均值；一个 focal + 0.1 pairwise AUC 损失反传，单个 AdamW 同时更新两支分类头。骨干冻结，384 等比补边，FP32 单张无 TTA 推理。

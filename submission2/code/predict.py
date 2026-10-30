@@ -1,4 +1,4 @@
-"""使用 submission4 已完成的检查点预测官方 test，生成三列提交 CSV。"""
+"""使用 submission2 已完成的检查点预测官方 test，生成三列提交 CSV。"""
 
 import argparse
 import time
@@ -21,7 +21,7 @@ def load_inference_models(checkpoint_path=MODEL_PATH):
     torch.backends.cuda.matmul.allow_tf32 = False
     checkpoint_path = Path(checkpoint_path)
     if not checkpoint_path.is_file():
-        raise FileNotFoundError("尚未生成 submission4 最终权重: " + str(checkpoint_path))
+        raise FileNotFoundError("尚未生成 submission2 最终权重: " + str(checkpoint_path))
     checkpoint = load_checkpoint(checkpoint_path)
     if checkpoint.get("recipe") not in (
             RECIPE, DAM_RECIPE, "official_train_joint_heads_rgb384_focal_pairauc_v2"):
@@ -69,7 +69,7 @@ def predict(output_csv=OUTPUT_CSV, checkpoint_path=MODEL_PATH):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="从已完成的 submission4 权重生成提交 CSV")
+    parser = argparse.ArgumentParser(description="从已完成的 submission2 权重生成提交 CSV")
     parser.add_argument("output_csv", nargs="?", type=Path, default=OUTPUT_CSV)
     parser.add_argument("--checkpoint", type=Path, default=MODEL_PATH)
     args = parser.parse_args()

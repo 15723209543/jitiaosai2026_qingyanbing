@@ -1,4 +1,4 @@
-"""Unified submission4/5 joint training. Only untouched official valid selects weights."""
+"""Unified submission3 joint training. Only untouched official valid selects weights."""
 import argparse
 import json
 import os

@@ -41,3 +41,8 @@ LOCAL_NOTES/
 !submission/model/best_model.pth
 training/20261028/progress.pth
 training/20261028/*_last.pth
+
+项目文档/归档_本地/
+**/.cache/
+submission2/runs/
+submission3/runs/
