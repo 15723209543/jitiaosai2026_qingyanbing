@@ -1,3 +1,17 @@
+<!-- FRACTIONAL_SUBMISSIONS_20261030_START -->
+## 2026-10-30 submission4 / submission5 新抽样实验（待训练）
+
+用户澄清“97.78”指当前 `submission/` 文件夹模型；这是用户报告的官网分数，现有成绩台账没有该次上传的版本或 CSV 哈希对应关系。历史旧 `submission4` 是不同的 RGB64 五模型，现新建的 `submission4/` 和 `submission5/` 均复制**当前 submission 双骨干及 balanced focal+pairAUC 配方**，没有把历史模型或成绩冒充新实验。
+
+- `submission4`：官方 train+valid 合并池按标签分层固定抽 80% 训练，余 20% 验证，图片记录互斥。`submission5`：从相同合并池独立抽两份 80% 分别训练/评估，允许重叠，日志会记录真实重叠数；其 AUROC 是集内指标。两个目录的 `code/train.py` 顶部都可改默认 `80`，命令行 `--percent` 也可覆盖；一次 run 内划分固定，`--resume` 校验指纹并从上一完整轮继续。
+- 两个实验默认仅由合规的非医学 ImageNet-1K 原始权重初始化。已有 `submission/` 和 `submission3/` 权重都见过官方数据，不能用于随机 80/20 留出实验的独立验证。官方 test 只供完成模型预测，不能用历史测试预测或平台分数选模；预测和计时共用 `score_batch`、FP32、无 TTA。
+- 新训练器沿用当前双骨干、384 预处理、balanced focal+0.1 pairAUC、学习率，并设置每支上限 30 轮/耐心 10；当前 `submission/` 的 2026-10-28 实际训练是旧任务权重续训且最多 3 轮、首次提升即停。新实验为避免留出样本先前泄漏，改用 ImageNet 初始权重，故不是旧训练日志的逐轮重放。
+- **尚无新实验训练结果**：本工作树没有 `glaucoma_first/`，当前 `submission/model/best_model.pth` 是 134 字节 Git LFS 指针，且可调用 Python 环境没有 PyTorch；未启动 GPU 训练，`submission4/5` 均无完成 PTH、预测 CSV、AUROC、计时或官网分数。训练机应先确认没有重复训练进程，检查真实数据和 ImageNet 原始权重，再按 `docs/submission4_5_抽样方案.md` 运行。原始数据/junction 目标只读。
+- 新实验当前的 ImageNet 初始化需访问 Hugging Face API/下载；它不会自动读取 `submission/pretrain_model/` 的 LFS 文件。`--resume` 的划分指纹覆盖图片名和标签，不覆盖原图字节；跨机器恢复前须核对原图内容一致。详见操作方案。
+- 版本号保持官网上传次数位 `18`；除非用户明确更改，后续提交只增加末位。同步状态见 `docs/使用说明.md`、`docs/训练结果.md`、`docs/平台成绩台账.md`。
+
+<!-- FRACTIONAL_SUBMISSIONS_20261030_END -->
+
 <!-- INSAMPLE_20261029_START -->
 ## 2026-10-29 submission3（train+valid 合并）集内训练
 

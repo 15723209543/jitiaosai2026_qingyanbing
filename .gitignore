@@ -20,6 +20,16 @@ submission2/model/*.tmp
 submission3/model/*.pth
 submission3/model/*.tmp
 submission3/pretrain_model/
+submission4/model/*.tmp
+submission4/model/*.pth
+!submission4/model/best_model.pth
+submission4/pretrain_model/
+submission4/runs/
+submission5/model/*.tmp
+submission5/model/*.pth
+!submission5/model/best_model.pth
+submission5/pretrain_model/
+submission5/runs/
 submission/pretrain_model/**/.cache/
 历史归档_本地/
 
