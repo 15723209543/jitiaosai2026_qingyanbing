@@ -14,7 +14,7 @@
 
 ## 模型状态（2026-10-31）
 
-正式模型官方 valid AUROC 为 **0.9859689935**，正式权重和 CSV 保持不变。今日 `submission2` 与 `submission3` 各新增两轮低学习率训练，最佳官方独立 valid AUROC 分别为 **0.9859329051** 和 **0.9859541880**，都在第 1 轮，均未超过正式模型，因此没有晋升权重。两份今日新候选 CSV 已生成并核验，分别位于 `submission2/submission.csv` 与 `submission3/submission.csv`。昨日旧 CSV 平台成绩分别为 97.87、97.81（用户提供），不可视为今日成绩，也不用于选模。详细结果见 [训练结果](项目文档/当前状态/训练结果.md)。
+正式模型官方 valid AUROC 为 **0.9859689935**，正式权重和 CSV 保持不变。今日 `submission2` 与 `submission3` 完成多轮低学习率训练，最佳官方独立 valid AUROC 分别为 **0.9859523373** 和 **0.9859541880**，分别为选中run的第1轮，均未超过正式模型，因此没有晋升权重。两份今日新候选 CSV 已生成并核验，分别位于 `submission2/submission.csv` 与 `submission3/submission.csv`。昨日旧 CSV 平台成绩分别为 97.87、97.81（用户提供），不可视为今日成绩，也不用于选模。详细结果见 [训练结果](项目文档/当前状态/训练结果.md)。
 
 ## 运行
 
@@ -26,4 +26,4 @@ python submission3/code/train.py --mode independent --percent 80 --epochs 1
 python submission2/code/train.py --epochs 1
 ```
 
-推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。昨日和今日候选权重分别复制到 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/` 与 `项目文档/训练记录/20261031_候选权重/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。
+推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。昨日和今日候选权重保存在 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/`、`项目文档/训练记录/20261031_候选权重/` 与 `项目文档/训练记录/20261031_晚间追加训练/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。

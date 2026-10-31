@@ -1,13 +1,13 @@
-# AI 交接（2026-10-31，V1.20.2）
+# AI 交接（2026-10-31，V1.20.3）
 
-先读本目录 `使用说明.md`、`训练结果.md`、`submission2_RECIPE.md`、`submission3_RECIPE.md` 和项目 `AGENTS.md`。历史交接在 `项目文档/历史研究记录/AI_HANDOFF_截至V1.18.3.md`，旧路径及待办不代表现状。物理训练机路径 `D:/青眼病题`。
+先读本目录 `使用说明.md`、`训练结果.md`、`submission2_RECIPE.md`、`submission3_RECIPE.md` 和项目 `AGENTS.md`。历史长交接见 `项目文档/历史研究记录/AI_HANDOFF_截至V1.18.3.md`，其中旧路径与待办不代表现状。物理训练机为 `D:/青眼病题`。
 
-用户要求北京时间 2026-10-31 20:00 前交付两份今日新 CSV。已生成并独立核验：`submission2/submission.csv` SHA256 `cbaae133560c1055441832b2f7d3b130036197ffba8388a9d2d6fa4f082a8c1b`；`submission3/submission.csv` SHA256 `9230c3fb39e3b41d58fbed6e10d2ad5a42cc6fd971ba52db6d4c532d16769d0d`。各 5855 行、三列表头、官方 test 顺序、概率和标签一致；彼此不同，也与各自昨日版不同。今日平台成绩尚未知，需用户上传后反馈。
+10 月 31 日最终交付两份已核验 CSV：`submission2/submission.csv` SHA256 `418e6ca3930e5030811d75cd815e90ed24cbf1dea56be8baffdee2c73dd41485`；`submission3/submission.csv` SHA256 `9230c3fb39e3b41d58fbed6e10d2ad5a42cc6fd971ba52db6d4c532d16769d0d`。各 5855 行，官方 test 顺序、三列表头、概率范围及0.5阈值标签正确，两份不同。今天最终两份文件的官网分数待用户上传。
 
-今日两条路线从正式权重开启独立低学习率 run，各完成 2 轮。submission2 full/marginAUC LR1e-5，第 1/2 轮官方独立 valid AUROC 为 0.9859329050836605 / 0.985854250757395；submission3 independent80/pairAUC LR5e-6 为 0.9859541880190029 / 0.9859162488733925。两条均取第 1 轮生成 CSV，但均低于正式基线 0.9859689935392411，因此没有晋升，不得把候选复制为 `model/best_model.pth`。两份候选 PTH 副本在 `项目文档/训练记录/20261031_候选权重/`，由 Git LFS 管理；原 run 在各自 `runs/`。昨日 CSV 快照在 `项目文档/训练记录/20261031_多轮训练/`。
+正式模型官方独立 valid AUROC 0.9859689935392411。今天最高的 submission2 是晚间 LR5e-6 full/marginAUC 第1轮 0.9859523373289731；submission3 是 LR5e-6 independent80/pairAUC 第1轮 0.9859541880190029。其余低学习率追加试验都更差。两条均未超过正式模型，故没有晋升，不得把候选覆盖为 `model/best_model.pth`。最终候选 PTH 的Git LFS副本分别在 `项目文档/训练记录/20261031_晚间追加训练/submission2/` 与 `项目文档/训练记录/20261031_候选权重/submission3/`；原 run 在各自忽略的 `runs/`。
 
-10 月 30 日旧 CSV 官网成绩由用户提供：submission2 97.87（ID 26227），submission3 97.81（ID 26230）。平台测试反馈不参与本地 AUROC 选模，不能套用到今日 CSV。正式 `submission/` 权重及 CSV 未改动。
+昨日官网成绩由用户提供：submission2 97.87（ID26227），submission3 97.81（ID26230）。只属于10月30日旧CSV，平台测试反馈不用于本地AUROC选模，也不能套到今天文件。正式 `submission/` 权重与CSV保持不变。
 
-旧 submission2/3 本地 ZIP 在 Git 忽略的 `项目文档/归档_本地/`，并作为 GitHub Release 资产。迁移备份 ZIP 仅本机保存，迁移方案见 `项目文档/修改说明/迁移与模型提升方案_20261029.md`。原始数据和 junction 目标只读；不使用外部医学数据、医学权重或 TTA。修改配方须更新 RECIPE 并重训；GPU 训练前查重复进程，中断后只以相同参数从原 run `--resume`。用户指定本次提交 V1.20.2，中间位 20 不得自行变更。
+旧 submission2/3 本地 ZIP 在 Git 忽略的 `项目文档/归档_本地/`，并作为GitHub Release资产。迁移备份ZIP仅本机保存，迁移方案见 `项目文档/修改说明/迁移与模型提升方案_20261029.md`。原始数据及junction目标只读；不得使用外部医学数据、医学权重、TTA或测试调参。修改配方须更新RECIPE并重新训练；启动GPU训练前查重复进程，中断后只以相同参数从原run `--resume`。用户指定本次提交版本V1.20.3，中间位20固定。
 
-本次交付含今日两份 CSV、文档和候选 PTH（Git LFS）。后续由用户上传今日两份 CSV 获取新平台分数。
+后续由用户上传今天两份最终CSV并反馈官网分数；两条候选如要继续迭代，仍只能以官方独立valid AUROC选模。

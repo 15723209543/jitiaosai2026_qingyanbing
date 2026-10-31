@@ -7,3 +7,10 @@
 ## 2026-10-31 多轮低学习率实验（已训练）
 
 在 2026-10-30 已完成的 full/marginauc、LR `5e-5` run 中，官方 valid AUROC 第 1 轮为 0.9856580776，第 2 轮降至 0.9855026197。因此下一次独立 run 仍从正式 `submission/model/best_model.pth` 初始化，保持 full 官方 train、focal + margin pairwise AUC、BF16、384 预处理及官方 valid 独立选模，但将学习率降至 `1e-5`，分轮训练并按官方 valid AUROC 保留最佳候选。旧 run 与新 run 不能跨参数 `--resume`。实际 run `submission2/runs/20261031_143405_202421` 完成2轮；官方独立 valid AUROC 第1轮 0.9859329050836605、第2轮 0.985854250757395，选择第1轮为本路线本轮最佳。两轮均低于正式基线 0.9859689935392411，未晋升 `model/best_model.pth`。
+
+## 2026-10-31 续试验（已完成）
+
+用户要求继续至20:00前选最佳；从正式 submission/model/best_model.pth 新开 run，仍用 full 官方 train、marginauc、BF16、官方 valid 独立选模，学习率降至 5e-6。不得跨学习率 resume；验证完成后仅用更优候选替换已交付 CSV。仅官方 valid 严格高于正式基线 0.9859689935392411 才晋升模型。
+
+
+实际run `20261031_172549_567435` 第1轮官方valid AUROC 0.9859523373289731，高于此前本路线0.9859329050836605，因此用此候选重新预测CSV；仍低于正式基线，未晋升模型。
