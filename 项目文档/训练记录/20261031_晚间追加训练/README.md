@@ -11,4 +11,4 @@
 
 新s2候选PTH在 `submission2/candidate_epoch1.pth`，为Git LFS文件；原训练run见表。PTH SHA256 `ede40880f25d6bd00da24dd16537921df2e7134abfe488dd4af08f002070e67`，大小200821471字节。它仍低于正式基线，未晋升正式权重。s3继续使用 `项目文档/训练记录/20261031_候选权重/submission3/candidate_epoch1.pth`。
 
-`submission2_v1.20.2_backup.csv` 是重新预测前原件，SHA256 `cbaae133560c1055441832b2f7d3b130036197ffba8388a9d2d6fa4f082a8c1b`。新预测经独立校验5855行、官方test顺序、表头、概率和0.5阈值标签，最终 `submission2/submission.csv` SHA256 `418e6ca3930e5030811d75cd815e90ed24cbf1dea56be8baffdee2c73dd41485`。`submission3/submission.csv` 保持V1.20.2今日最佳版本，SHA256 `9230c3fb39e3b41d58fbed6e10d2ad5a42cc6fd971ba52db6d4c532d16769d0d`。今日最终平台成绩待上传。
+`submission2_v1.20.2_backup.csv` 是重新预测前原件，SHA256 `cbaae133560c1055441832b2f7d3b130036197ffba8388a9d2d6fa4f082a8c1b`。新预测经独立校验5855行、官方test顺序、表头、概率和0.5阈值标签，最终 `submission2/submission.csv` SHA256 `418e6ca3930e5030811d75cd815e90ed24cbf1dea56be8baffdee2c73dd41485`。`submission3/submission.csv` 保持V1.20.2今日最佳版本，SHA256 `9230c3fb39e3b41d58fbed6e10d2ad5a42cc6fd971ba52db6d4c532d16769d0d`。用户提供的今日最终平台成绩：submission2 **97.80**（ID 27513），submission3 **97.79**（ID 27515）；对应关系与截图见 [提交记录](../../提交记录/20261031_两路线官网成绩.md)。平台分数不用于本地AUROC选模。
