@@ -8,6 +8,7 @@
 - `submission/`：当前正式模型、推理代码与 `submission.csv`。
 - `submission2/`：margin AUC 候选代码与 `submission.csv`。
 - `submission3/`：统一双模型联合训练，`--mode holdout` 对应 80/20，`--mode independent` 对应独立 80/80，`--percent` 可调整；含候选 `submission.csv`。
+- `submission4/`：待训练的 512 像素 ConvNeXt-Tiny 全参数微调新路线；目前只有代码与配方，没有权重或 CSV。
 - `项目文档/当前状态/`：最新说明、训练结果、配方及 AI 交接。
 - `项目文档/历史研究记录/`、`项目文档/训练记录/`：历史文档、运行证据及源码。
 - `项目文档/归档_本地/`：本机 ZIP 备份，Git 忽略；旧 submission2/3 ZIP 另见 [GitHub Release](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/tag/archive-V1.18.2-submission2-3)。
@@ -27,3 +28,7 @@ python submission2/code/train.py --epochs 1
 ```
 
 推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。昨日和今日候选权重保存在 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/`、`项目文档/训练记录/20261031_候选权重/` 与 `项目文档/训练记录/20261031_晚间追加训练/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。
+
+## 下一轮三路线实验（准备就绪，尚未训练）
+
+`submission4` 使用合规 ImageNet-1K 预训练的单个 ConvNeXt-Tiny，512 像素视野处理与全参数微调。训练脚本及显式 checkpoint 预测入口见 [submission4 使用说明](submission4/README.md)；三路线训练与两份 CSV 选择见 [11 月 1 日计划](项目文档/当前状态/20261101_三路线训练计划.md)。新路线尚无本项目验证 AUROC、模型权重、CSV 或官网成绩。

@@ -1,3 +1,7 @@
+## 2026-10-31 Submission4 交接（V1.22.2，待训练）
+
+`D:/青眼病题/submission4/` 已新增 512 像素 ConvNeXt-Tiny 全参数微调代码，独立非医学 ImageNet-1K 原始权重初始化；官方 train 训练、官方 valid AUROC 选模、test 仅最终预测。README/RECIPE 及三路线计划在对应目录。已用 deepStudy 环境核对依赖、官方 train/valid/test 数量 51396/5849/5855、原始权重严格加载；**未运行 GPU 训练、未生成候选权重或 CSV，未核验 100ms 速度**。明日先检查 GPU 与胸片任务，按计划串行训练 submission2、3、4，取官方独立 valid AUROC 最高且合规的两条生成 CSV。正式旧模型和两份现有 CSV 未覆盖。版本中间位固定 22，下一提交末位加一。
+
 # AI 交接（2026-10-31，V1.22.1）
 
 先读本目录 `使用说明.md`、`训练结果.md`、`submission2_RECIPE.md`、`submission3_RECIPE.md` 和项目 `AGENTS.md`。历史长交接见 `项目文档/历史研究记录/AI_HANDOFF_截至V1.18.3.md`，其中旧路径与待办不代表现状。物理训练机为 `D:/青眼病题`。
