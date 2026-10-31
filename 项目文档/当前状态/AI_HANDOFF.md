@@ -1,10 +1,10 @@
-# AI 交接（2026-10-31，V1.20.3）
+# AI 交接（2026-10-31，V1.20.4）
 
 先读本目录 `使用说明.md`、`训练结果.md`、`submission2_RECIPE.md`、`submission3_RECIPE.md` 和项目 `AGENTS.md`。历史长交接见 `项目文档/历史研究记录/AI_HANDOFF_截至V1.18.3.md`，其中旧路径与待办不代表现状。物理训练机为 `D:/青眼病题`。
 
 10 月 31 日最终交付两份已核验 CSV：`submission2/submission.csv` SHA256 `418e6ca3930e5030811d75cd815e90ed24cbf1dea56be8baffdee2c73dd41485`；`submission3/submission.csv` SHA256 `9230c3fb39e3b41d58fbed6e10d2ad5a42cc6fd971ba52db6d4c532d16769d0d`。各 5855 行，官方 test 顺序、三列表头、概率范围及0.5阈值标签正确，两份不同。今天最终两份文件的官网分数待用户上传。
 
-正式模型官方独立 valid AUROC 0.9859689935392411。今天最高的 submission2 是晚间 LR5e-6 full/marginAUC 第1轮 0.9859523373289731；submission3 是 LR5e-6 independent80/pairAUC 第1轮 0.9859541880190029。其余低学习率追加试验都更差。两条均未超过正式模型，故没有晋升，不得把候选覆盖为 `model/best_model.pth`。最终候选 PTH 的Git LFS副本分别在 `项目文档/训练记录/20261031_晚间追加训练/submission2/` 与 `项目文档/训练记录/20261031_候选权重/submission3/`；原 run 在各自忽略的 `runs/`。
+正式模型官方独立 valid AUROC 0.9859689935392411。今天最高的 submission2 是晚间 LR5e-6 full/marginAUC 第1轮 0.9859523373289731；submission3 是 LR5e-6 independent80/pairAUC 第1轮 0.9859541880190029。该s2 run续训第2轮官方valid AUROC降至0.9859329050836605；其余低学习率追加试验也更差，因此最终两份CSV不再改变。两条均未超过正式模型，故没有晋升，不得把候选覆盖为 `model/best_model.pth`。最终候选 PTH 的Git LFS副本分别在 `项目文档/训练记录/20261031_晚间追加训练/submission2/` 与 `项目文档/训练记录/20261031_候选权重/submission3/`；原 run 在各自忽略的 `runs/`。
 
 昨日官网成绩由用户提供：submission2 97.87（ID26227），submission3 97.81（ID26230）。只属于10月30日旧CSV，平台测试反馈不用于本地AUROC选模，也不能套到今天文件。正式 `submission/` 权重与CSV保持不变。
 

@@ -6,6 +6,7 @@
 |---|---|---|---:|---|
 | submission3 | `20261031_165415_744669` | independent80/80 pairAUC BF16 LR3e-6，第1轮 | 0.9859514119839582 | 低于既有s3最佳0.9859541880190029，不选 |
 | submission2 | `20261031_172549_567435` | full marginAUC BF16 LR5e-6，第1轮 | 0.9859523373289731 | 高于既有s2最佳0.9859329050836605，选用 |
+| submission2 | 同一run第2轮（精确resume） | full marginAUC BF16 LR5e-6 | 0.9859329050836605 | 低于该run第1轮，不选 |
 | submission3 | `20261031_181138_671046` | independent80/80 pairAUC BF16 LR4e-6，第1轮 | 0.9859477106038986 | 不选 |
 
 新s2候选PTH在 `submission2/candidate_epoch1.pth`，为Git LFS文件；原训练run见表。PTH SHA256 `ede40880f25d6bd00da24dd16537921df2e7134abfe488dd4af08f002070e67`，大小200821471字节。它仍低于正式基线，未晋升正式权重。s3继续使用 `项目文档/训练记录/20261031_候选权重/submission3/candidate_epoch1.pth`。
