@@ -12,9 +12,9 @@
 - `项目文档/历史研究记录/`、`项目文档/训练记录/`：历史文档、运行证据及源码。
 - `项目文档/归档_本地/`：本机 ZIP 备份，Git 忽略；旧 submission2/3 ZIP 另见 [GitHub Release](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/tag/archive-V1.18.2-submission2-3)。
 
-## 模型状态
+## 模型状态（2026-10-31）
 
-正式模型官方 valid AUROC 为 **0.9859689935**。`submission2` 候选为 **0.9856580776**，`submission3` 候选为 **0.9859218009**，均未超过正式模型，故两目录没有晋升的 `model/best_model.pth`。两份同名 CSV 位于不同目录，均是候选，不能当作模型已提升的证据。官网 2026-10-30 晚上两次提交由用户提供对应关系：`submission2` **97.87**（ID 26227），`submission3` **97.81**（ID 26230）。这是平台分数，不改变官方 valid AUROC 晋升结论。官方测试集不用于选模。详细核验见 [训练结果](项目文档/当前状态/训练结果.md)。
+正式模型官方 valid AUROC 为 **0.9859689935**，正式权重和 CSV 保持不变。今日 `submission2` 与 `submission3` 各新增两轮低学习率训练，最佳官方独立 valid AUROC 分别为 **0.9859329051** 和 **0.9859541880**，都在第 1 轮，均未超过正式模型，因此没有晋升权重。两份今日新候选 CSV 已生成并核验，分别位于 `submission2/submission.csv` 与 `submission3/submission.csv`。昨日旧 CSV 平台成绩分别为 97.87、97.81（用户提供），不可视为今日成绩，也不用于选模。详细结果见 [训练结果](项目文档/当前状态/训练结果.md)。
 
 ## 运行
 
@@ -26,4 +26,4 @@ python submission3/code/train.py --mode independent --percent 80 --epochs 1
 python submission2/code/train.py --epochs 1
 ```
 
-推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。候选权重已复制到 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。
+推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。昨日和今日候选权重分别复制到 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/` 与 `项目文档/训练记录/20261031_候选权重/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。
