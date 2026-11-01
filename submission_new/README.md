@@ -18,7 +18,7 @@
 ## 训练与预测
 
 1. 官方 `glaucoma_first/train.csv`、`valid.csv`、`test.csv` 及同名图片目录放在 `submission_new/` 的同级；亦可用环境变量 `GLAUCOMA_DATA_ROOT` 指向官方数据。绝不读取 `glaucoma_first_my`。
-2. 在 CUDA GPU 环境安装 `code/requirements.txt`。首次运行 `python submission_new/code/train.py` 自动从公开 `timm/convnext_small.fb_in1k` 下载非医学 ImageNet-1K 权重并保存到 `pretrain_model/convnext_small.fb_in1k/model.safetensors`。无法联网时先手工取得该模型的官方 `model.safetensors` 放到相同位置。预训练来源与 Apache-2.0 许可证须在正式提交材料中写明、附全文和 SHA256。
+2. 在 CUDA GPU 环境安装 `code/requirements.txt`。首次运行 `python submission_new/code/train.py` 自动从公开的 [timm/convnext_small.fb_in1k](https://huggingface.co/timm/convnext_small.fb_in1k) 下载非医学 ImageNet-1K 权重并保存到 `pretrain_model/convnext_small.fb_in1k/model.safetensors`。无法联网时先手工取得该模型的官方 `model.safetensors` 放到相同位置。预训练来源与 Apache-2.0 许可证须在正式提交材料中写明、附全文和 SHA256。
 3. 运行 `python submission_new/code/train.py`。默认 micro-batch 2×累积32（适配约8GB GPU 的保守起点）；显存充足可 `--batch-size 8 --accumulation 8` 接近报告配方。每轮完整训练 41,116 张，官方 valid 5,849 张；按 valid AUROC 提升更新唯一 `model/best_model.pth`。完整轮次状态写到同级 `runs/submission_new/<时间>/last.pth`。中断后用原目录 `--resume`，不能用新 run 覆盖旧最佳。CPU 不执行完整训练。
 4. 完成验证后单独运行 `python submission_new/code/predict.py`，生成小写后缀 `submission_new/submission.csv`；训练不会改写任何历史 CSV。
 5. `python submission_new/cost.py <100张目录> <5张预热目录>` 计时，必须在比赛指定设备核对平均 ≤100ms/张。未实测前不声称达标。

@@ -28,7 +28,13 @@ def read_records(split):
     folder, table = DATA_ROOT / split, DATA_ROOT / f"{split}.csv"
     if not folder.is_dir() or not table.is_file():
         raise FileNotFoundError(f"缺少官方数据: {folder} 或 {table}")
-    files = {p.name.casefold(): p for p in folder.rglob("*") if p.is_file()}
+    files = {}
+    for path in folder.rglob("*"):
+        if path.is_file():
+            key = path.name.casefold()
+            if key in files:
+                raise ValueError(f"图片目录中有重复文件名: {path.name}")
+            files[key] = path
     records, seen = [], set()
     with table.open(encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)

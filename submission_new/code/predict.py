@@ -36,6 +36,7 @@ def predict(output=ROOT / "submission.csv", checkpoint_path=MODEL_PATH, workers=
     output = Path(output)
     if output.suffix != ".csv":
         raise ValueError("提交文件后缀必须为小写 .csv")
+    output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_suffix(".csv.tmp")
     count = 0
     with temporary.open("w", encoding="utf-8", newline="") as handle:
