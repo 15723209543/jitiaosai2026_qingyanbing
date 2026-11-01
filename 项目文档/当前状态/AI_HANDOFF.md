@@ -1,3 +1,7 @@
+## 2026-11-01 上午交接（待提交 V1.22.3）
+
+用户要求中午前先交一份 CSV。已与胸片任务约定青眼病先使用共享 GPU；submission2 一轮 LR3e-6 完成，官方 valid AUROC 0.9859551133640179（旧路线候选 0.9859523373289731，正式 baseline 0.9859689935392411）。已用新候选预测、独立核验并替换 submission2/submission.csv，SHA256 244d93d85fd4f4b7d99a98b614558ff410cdb4fc15815e0da5afad04bed2e480。完整权重在 项目文档/训练记录/20261101_上午短轮/submission2_candidate_epoch1.pth；原 run 在 ignored runs。GPU 0 MiB 且训练预测进程已退出，已明确交还胸片任务。submission3/4 今日尚未训练；下午训练待用户决定。新 CSV 官网分数未知，不得沿用昨日 97.80。中间位固定 22，下一提交 V1.22.3。
+
 ## 2026-10-31 Submission4 交接（V1.22.2，待训练）
 
 `D:/青眼病题/submission4/` 已新增 512 像素 ConvNeXt-Tiny 全参数微调代码，独立非医学 ImageNet-1K 原始权重初始化；官方 train 训练、官方 valid AUROC 选模、test 仅最终预测。README/RECIPE 及三路线计划在对应目录。已用 deepStudy 环境核对依赖、官方 train/valid/test 数量 51396/5849/5855、原始权重严格加载；**未运行 GPU 训练、未生成候选权重或 CSV，未核验 100ms 速度**。明日先检查 GPU 与胸片任务，按计划串行训练 submission2、3、4，取官方独立 valid AUROC 最高且合规的两条生成 CSV。正式旧模型和两份现有 CSV 未覆盖。版本中间位固定 22，下一提交末位加一。
