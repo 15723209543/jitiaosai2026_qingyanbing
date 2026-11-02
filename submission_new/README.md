@@ -24,3 +24,11 @@
 5. `python submission_new/cost.py <100张目录> <5张预热目录>` 计时，必须在比赛指定设备核对平均 ≤100ms/张。未实测前不声称达标。
 
 本目录仅是候选实验。正式提交前，按赛规补齐 `model`、`pretrain_model`、`licenses`、核验工作簿及预测 CSV；不要提交未训练的占位模型。
+
+## 2026-11-02 新候选 submission_new
+
+已完成 7 轮本机近似复现；官方独立 valid AUROC 最佳 0.9863724439657326（第 5 轮）。可提交 CSV 为 `submission_new/submission.csv`，5855 行已核验，SHA256 `39412da3b861de2e1781bed85e16de91367ba40793de8deeec7056aeaeee7f30`，官网分数未知。训练与报告作者的 98.55 不完全相同，详见 `submission_new/RECIPE.md`。旧路线 CSV 保留；官方平台成绩与指定硬件速度待实测。
+
+### 2026-11-02 19:36 本机速度补测
+
+胸片任务明确释放 GPU 后，在同一台 RTX 5060 Laptop 8GB 上执行 `D:/anaconda3.0/envs/deepStudy/python.exe -u submission_new/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5`。计时图片为官方 valid 的只读副本，5 张预热、100 张×3 轮；单张从读图、预处理至模型输出含 CUDA 同步，与预测共用 `score_batch`。实测平均 **0.057311 秒/张（57.311 ms/张）**，低于 100 ms 参考门槛。此结果仅代表本机与该图像集，不冒称比赛指定设备正式验收。19:36 确认无 Python 进程、GPU 显存 26 MiB，并明确归还胸片任务。此前文档“速度尚未实测”已由本段更新。

@@ -1,3 +1,7 @@
+## 2026-11-01 最新用户反馈与推送限制
+
+用户报告今日 submission2 官网 97.79，低于 10 月 31 日 97.80。今日 V1.22.3 已于 10:08 推送至远端；从现在起每天最多推送一次，因此不再二次推送。详细明日执行方案在 20261102_训练与单次推送方案.md；明日先试 submission4 全参数 512，并按官方独立 valid AUROC/速度选模，训练完成后集中推送 V1.22.4。当前 s4 今日未训练，成绩记录与方案只在本地工作树，尚未推送。
+
 ## 2026-11-01 上午交接（待提交 V1.22.3）
 
 用户要求中午前先交一份 CSV。已与胸片任务约定青眼病先使用共享 GPU；submission2 一轮 LR3e-6 完成，官方 valid AUROC 0.9859551133640179（旧路线候选 0.9859523373289731，正式 baseline 0.9859689935392411）。已用新候选预测、独立核验并替换 submission2/submission.csv，SHA256 244d93d85fd4f4b7d99a98b614558ff410cdb4fc15815e0da5afad04bed2e480。完整权重在 项目文档/训练记录/20261101_上午短轮/submission2_candidate_epoch1.pth；原 run 在 ignored runs。GPU 0 MiB 且训练预测进程已退出，已明确交还胸片任务。submission3/4 今日尚未训练；下午训练待用户决定。新 CSV 官网分数未知，不得沿用昨日 97.80。中间位固定 22，下一提交 V1.22.3。
@@ -19,3 +23,13 @@
 旧 submission2/3 本地 ZIP 在 Git 忽略的 `项目文档/归档_本地/`，并作为GitHub Release资产。迁移备份ZIP仅本机保存，迁移方案见 `项目文档/修改说明/迁移与模型提升方案_20261029.md`。原始数据及junction目标只读；不得使用外部医学数据、医学权重、TTA或测试调参。修改配方须更新RECIPE并重新训练；启动GPU训练前查重复进程，中断后只以相同参数从原run `--resume`。用户已明确指定本次成绩记录提交版本为 V1.22.1；中间位22此后不可自行更改。
 
 两份今日最终CSV已由用户上传并反馈官网分数；若继续迭代，仍只能以官方独立valid AUROC选模。
+
+## 2026-11-02 submission_new 本机近似复现结果
+
+依据远端 `submission_new` 与用户提供的高分报告，在本机 RTX 5060 Laptop 8GB 使用非医学 ImageNet-1K `convnext_small.fb_in1k` 初始化。官方 train 51,396 张中分层抽取 41,116 张训练；官方 valid 5,849 张只用于 AUROC 选模；test 5,855 张只用于最终预测。实际命令：`D:/anaconda3.0/envs/deepStudy/python.exe -u submission_new/code/train.py --epochs 7 --batch-size 8 --accumulation 8 --workers 2`。运行目录 `runs/submission_new/20261102_133834`，原始日志 `runs/submission_new/launch_20261102_full.out.log`。7 轮已完整结束，官方 valid AUROC 依次为 0.957677、0.977851、0.982447、0.983859、**0.9863724439657326**、0.984559、0.984456；第 5 轮最佳，模型 `submission_new/model/best_model.pth` SHA256 `33ce0cccaf8bdaa9d132a75c6fd25d19dc2293ae9a5955b03d2b1f2647ff7a93`，`training_complete=True`、`metric_scope=official_valid`。该 AUROC 高于既有正式验证基线 0.9859689935392411，但官网分数未知，不能等同报告作者的 98.55。
+
+已用该最佳权重显式预测 `submission_new/submission.csv`，2026-11-02 15:58:32 北京时间生成，SHA256 `39412da3b861de2e1781bed85e16de91367ba40793de8deeec7056aeaeee7f30`。独立核验 5,855 行、官方 test 顺序、三列表头 `Image_name,Probability,Pred_Label`、概率范围与 0.5 标签，错误 0。无 TTA、外部医学数据、医学预训练或测试调参。该实现与报告作者仍有结构、划分、轮次和选模差异，属可运行近似复现。比赛平台分数及指定设备每张 100ms 计时尚未实测。共享 GPU 已于 16:01 确认空闲并交还胸片任务；本日不再重复启动训练。预训练文件 SHA256 `cb43de67007c925cddcddea01655191aeb805dfd9ec76eb1455e8b8de398e8a6`。
+
+### 2026-11-02 19:36 本机速度补测
+
+胸片任务明确释放 GPU 后，在同一台 RTX 5060 Laptop 8GB 上执行 `D:/anaconda3.0/envs/deepStudy/python.exe -u submission_new/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5`。计时图片为官方 valid 的只读副本，5 张预热、100 张×3 轮；单张从读图、预处理至模型输出含 CUDA 同步，与预测共用 `score_batch`。实测平均 **0.057311 秒/张（57.311 ms/张）**，低于 100 ms 参考门槛。此结果仅代表本机与该图像集，不冒称比赛指定设备正式验收。19:36 确认无 Python 进程、GPU 显存 26 MiB，并明确归还胸片任务。此前文档“速度尚未实测”已由本段更新。
