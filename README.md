@@ -1,3 +1,5 @@
+**当前版本：v1.24.1。** 2026-11-02 完成 Small320 七轮训练；用户提供官网成绩 97.65（ID 29668）。详见 [版本记录](项目文档/提交记录/20261102_v1.24.1_训练完成.md)。
+
 # 青眼病题
 
 这是 2026 年青光眼眼底图像二分类比赛项目。当前根目录唯一提交方案是 [`submission/`](submission/README.md)：非医学 ImageNet-1K ConvNeXt-Small、320 输入的 S23 g07 **近似复现**。旧 `submission`、`submission2`、`submission3`、`submission4` 已本地打包为四份 ZIP，保存在 Git 忽略的 `项目文档/归档_本地/20261102_旧submission/`；原目录额外保留在该处 `原目录/`，不会随普通 Git 拉取。
