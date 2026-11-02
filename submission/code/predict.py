@@ -1,81 +1,69 @@
-"""固定最佳推理方案：只读取已训练 PTH，预测官方 test 后生成三列 CSV。"""
+"""仅用已完成的官方验证最佳权重，对官方 test 单视图生成提交 CSV。"""
 
 import argparse
-import time
+import csv
+import math
 from pathlib import Path
 
 import torch
 from torch.utils.data import DataLoader
 
-from model import MODEL_NAMES, create_model
-from utils import (BATCH_SIZE, FundusDataset, MODEL_PATH, OUTPUT_CSV,
-                   inference_model_names, load_resume_checkpoint, metrics, print_metrics, print_progress,
-                   read_records, write_submission)
+from model import NAME, create_model
+from train import RECIPE, score_batch
+from utils import MODEL_PATH, ROOT, FundusDataset, load_checkpoint, read_records
 
 
-def load_inference_models():
-    """【改自旧 predict.load_inference_models】仅加载验证选中的分支，不下载预训练权重。"""
-    torch.set_num_threads(1)
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.allow_tf32 = False
-    torch.backends.cuda.matmul.allow_tf32 = False
-    if not MODEL_PATH.is_file():
-        raise FileNotFoundError("尚未生成训练完成的模型: " + str(MODEL_PATH))
-    checkpoint = load_resume_checkpoint(MODEL_PATH, MODEL_NAMES)
-    chosen = inference_model_names(checkpoint, MODEL_NAMES)
-    selected = checkpoint["selection"]["name"]
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    models = []
-    for name in chosen:
-        model, _ = create_model(name)
-        model.load_state_dict(checkpoint["states"][name], strict=True)
-        models.append(model.to(device).eval())
-    print("推理设备:", device, "固定方案:", selected, "FP32, 无TTA", flush=True)
-    return models
+def load_model(path=MODEL_PATH):
+    """【复用并修改】submission4/code/predict.py:load_model；核对模型配方及官方验证来源。"""
+    checkpoint = load_checkpoint(path)
+    if (checkpoint.get("recipe") != RECIPE or checkpoint.get("model_name") != NAME or
+            checkpoint.get("metric_scope") != "official_valid" or
+            checkpoint.get("training_complete") is not True):
+        raise ValueError("这不是 submission_new 已通过官方验证的完整权重")
+    model = create_model(pretrained=False)
+    model.load_state_dict(checkpoint["model"], strict=True)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    return model.to(device).eval(), checkpoint, device
 
 
-def score_batch(images, models):
-    """【改自旧 predict.score_batch】概率先平均，不能对二值标签投票。"""
-    if not models:
-        raise ValueError("没有可用模型")
-    device = next(models[0].parameters()).device
-    with torch.inference_mode():
-        x = images.to(device, non_blocking=False)
-        scores = [torch.sigmoid(model(x).flatten()) for model in models]
-        return torch.stack(scores).mean(dim=0).cpu().tolist()
-
-
-def collect(records, models, stage):
-    """【改自课堂 CNN 测试循环】验证和预测用同一套无随机增强的推理。"""
-    dataset = FundusDataset(records, training=False)
-    loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=4)
-    labels, scores, started = [], [], time.time()
-    for index, batch in enumerate(loader, 1):
-        if stage == "valid":
-            images, targets = batch
-            labels.extend(targets.tolist())
-        else:
-            images = batch
-        scores.extend(score_batch(images, models))
-        print_progress(stage, index, len(loader), started)
-    return labels, scores
-
-
-def predict(output_csv=OUTPUT_CSV):
-    """【改自旧 predict.predict】先只读验证展示指标，再按官方 test.csv 原顺序写结果。"""
-    models = load_inference_models()
-    valid_records = read_records("valid")
-    labels, validation = collect(valid_records, models, "valid")
-    print_metrics("固定模型验证", metrics(labels, validation))
-    test_records = read_records("test")
-    _, scores = collect(test_records, models, "test")
-    result = write_submission(test_records, scores, output_csv)
-    print(f"已输出:{result}, 测试图片:{len(test_records)}, 预测阳性:{sum(x >= 0.5 for x in scores)}", flush=True)
-    return result
+def predict(output=ROOT / "submission.csv", checkpoint_path=MODEL_PATH, workers=2):
+    """【复用并修改】submission4/code/predict.py:predict；按官方 test.csv 顺序写三列。"""
+    model, checkpoint, device = load_model(checkpoint_path)
+    print(f"预测设备:{device}; 最佳官方验证AUROC:{checkpoint['official_valid_auroc']:.6f}", flush=True)
+    records = read_records("test")
+    loader = DataLoader(FundusDataset(records), batch_size=1, shuffle=False,
+                        num_workers=workers, pin_memory=device == "cuda")
+    output = Path(output)
+    if output.suffix != ".csv":
+        raise ValueError("提交文件后缀必须为小写 .csv")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_suffix(".csv.tmp")
+    count = 0
+    with temporary.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["Image_name", "Probability", "Pred_Label"])
+        for images in loader:
+            probability = float(score_batch(images, model, device)[0])
+            if not math.isfinite(probability) or not 0 <= probability <= 1:
+                raise ValueError("预测概率非法")
+            probability = round(probability, 10)
+            name = str(Path(records[count][0]).with_suffix(".jpg"))
+            writer.writerow([name, f"{probability:.10f}", int(probability >= 0.5)])
+            count += 1
+            if count == 1 or count % 500 == 0 or count == len(records):
+                print(f"test, image:{count}/{len(records)}", flush=True)
+    if count != len(records):
+        temporary.unlink(missing_ok=True)
+        raise RuntimeError("测试集未完整预测")
+    temporary.replace(output)
+    print(f"已生成:{output}, 图片:{count}", flush=True)
+    return output
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="验证后生成可提交的 submission.csv；不训练")
-    parser.add_argument("output_csv", nargs="?", type=Path, default=OUTPUT_CSV)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--checkpoint", type=Path, default=MODEL_PATH)
+    parser.add_argument("--output", type=Path, default=ROOT / "submission.csv")
+    parser.add_argument("--workers", type=int, default=2)
     args = parser.parse_args()
-    predict(args.output_csv)
+    predict(args.output, args.checkpoint, args.workers)

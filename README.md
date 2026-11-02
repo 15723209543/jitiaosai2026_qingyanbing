@@ -1,39 +1,7 @@
 # 青眼病题
 
-## 2026-11-01 上午进展
+这是 2026 年青光眼眼底图像二分类比赛项目。当前根目录唯一提交方案是 [`submission/`](submission/README.md)：非医学 ImageNet-1K ConvNeXt-Small、320 输入的 S23 g07 **近似复现**。旧 `submission`、`submission2`、`submission3`、`submission4` 已本地打包为四份 ZIP，保存在 Git 忽略的 `项目文档/归档_本地/20261102_旧submission/`；原目录额外保留在该处 `原目录/`，不会随普通 Git 拉取。
 
-submission2 一轮短训已生成并核验 [首份新 CSV](submission2/submission.csv)，官方 valid AUROC 0.9859551133640179，官网成绩未知；submission3/4 今日尚未训练。详见 [训练记录](项目文档/训练记录/20261101_上午短轮/README.md)。
+当前最佳本机官方独立 valid AUROC **0.9863724439657326**（第5轮），提交文件 [`submission/submission.csv`](submission/submission.csv) 已核验 5855 行。用户 2026-11-02 官网反馈 **97.65**（ID 29668），见[提交记录](项目文档/提交记录/20261102_submission官网97.65.md)。报告作者的 98.55 与本机不是同一训练轨迹。明日从第7轮断点继续，详见[续训方案](项目文档/当前状态/20261103_submission复现续训方案.md)。
 
-
-本仓库是 2026 年青光眼眼底图像二分类比赛项目。本地使用官方训练集训练、独立官方验证集按 AUROC 选模，再对官方无标签测试集生成预测。初赛平台上传的文件名为 `submission.csv`；规则原文见根目录两份 PDF。
-
-## 当前目录
-
-- `glaucoma_first/`、`glaucoma_first_my/`：原始数据，只读。
-- `submission/`：当前正式模型、推理代码与 `submission.csv`。
-- `submission2/`：margin AUC 候选代码与 `submission.csv`。
-- `submission3/`：统一双模型联合训练，`--mode holdout` 对应 80/20，`--mode independent` 对应独立 80/80，`--percent` 可调整；含候选 `submission.csv`。
-- `submission4/`：待训练的 512 像素 ConvNeXt-Tiny 全参数微调新路线；目前只有代码与配方，没有权重或 CSV。
-- `项目文档/当前状态/`：最新说明、训练结果、配方及 AI 交接。
-- `项目文档/历史研究记录/`、`项目文档/训练记录/`：历史文档、运行证据及源码。
-- `项目文档/归档_本地/`：本机 ZIP 备份，Git 忽略；旧 submission2/3 ZIP 另见 [GitHub Release](https://github.com/15723209543/jitiaosai2026_qingyanbing/releases/tag/archive-V1.18.2-submission2-3)。
-
-## 模型状态（2026-10-31）
-
-正式模型官方 valid AUROC 为 **0.9859689935**，正式权重和 CSV 保持不变。今日 `submission2` 与 `submission3` 完成多轮低学习率训练，最佳官方独立 valid AUROC 分别为 **0.9859523373** 和 **0.9859541880**，分别为选中run的第1轮，均未超过正式模型，因此没有晋升权重。两份今日新候选 CSV 已生成并核验，分别位于 `submission2/submission.csv` 与 `submission3/submission.csv`。10 月 31 日最终两份 CSV 的官网成绩由用户提供：submission2 **97.80**（ID 27513）、submission3 **97.79**（ID 27515）。10 月 30 日旧 CSV 分别为 97.87、97.81。平台成绩不用于选模；截图及对应关系见 [提交记录](项目文档/提交记录/20261031_两路线官网成绩.md)。详细结果见 [训练结果](项目文档/当前状态/训练结果.md)。
-
-## 运行
-
-在本机 GPU 环境中先确认没有重复训练进程；中断后从原 run 继续：
-
-```powershell
-python submission3/code/train.py --mode holdout --percent 80 --epochs 1
-python submission3/code/train.py --mode independent --percent 80 --epochs 1
-python submission2/code/train.py --epochs 1
-```
-
-推理入口分别为各目录 `code/predict.py`，计时入口为 `cost.py`。昨日和今日候选权重保存在 Git LFS 管理的 `项目文档/训练记录/20261030_候选权重/`、`项目文档/训练记录/20261031_候选权重/` 与 `项目文档/训练记录/20261031_晚间追加训练/`，可通过 `--checkpoint` 显式指定；默认推理只接受已晋升的 `model/best_model.pth`。完整用法与目录清理记录见 [使用说明](项目文档/当前状态/使用说明.md)。
-
-## 下一轮三路线实验（准备就绪，尚未训练）
-
-`submission4` 使用合规 ImageNet-1K 预训练的单个 ConvNeXt-Tiny，512 像素视野处理与全参数微调。训练脚本及显式 checkpoint 预测入口见 [submission4 使用说明](submission4/README.md)；三路线训练与两份 CSV 选择见 [11 月 1 日计划](项目文档/当前状态/20261101_三路线训练计划.md)。新路线尚无本项目验证 AUROC、模型权重、CSV 或官网成绩。
+原始 `glaucoma_first/`、`glaucoma_first_my/` 及其 junction 目标只读；只使用规则允许的非医学预训练，官方 valid 不并入训练，测试集不用于调参，预测不使用 TTA。比赛规则见根目录两份 PDF。训练与预测命令、权重来源、速度测量见 [`submission/README.md`](submission/README.md) 和[使用说明](项目文档/当前状态/使用说明.md)。跨电脑先执行 `git lfs pull`。`runs/` 为本地忽略的训练断点，明日续训必须保留 `runs/submission_new/20261102_133834`；普通拉取不会获得该完整断点。

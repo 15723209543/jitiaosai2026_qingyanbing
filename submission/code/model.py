@@ -1,42 +1,57 @@
-"""ImageNet-1K 非医学预训练双骨干；仅训练脚本下载原始权重。"""
+"""ImageNet-1K ConvNeXt-Small + 通道注意力 + 主/辅助二分类头。"""
 
-import hashlib
 from pathlib import Path
 
 import timm
-from huggingface_hub import HfApi, hf_hub_download
-from safetensors.torch import load_file
+import torch
+from torch import nn
+from safetensors.torch import load_file, save_file
+
+from utils import ROOT
+
+NAME = "convnext_small.fb_in1k"
+PRETRAIN_PATH = ROOT / "pretrain_model" / NAME / "model.safetensors"
 
 
-MODEL_NAMES = ("convnext_tiny.fb_in1k", "efficientnetv2_rw_s.ra2_in1k")
-MODEL_REPOS = {name: "timm/" + name for name in MODEL_NAMES}
+class GlaucomaNet(nn.Module):
+    """【参考报告 S23-g07，结构为自写近似】空间特征注意力及两路分类；非原作者源码。"""
+
+    def __init__(self, backbone):
+        super().__init__()
+        self.backbone = backbone
+        channels = backbone.num_features
+        self.attention = nn.Sequential(nn.AdaptiveAvgPool2d(1),
+                                       nn.Conv2d(channels, max(1, channels // 16), 1),
+                                       nn.ReLU(inplace=True),
+                                       nn.Conv2d(max(1, channels // 16), channels, 1),
+                                       nn.Sigmoid())
+        self.dropout = nn.Dropout(0.3)
+        self.classifier = nn.Linear(channels, 1)
+        self.auxiliary = nn.Linear(channels, 1)
+
+    def forward(self, images):
+        features = self.backbone.forward_features(images)
+        if features.shape[1] != self.backbone.num_features:
+            features = features.permute(0, 3, 1, 2)
+        pooled = (features * self.attention(features)).mean(dim=(2, 3))
+        return self.classifier(self.dropout(pooled)).flatten(), self.auxiliary(pooled).flatten()
 
 
-def sha256_file(path):
-    """【自写】分块计算原始预训练权重 SHA-256，供赛后溯源。"""
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as file:
-        for block in iter(lambda: file.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def create_model(name, pretrain_dir=None):
-    """【改自 timm 官方模型卡】先严格载入 ImageNet 原权重，再换成单输出青光眼头。"""
-    if name not in MODEL_REPOS:
-        raise ValueError("未知模型: " + name)
-    if pretrain_dir is None:
-        return timm.create_model(name, pretrained=False, num_classes=1, drop_rate=0.05), None
-    repo = MODEL_REPOS[name]
-    revision = HfApi().model_info(repo).sha
-    path = hf_hub_download(repo_id=repo, filename="model.safetensors", revision=revision,
-                           local_dir=str(Path(pretrain_dir) / name))
-    model = timm.create_model(name, pretrained=False, num_classes=1000, drop_rate=0.05)
-    model.load_state_dict(load_file(path), strict=True)
-    model.reset_classifier(num_classes=1)
-    origin = {"name": name, "repo": repo, "revision": revision,
-              "url": f"https://huggingface.co/{repo}/resolve/{revision}/model.safetensors",
-              "sha256": sha256_file(path), "license": "Apache-2.0",
-              "training_data": "ImageNet-1K",
-              "original_file": f"pretrain_model/{name}/model.safetensors"}
-    return model, origin
+def create_model(pretrained=False):
+    """【复用并修改】submission4/code/model.py:create_model；仅非医学 ImageNet-1K 权重。"""
+    if pretrained and not PRETRAIN_PATH.is_file():
+        # 只在首次训练时下载公开的 ImageNet-1K 参数，并留存完整来源文件。
+        PRETRAIN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        source = timm.create_model(NAME, pretrained=True, num_classes=1000)
+        save_file({k: v.contiguous().cpu() for k, v in source.state_dict().items()},
+                  str(PRETRAIN_PATH))
+        del source
+    backbone = timm.create_model(NAME, pretrained=False, num_classes=1000,
+                                 drop_rate=0.0, drop_path_rate=0.0)
+    if pretrained:
+        with PRETRAIN_PATH.open("rb") as handle:
+            if handle.read(48).startswith(b"version https://git-lfs.github.com/spec/v1"):
+                raise RuntimeError("预训练权重仅是 Git LFS 指针；请先 git lfs pull")
+        backbone.load_state_dict(load_file(str(PRETRAIN_PATH)), strict=True)
+    backbone.reset_classifier(num_classes=0)
+    return GlaucomaNet(backbone)

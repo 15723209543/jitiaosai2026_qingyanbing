@@ -25,3 +25,7 @@
 ### 2026-11-02 19:36 本机速度补测
 
 胸片任务明确释放 GPU 后，在同一台 RTX 5060 Laptop 8GB 上执行 `D:/anaconda3.0/envs/deepStudy/python.exe -u submission_new/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5`。计时图片为官方 valid 的只读副本，5 张预热、100 张×3 轮；单张从读图、预处理至模型输出含 CUDA 同步，与预测共用 `score_batch`。实测平均 **0.057311 秒/张（57.311 ms/张）**，低于 100 ms 参考门槛。此结果仅代表本机与该图像集，不冒称比赛指定设备正式验收。19:36 确认无 Python 进程、GPU 显存 26 MiB，并明确归还胸片任务。此前文档“速度尚未实测”已由本段更新。
+
+## 2026-11-02 晚间目录归档与续训修复
+
+用户反馈本候选官网 **97.65**（ID 29668，20:57:24；[截图记录](../项目文档/提交记录/20261102_submission官网97.65.md)），低于报告作者 98.55。报告 g07 实际训练13轮、joint选第7轮；本机第5轮官方 valid AUROC 最高，第6/7轮下降，不能据此认定轮次不足。高分报告原文已放入 `项目文档/历史研究记录/`。本目录由 `submission_new/` 重命名为 `submission/`；四个旧方案另存本地 ZIP。运行历史断点仍位于 `runs/submission_new/20261102_133834`，不移动，以保留完整优化器/EMA状态。代码仅修复续训目标轮数及早停状态恢复，不改变模型、数据、预处理、学习率或推理配方；此前训练的权重仍有效。明日同配方执行 `python submission/code/train.py --epochs 25 --batch-size 8 --accumulation 8 --workers 2 --resume runs/submission_new/20261102_133834`，只按官方 valid AUROC 严格提升更新最佳。当前断点第7轮，最佳第5轮，连续未提升2轮。旧 CSV 与权重在今晚不覆盖；详细执行门槛见 `项目文档/当前状态/20261103_submission复现续训方案.md`。
