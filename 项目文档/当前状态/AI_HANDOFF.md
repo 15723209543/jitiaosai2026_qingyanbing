@@ -42,3 +42,6 @@
 ### 2026-11-02 19:36 本机速度补测
 
 胸片任务明确释放 GPU 后，在同一台 RTX 5060 Laptop 8GB 上执行 `D:/anaconda3.0/envs/deepStudy/python.exe -u submission_new/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5`。计时图片为官方 valid 的只读副本，5 张预热、100 张×3 轮；单张从读图、预处理至模型输出含 CUDA 同步，与预测共用 `score_batch`。实测平均 **0.057311 秒/张（57.311 ms/张）**，低于 100 ms 参考门槛。此结果仅代表本机与该图像集，不冒称比赛指定设备正式验收。19:36 确认无 Python 进程、GPU 显存 26 MiB，并明确归还胸片任务。此前文档“速度尚未实测”已由本段更新。
+## 2026-11-03 晚：v1.25.1 Tiny 对照代码，明日待训
+
+用户要求今晚不再训练，新增二级版本并推送代码。已准备 S23 g03 ConvNeXt-Tiny320 原报告近似复现和 ICCV 2021 独立高斯特征增强消融；两者均未产生新权重或 CSV。明日先查 GPU/胸片进程并协调，再从非医学 ImageNet-1K 权重开新 run；官方 valid 仅用于 AUROC 选模。正式 Small 权重/CSV 保持不变，Tiny 只有 AUROC 严格超过0.9863724439657326且体积/延迟合规才晋升。命令及论文边界见 `20261103_S23_Tiny320复现方案.md`。用户反馈今日低 LR 候选官网96.95，ID30606；截图不含哈希，不能用于模型选择。

@@ -47,3 +47,10 @@ D:/anaconda3.0/envs/deepStudy/python.exe -u submission/code/train_restart.py --e
 ### 2026-11-03 实际执行结果
 
 v1旧run第8–11轮官方valid AUROC为0.983186、0.984842、0.982625、0.982553，连续6轮无提升在第11轮早停。v2低学习率新run runs/submission_new/20261103_135745 从ImageNet-1K原始权重完整训练10轮；第1–10轮AUROC为0.935235、0.962165、0.972783、0.977784、0.978090、0.979014、0.979959、0.981102、0.979172、0.975056。最佳第8轮0.981102低于正式v1第5轮0.9863724439657326，因此未晋升正式best_model.pth，也不覆盖正式submission.csv。候选权重已归档 项目文档/训练记录/20261103_低学习率重训/candidate_best_epoch8.pth，测试预测仅作为实验候选，不能用测试/官网反馈选模。
+
+## S23 g03 Tiny320 随机擦除独立复现（2026-11-03，执行前冻结）
+
+详细证据、已知差异、选模门槛与命令见 项目文档/当前状态/20261103_S23_Tiny320复现方案.md。配方ID s23_g03_tiny320_erasing_official_valid_v3；独立代码 model_tiny.py/train_tiny.py/predict_tiny.py/cost_tiny.py。只替换骨干为非医学ImageNet-1K ConvNeXt-Tiny；其余沿S23 320 erasing设置，官方train内41116张训练、官方valid5849张只用于AUROC选模。报告原精确源码/分割索引缺失，仍为明确差异的可执行复现。正式Small模型与CSV只在独立valid AUROC严格提升且体积/速度过关后更换。模型的真实训练结果待运行后记录。
+## S23 Tiny 特征增强对照（v1.25.1 代码，尚未训练）
+
+Tiny 原配方 `s23_g03_tiny320_erasing_official_valid_v3`，`--feature-noise-std 0`；论文启发消融 `s23_g03_tiny320_erasing_sfa_official_valid_v1`，`--feature-noise-std 0.05`。在池化特征进入分类头前，仅训练态加入独立高斯噪声，幅度为该样本特征标准差的5%；验证、预测、计时 `eval()` 无噪声。参考 ICCV 2021 Li 等人的特征增强，但未实现类别条件协方差估计，不能称为完整复现。两配方独立 run，参数和官方 train/valid 指纹写入断点。今晚仅完成代码与方案，明日训练后填写真实 AUROC。详见 `项目文档/当前状态/20261103_S23_Tiny320复现方案.md`。
