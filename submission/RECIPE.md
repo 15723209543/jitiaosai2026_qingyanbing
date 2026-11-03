@@ -29,3 +29,21 @@
 ## 2026-11-02 晚间目录归档与续训修复
 
 用户反馈本候选官网 **97.65**（ID 29668，20:57:24；[截图记录](../项目文档/提交记录/20261102_submission官网97.65.md)），低于报告作者 98.55。报告 g07 实际训练13轮、joint选第7轮；本机第5轮官方 valid AUROC 最高，第6/7轮下降，不能据此认定轮次不足。高分报告原文已放入 `项目文档/历史研究记录/`。本目录由 `submission_new/` 重命名为 `submission/`；四个旧方案另存本地 ZIP。运行历史断点仍位于 `runs/submission_new/20261102_133834`，不移动，以保留完整优化器/EMA状态。代码仅修复续训目标轮数及早停状态恢复，不改变模型、数据、预处理、学习率或推理配方；此前训练的权重仍有效。明日同配方执行 `python submission/code/train.py --epochs 25 --batch-size 8 --accumulation 8 --workers 2 --resume runs/submission_new/20261102_133834`，只按官方 valid AUROC 严格提升更新最佳。当前断点第7轮，最佳第5轮，连续未提升2轮。旧 CSV 与权重在今晚不覆盖；详细执行门槛见 `项目文档/当前状态/20261103_submission复现续训方案.md`。
+
+2026-11-02 版本补充：用户已指定本轮完成训练及官网 97.65 的版本为 **v1.24.1**；明日续训结果下一提交为 **v1.24.2**，中间位 24 保持不变。
+
+## 2026-11-03 条件重训方案（执行前记录）
+
+用户要求：若同配方断点续训触发早停且正式模型没有更新，则从第 1 轮开启新 run。本实验配方 ID `small320_lr3e5_ema_aux_consistency_official_valid_v2`，脚本 `submission/code/train_restart.py`。与 v1 的唯一训练配方变化是 AdamW 初始学习率及 40 轮余弦调度峰值从 `1e-4` 降至 `3e-5`；最低学习率仍为 `1e-6`。数据划分种子、41,116 张训练样本、独立官方 valid 5,849 张、模型结构、ImageNet-1K 预训练、320 像素、增强、损失、EMA、batch8×累积8、workers2 均保持 v1。理由：v1 第 5 轮后官方 valid AUROC 连续下降，降低更新幅度以检验是否能延缓退化，不保证提升。新实验从非医学 ImageNet-1K 原始权重初始化，优化器/EMA从零开始，绝不跨配方 resume；本轮时间盒目标 10 轮，若超过 17:15 不再启动新轮，18:30 前完成 CSV。
+
+待旧 run 确认早停且胸片并行显存允许，再执行：
+
+```powershell
+D:/anaconda3.0/envs/deepStudy/python.exe -u submission/code/train_restart.py --epochs 10 --batch-size 8 --accumulation 8 --workers 2
+```
+
+新 run 的最佳候选只写到其 `runs/submission_new/<新run>/best.pth`，脚本不会覆盖正式 `submission/model/best_model.pth` 或 `submission/submission.csv`。仅在官方独立 valid AUROC 严格超过 v1 最佳 `0.9863724439657326` 时，才人工晋升并重新预测；test 和平台分数不参与选模。若无提升，保留已验证的旧 CSV，并如实标注今天没有更高分候选。完整训练日志与实际轮次待执行后填写。
+
+### 2026-11-03 实际执行结果
+
+v1旧run第8–11轮官方valid AUROC为0.983186、0.984842、0.982625、0.982553，连续6轮无提升在第11轮早停。v2低学习率新run runs/submission_new/20261103_135745 从ImageNet-1K原始权重完整训练10轮；第1–10轮AUROC为0.935235、0.962165、0.972783、0.977784、0.978090、0.979014、0.979959、0.981102、0.979172、0.975056。最佳第8轮0.981102低于正式v1第5轮0.9863724439657326，因此未晋升正式best_model.pth，也不覆盖正式submission.csv。候选权重已归档 项目文档/训练记录/20261103_低学习率重训/candidate_best_epoch8.pth，测试预测仅作为实验候选，不能用测试/官网反馈选模。
