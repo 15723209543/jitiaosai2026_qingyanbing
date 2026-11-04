@@ -10,7 +10,7 @@ from safetensors.torch import load_file, save_file
 from utils import ROOT
 
 NAME = "convnext_small.fb_in1k"
-PRETRAIN_PATH = ROOT / "pretrain_model" / NAME / "model.safetensors"
+PRETRAIN_PATH = ROOT.parent / "项目文档" / "预训练权重" / NAME / "model.safetensors"
 
 
 class GlaucomaNet(nn.Module):

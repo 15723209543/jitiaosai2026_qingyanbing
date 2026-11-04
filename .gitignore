@@ -46,3 +46,4 @@ training/20261028/*_last.pth
 **/.cache/
 submission2/runs/
 submission3/runs/
+!submission/model/tiny_best_model.pth
