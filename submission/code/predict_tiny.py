@@ -16,12 +16,23 @@ from utils import ROOT, FundusDataset, load_checkpoint, read_records
 def load_model(path):
     """【复用并修改】submission4/code/predict.py:load_model；核对模型配方及官方验证来源。"""
     checkpoint = load_checkpoint(path)
-    if (checkpoint.get("recipe") not in {RECIPE, RECIPE_SFA} or checkpoint.get("model_name") != NAME or
+    allowed_recipes = {
+        RECIPE: 0.0,
+        RECIPE_SFA: 0.05,
+        "s23_g03_tiny320_randaugment_n1m4_official_valid_v1": 0.0,
+        "s23_g03_tiny320_randaugment_n1m4_low_lr_from_epoch7_v1": 0.0,
+        "s23_g03_tiny320_rand_low_lr_equal_soup_official_valid_v1": 0.0,
+        "s23_g03_tiny320_rand_sfa_soup_75_25_official_valid_v1": 0.0,
+        "s23_g03_tiny320_randaugment_n1m4_sam_rho005_from_epoch7_v1": 0.0,
+        "s23_g03_tiny320_randaugment_pairauc_balanced_from_soup_v1": 0.0,
+    }
+    recipe = checkpoint.get("recipe")
+    if (recipe not in allowed_recipes or checkpoint.get("model_name") != NAME or
             checkpoint.get("metric_scope") != "official_valid" or
             checkpoint.get("training_complete") is not True):
         raise ValueError("这不是S23 Tiny已通过官方验证的完整权重")
     noise_std = checkpoint.get("config", {}).get("feature_noise_std", 0.0)
-    if (checkpoint["recipe"] == RECIPE and noise_std != 0.0) or (checkpoint["recipe"] == RECIPE_SFA and noise_std != 0.05):
+    if noise_std != allowed_recipes[recipe]:
         raise ValueError("Tiny 权重配方与特征扰动参数不一致")
     model = create_model(pretrained=False, feature_noise_std=noise_std)
     model.load_state_dict(checkpoint["model"], strict=True)

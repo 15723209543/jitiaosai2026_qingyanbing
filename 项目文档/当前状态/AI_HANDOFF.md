@@ -1,3 +1,8 @@
+﻿正式CSV于2026-11-05 18:27:12生成并独立核验5,855行/官方顺序/三列/阈值，SHA256 e6d1a5ef4dbdc35fe9f755d386e8b61af3b6f10ff598d7ba50fd8c02aeee17ea。旧版CSV已备份；最终详情见项目文档/训练记录/20261105_最终交付/README.md。
+
+## 2026-11-05 v1.26.2 选模与交付
+
+正式路线现为**单Tiny320**，从已训练权重继续的成对AUC实验第3轮在完整官方valid 5,849张的AUROC为 **0.9897295956797492**，高于上一正式Small+Tiny融合的0.9875753924850881。最佳权重SHA256为`0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`，已复制至`submission/model/tiny_best_model.pth`；训练证据为`runs/submission_tiny_pair_auc/20261105_095121/best.pth`和不可变`runs/submission_tiny_pair_auc/candidate_epoch3.pth`。第4/5/6轮未提升后早停。温和成对AUC新run第1/2/3轮约0.989632/0.989522/0.989427；全量官方train新run第1/2轮约0.989619/0.989592；固定等权Tiny快照平均0.9896916565341388，均未超过第3轮，故不晋升。仅AUROC选模，AP和test/官网成绩不参与。正式`submission/code/predict.py`与`submission/cost.py`均调用单Tiny的同一推理实现；单权重111,644,807字节，RTX 5060 Laptop本机100张×3轮平均43.440ms/张，指定比赛硬件仍待验。CSV最终生成、独立核验和远端状态见`项目文档/训练记录/20261105_最终交付/README.md`；官网分数未知，不承诺达到98.5。历史Small模型和融合记录保留供回退。
 ## 2026-11-04 v1.26.1 官网反馈（用户提供）
 
 Small+Tiny 等权融合官网成绩 **97.97**（用户反馈；未提供提交 ID 或上传文件哈希），仓库当前 CSV SHA256 `e6013be93b43e37dd6af9654a72f2bd4752f7f23213d7a703d860f02bc833236`。本次仅记录成绩、更新版本号，模型/CSV未变；与平台文件的字节一致性无法独立核验。官方valid AUROC仍为0.9875753924850881。详见[成绩记录](../提交记录/20261104_v1.26.1_官网97.97.md)。以下为历史交接与实验记录。
@@ -52,3 +57,7 @@ Small+Tiny 等权融合官网成绩 **97.97**（用户反馈；未提供提交 I
 ## 2026-11-03 晚：v1.25.1 Tiny 对照代码，明日待训
 
 用户要求今晚不再训练，新增二级版本并推送代码。已准备 S23 g03 ConvNeXt-Tiny320 原报告近似复现和 ICCV 2021 独立高斯特征增强消融；两者均未产生新权重或 CSV。明日先查 GPU/胸片进程并协调，再从非医学 ImageNet-1K 权重开新 run；官方 valid 仅用于 AUROC 选模。正式 Small 权重/CSV 保持不变，Tiny 只有 AUROC 严格超过0.9863724439657326且体积/延迟合规才晋升。命令及论文边界见 `20261103_S23_Tiny320复现方案.md`。用户反馈今日低 LR 候选官网96.95，ID30606；截图不含哈希，不能用于模型选择。
+
+### 2026-11-05 03:20 通宵训练接续
+
+RandAugment Tiny 原run `runs/submission_tiny_randaugment/20261104_205005` 最佳第7轮官方独立valid AUROC 0.9889134413766172；第8–10轮连续下降，已核验完整第10轮last并只停止我方PID19360。新配方先写入`submission/RECIPE.md`，新代码`submission/code/train_tiny_randaugment_low_lr.py`，从第7轮EMA权重开启独立低学习率run `runs/submission_tiny_randaugment_low_lr/20261105_032034`，PID58192，日志`runs/submission_tiny_randaugment_low_lr/launch_20261105.{out,err}.log`。不得重复启动或跨配方resume。启动时官方valid AUROC 0.988913441377，尚未完成新轮。保持胸片进程不动；按独立官方valid选模，正式CSV暂不覆盖。下一次完整轮次读取日志/权重，连续3轮无提升则核验last后停仅我方PID；2026-11-05 19:00前最终交付。

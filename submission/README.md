@@ -1,22 +1,16 @@
-# submission：Small320 + Tiny320 固定等权融合
+﻿# submission：单Tiny320 成对AUC最佳权重
 
-**当前版本：v1.26.1；官网 97.97（用户反馈）。** 本方案是用户提供的 S23 报告思路的近似复现，作者的 98.55 不是本机成绩。两个骨干分别从非医学 ImageNet-1K 预训练，在官方 train 中训练；官方 valid 5,849 张仅用于 AUROC 选模，test 5,855 张仅用于输出。没有 TTA、外部医学数据或测试集调参。
+**v1.26.2；官方valid 5,849张 AUROC 0.9897295956797492。** 用户提供的高分报告是方案来源，作者的官网98.55并非本机成绩。本机上一正式Small+Tiny版本官方valid为0.9875753924850881、用户反馈官网97.97。新版本官网成绩未知。
 
-## 正式结果
+选定`model/tiny_best_model.pth`，SHA256 `0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`，第3轮EMA权重。训练从此前最高Tiny已训练权重开始，使用官方train内41,116张；官方valid仅以AUROC选模，官方test仅最终预测。没有外部医学训练数据或医学权重、TTA和测试调参。训练详情与后续未晋升实验见`RECIPE.md`及`../项目文档/训练记录/20261105_最终交付/README.md`。
 
-- Small 第5轮官方 valid AUROC：0.9863724439657326；Tiny 对照第7轮：0.9864871867475788。
-- 预先固定概率各 0.5 的 Small+Tiny 融合，完整官方 valid AUROC：**0.9875753924850881**；比原正式 Small 高 0.0012029485193555。记录：`model/ensemble_valid.json`，含两权重 SHA256。
-- SFA 特征噪声 0.05 独立实验最佳第5轮 0.987248，低于固定融合，未晋升。
-- 正式模型文件 `model/best_model.pth`（Small）与 `model/tiny_best_model.pth`（Tiny）合计 309,878,282 字节，低于 500 MB。本机 RTX 5060 Laptop 使用同一推理实现测得 84.677 ms/张；指定设备仍需验收，记录 `model/ensemble_cost.json`。
-- 正式 CSV 为 `submission.csv`，5855 行、官方 test 顺序与三列格式均已核验；用户反馈官网成绩 **97.97**；未提供提交 ID 或上传文件哈希，平台与本地文件的字节对应无法独立核验。
+正式预测`code/predict.py`与计时`cost.py`均调用`code/predict_tiny.py`/`code/measure_tiny.py`中的同一单视图Tiny `score_batch`。选定PTH 111,644,807字节；本机 RTX 5060 Laptop 使用100张验证图×3轮测得43.440ms/张，比赛指定硬件待验。`model/best_model.pth`是旧Small历史权重，正式预测不加载；保留它与旧融合记录供回退。整个`model/`内两个PTH合计仍低于500MB。
 
-## 使用
-
-首次拉取先执行 `git lfs pull`。在仓库根目录，`glaucoma_first/` 或 `GLAUCOMA_DATA_ROOT` 指向官方只读数据：
+拉取后先执行`git lfs pull`，保证官方数据只读路径`glaucoma_first/`或`GLAUCOMA_DATA_ROOT`可用。然后在仓库根目录运行：
 
 ```powershell
 D:/anaconda3.0/envs/deepStudy/python.exe -u submission/code/predict.py --output submission/submission.csv --workers 1
-D:/anaconda3.0/envs/deepStudy/python.exe -u submission/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5 --output submission/model/ensemble_cost.json
+D:/anaconda3.0/envs/deepStudy/python.exe -u submission/cost.py runs/submission_new/timing_20261102/100 runs/submission_new/timing_20261102/5 --output submission/model/tiny_cost_recheck.json
 ```
 
-`predict.py` 和 `cost.py` 均调用 `code/ensemble_tiny_small.py` 的同一个 `score()` 实现。预测会校验官方 valid 记录、两个权重的 SHA256 及 AUROC 门槛。原 Small 单模型入口保留为 `code/predict_small.py` 与 `cost_small.py`。完整训练配方与实验差异见 `RECIPE.md`，今日原始证据见 `../项目文档/训练记录/20261104_Tiny320/README.md`。旧四路线已存本地 ZIP 和仓库 Release。
+正式CSV应有5,855行、表头`Image_name,Probability,Pred_Label`，且遵循官方test顺序；最终哈希与校验报告记录在训练记录README。官网成绩只有上传后才能获知。
