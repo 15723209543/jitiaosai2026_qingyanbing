@@ -1,8 +1,19 @@
+# v1.28.1：2026-11-06 官网成绩 98.05
+
+用户提供的官网截图显示：2026-11-06 18:14:29，提交 ID 34323，成绩 **98.05**。截图仅显示文件名 `submission.csv`，不含上传文件 SHA256，因此不能独立证明平台文件与本地字节完全相同；本地正式 CSV SHA256 为 `46f5202f6ebac88299f25b4d81f751aa3d28211d954b417ce3ddacd96389072d`。v1.27.1 的用户反馈成绩为 97.57（提交 ID 32895），更早 v1.26.1 为 97.97。
+
+正式方案是 Small 第 6 轮成对 AUC 训练 EMA + 原 Tiny，固定各 0.5 概率融合。完整官方 valid 5,849 张 AUROC **0.9883804426480413**；模型权重分别为 `ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555` 与 `dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647`，合计 309,878,666 字节。本机同实现单张 47.845 ms；指定比赛硬件仍待验。CSV 已核验 5,855 行、官方 test 顺序、三列及 0.5 标签阈值。官网分数只作结果记录，不用于模型选择。
+
+## 2026-11-06 今日正式提交（本地，未获官网评分）
+
+用户要求以**今天训练得到的最高完整官方valid AUROC合规版本**提交，不回退官网97.97版；按此已替换本地正式`submission/`，没有Git推送、没有代用户上传官网。当前Small+Tiny固定概率各0.5，完整官方valid AUROC0.9883804426480413；正式CSV SHA256 `46f5202f6ebac88299f25b4d81f751aa3d28211d954b417ce3ddacd96389072d`，5,855行/官方顺序/三列/阈值独立核验。Small PTH SHA `ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555`，Tiny PTH SHA `dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647`。本机同代码推理平均47.845ms/张、双权重309,878,666字节。30%阶段性审计候选0.9931808319385035、旧版0.9936457752154236，候选较低，官网结果不能推定。旧官网97.97版在`runs/final_20261106/previous_*`；正式验证/计时/审计证据见该目录。今日两条训练均结束，勿重启；下一步只有用户自行上传并回报官网成绩，或按用户另行要求处理。原始数据/junction只读，未使用test调参、TTA、外部医学数据或权重。
+
+
 ﻿正式CSV于2026-11-05 18:27:12生成并独立核验5,855行/官方顺序/三列/阈值，SHA256 e6d1a5ef4dbdc35fe9f755d386e8b61af3b6f10ff598d7ba50fd8c02aeee17ea。旧版CSV已备份；最终详情见项目文档/训练记录/20261105_最终交付/README.md。
 
-## 2026-11-05 v1.26.2 选模与交付
+## 2026-11-05 v1.27.1 选模与交付
 
-正式路线现为**单Tiny320**，从已训练权重继续的成对AUC实验第3轮在完整官方valid 5,849张的AUROC为 **0.9897295956797492**，高于上一正式Small+Tiny融合的0.9875753924850881。最佳权重SHA256为`0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`，已复制至`submission/model/tiny_best_model.pth`；训练证据为`runs/submission_tiny_pair_auc/20261105_095121/best.pth`和不可变`runs/submission_tiny_pair_auc/candidate_epoch3.pth`。第4/5/6轮未提升后早停。温和成对AUC新run第1/2/3轮约0.989632/0.989522/0.989427；全量官方train新run第1/2轮约0.989619/0.989592；固定等权Tiny快照平均0.9896916565341388，均未超过第3轮，故不晋升。仅AUROC选模，AP和test/官网成绩不参与。正式`submission/code/predict.py`与`submission/cost.py`均调用单Tiny的同一推理实现；单权重111,644,807字节，RTX 5060 Laptop本机100张×3轮平均43.440ms/张，指定比赛硬件仍待验。CSV最终生成、独立核验和远端状态见`项目文档/训练记录/20261105_最终交付/README.md`；官网分数未知，不承诺达到98.5。历史Small模型和融合记录保留供回退。
+正式路线现为**单Tiny320**，从已训练权重继续的成对AUC实验第3轮在完整官方valid 5,849张的AUROC为 **0.9897295956797492**，高于上一正式Small+Tiny融合的0.9875753924850881。最佳权重SHA256为`0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`，已复制至`submission/model/tiny_best_model.pth`；训练证据为`runs/submission_tiny_pair_auc/20261105_095121/best.pth`和不可变`runs/submission_tiny_pair_auc/candidate_epoch3.pth`。第4/5/6轮未提升后早停。温和成对AUC新run第1/2/3轮约0.989632/0.989522/0.989427；全量官方train新run第1/2轮约0.989619/0.989592；固定等权Tiny快照平均0.9896916565341388，均未超过第3轮，故不晋升。仅AUROC选模，AP和test/官网成绩不参与。正式`submission/code/predict.py`与`submission/cost.py`均调用单Tiny的同一推理实现；单权重111,644,807字节，RTX 5060 Laptop本机100张×3轮平均43.440ms/张，指定比赛硬件仍待验。CSV最终生成、独立核验和远端状态见`项目文档/训练记录/20261105_最终交付/README.md`；用户反馈官网成绩97.57（提交ID 32895），低于v1.26.1的97.97；上传文件哈希未提供，字节对应无法独立核验。历史Small模型和融合记录保留供回退。
 ## 2026-11-04 v1.26.1 官网反馈（用户提供）
 
 Small+Tiny 等权融合官网成绩 **97.97**（用户反馈；未提供提交 ID 或上传文件哈希），仓库当前 CSV SHA256 `e6013be93b43e37dd6af9654a72f2bd4752f7f23213d7a703d860f02bc833236`。本次仅记录成绩、更新版本号，模型/CSV未变；与平台文件的字节一致性无法独立核验。官方valid AUROC仍为0.9875753924850881。详见[成绩记录](../提交记录/20261104_v1.26.1_官网97.97.md)。以下为历史交接与实验记录。
@@ -61,3 +72,9 @@ Small+Tiny 等权融合官网成绩 **97.97**（用户反馈；未提供提交 I
 ### 2026-11-05 03:20 通宵训练接续
 
 RandAugment Tiny 原run `runs/submission_tiny_randaugment/20261104_205005` 最佳第7轮官方独立valid AUROC 0.9889134413766172；第8–10轮连续下降，已核验完整第10轮last并只停止我方PID19360。新配方先写入`submission/RECIPE.md`，新代码`submission/code/train_tiny_randaugment_low_lr.py`，从第7轮EMA权重开启独立低学习率run `runs/submission_tiny_randaugment_low_lr/20261105_032034`，PID58192，日志`runs/submission_tiny_randaugment_low_lr/launch_20261105.{out,err}.log`。不得重复启动或跨配方resume。启动时官方valid AUROC 0.988913441377，尚未完成新轮。保持胸片进程不动；按独立官方valid选模，正式CSV暂不覆盖。下一次完整轮次读取日志/权重，连续3轮无提升则核验last后停仅我方PID；2026-11-05 19:00前最终交付。
+
+## 2026-11-05 20:00 新一轮训练状态
+
+用户反馈 v1.27.1 单Tiny提交ID32895官网97.57，故正式 `submission/` 已从本地已核验备份恢复为 v1.26.1 Small+Tiny 官网97.97路线。正式 CSV SHA256 `e6013be93b43e37dd6af9654a72f2bd4752f7f23213d7a703d860f02bc833236`；Small权重SHA256 `33ce0cccaf8bdaa9d132a75c6fd25d19dc2293ae9a5955b03d2b1f2647ff7a93`；Tiny权重SHA256 `dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647`。v1.27.1的正式CSV、Tiny权重及README/RECIPE已备份在 `项目文档/训练记录/20261105_97_57回退备份/`；旧训练记录和根目录提交材料ZIP不动。
+
+新Small随机子集独立实验已于20:00启动PID57388，代码 `submission/code/train_small_random_subset.py`，run `runs/submission_small_random_subset/20261105_200003`，日志 `runs/submission_small_random_subset/launch_20261105_overnight.{out,err}.log`。从官网最高版本的Small权重暖启动，每轮官方train内随机抽24000张，官方valid5849只用AUROC选模。正式CSV和权重暂不随训练覆盖。2026-11-06 19:00前交付真实结果；本地目标AUROC0.995及官网98.5只是目标，不是已取得成绩。本轮无GitHub推送指令。

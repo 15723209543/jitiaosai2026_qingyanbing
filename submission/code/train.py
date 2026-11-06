@@ -1,4 +1,4 @@
-"""S23-g07 近似复现实验：官方 train 内部分层留出，官方 valid AUROC 选最佳 EMA。"""
+"""S23-g03 Tiny320 近似复现实验：官方 train 内部分层留出，官方 valid AUROC 选最佳 EMA。"""
 
 import argparse
 import copy
@@ -14,18 +14,20 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-from model import NAME, PRETRAIN_PATH, create_model
-from utils import (DATA_ROOT, MODEL_PATH, ROOT, FundusDataset, atomic_save,
+from model import NAME, PRETRAIN_PATH, TINY_NAME, TINY_PRETRAIN_PATH, create_model, create_tiny_model
+from utils import (DATA_ROOT, ROOT, FundusDataset, atomic_save,
                    calculate_metrics, fingerprint, load_checkpoint, read_records)
 
-RECIPE = "small320_erasing_ema_aux_consistency_official_valid_v1"
+SMALL_RECIPE = "small320_erasing_ema_aux_consistency_official_valid_v1"
+TINY_RECIPE = "s23_g03_tiny320_erasing_official_valid_v3"
+TINY_RECIPE_SFA = "s23_g03_tiny320_erasing_sfa_official_valid_v1"
 SEED = 20261024
 FIT_COUNT = 41116
 EMA_DECAY = 0.996006
 
 
 def split_train(records):
-    """【报告 S23-g07 思路，自写实现】只在官方 train 内分层取 41,116 张；valid 不入训练。"""
+    """【报告 S23-g03 思路，自写实现】只在官方 train 内分层取 41,116 张；valid 不入训练。"""
     if len(records) < FIT_COUNT:
         raise ValueError(f"官方 train 数量 {len(records)} 小于复现配方要求 {FIT_COUNT}")
     indices, _ = train_test_split(np.arange(len(records)), train_size=FIT_COUNT,
@@ -34,7 +36,7 @@ def split_train(records):
 
 
 def update_ema(ema, model):
-    """【参考报告 S23-g07，自写】每次真实优化器更新后用 0.996006 指数滑动平均。"""
+    """【参考报告 S23-g03，自写】每次真实优化器更新后用 0.996006 指数滑动平均。"""
     with torch.no_grad():
         for target, source in zip(ema.parameters(), model.parameters()):
             target.lerp_(source, 1 - EMA_DECAY)
@@ -76,7 +78,7 @@ def learning_rate(step, steps_per_epoch):
 
 def train_epoch(model, ema, loader, optimizer, scaler, epoch, steps_per_epoch,
                 first_step, pos_weight, batch_accumulation, device, amp_dtype):
-    """【报告 S23-g07 思路，自写】BCE+0.2辅助头+渐入0.05双视图一致性，梯度累积。"""
+    """【报告 S23-g03 思路，自写】BCE+0.2辅助头+渐入0.05双视图一致性，梯度累积。"""
     model.train()
     optimizer.zero_grad(set_to_none=True)
     total_loss, steps = 0.0, 0
@@ -127,15 +129,14 @@ def checkpoint(model, ema, optimizer, scaler, epoch, step, best, config, patienc
 
 
 def run(args):
-    """【报告 S23-g07 配方，自写执行】GPU 完整训练；仅官方 valid AUROC 严格升高时更新单份最佳 PTH。"""
+    """【报告 S23-g03 配方，自写执行】GPU 完整训练；仅官方 valid AUROC 严格升高时更新单份最佳 PTH。"""
     print(f"设备：{'GPU ' + torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}; "
           f"PyTorch:{torch.__version__}; CUDA:{torch.version.cuda}", flush=True)
     if not torch.cuda.is_available():
         raise RuntimeError("本配方只在 GPU 训练；当前机器不执行完整训练")
-    if args.epochs < 1 or args.batch_size < 1 or args.accumulation < 1 or args.workers < 0:
+    if (args.epochs < 1 or args.batch_size < 1 or args.accumulation < 1 or
+            args.workers < 0 or args.feature_noise_std not in {0.0, 0.05}):
         raise ValueError("训练参数必须为合法正整数")
-    if args.resume is None and MODEL_PATH.exists():
-        raise FileExistsError("已有最佳权重。请使用 --resume 指定原 run 目录，避免意外覆盖。")
     random.seed(SEED)
     np.random.seed(SEED)
     torch.manual_seed(SEED)
@@ -147,15 +148,27 @@ def run(args):
     amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
     print(f"官方训练:{len(official_train)}，本配方实际训练:{len(fit)}，官方验证:{len(valid)}；"
           f"AMP:{amp_dtype}，batch:{args.batch_size}×{args.accumulation}", flush=True)
-    config = {"recipe": RECIPE, "seed": SEED, "model_name": NAME, "size": 320,
+    if args.arch == "small":
+        if args.feature_noise_std != 0:
+            raise ValueError("Small recipe does not use feature noise")
+        recipe, model_name, pretrain_path = SMALL_RECIPE, NAME, PRETRAIN_PATH
+        model_factory = lambda pretrained: create_model(pretrained=pretrained)
+        run_root = ROOT.parent / "runs" / "submission_new"
+    else:
+        recipe = TINY_RECIPE_SFA if args.feature_noise_std > 0 else TINY_RECIPE
+        model_name, pretrain_path = TINY_NAME, TINY_PRETRAIN_PATH
+        model_factory = lambda pretrained: create_tiny_model(pretrained=pretrained, feature_noise_std=args.feature_noise_std)
+        run_root = ROOT.parent / "runs" / ("submission_tiny_sfa" if args.feature_noise_std > 0 else "submission_tiny")
+    config = {"recipe": recipe, "seed": SEED, "model_name": model_name, "size": 320,
               "train_sha256": fingerprint(fit), "valid_sha256": fingerprint(valid),
               "batch_size": args.batch_size, "accumulation": args.accumulation,
               "epochs": args.epochs, "workers": args.workers}
-    run_root = ROOT.parent / "runs" / "submission_new"
+    if args.arch == "tiny":
+        config["feature_noise_std"] = args.feature_noise_std
     if args.resume:
         run_dir = args.resume.resolve()
         if not run_dir.is_dir() or run_dir.parent != run_root.resolve():
-            raise ValueError("--resume 必须是本项目 runs/submission_new 下原有 run")
+            raise ValueError(f"--resume 必须是本项目 {run_root} 下同配方原有 run")
         previous = load_checkpoint(run_dir / "last.pth")
         # The fixed 40-epoch schedule is unchanged; --epochs only extends the run target.
         recorded = {k: v for k, v in previous["config"].items()
@@ -165,7 +178,7 @@ def run(args):
             raise ValueError("恢复时配方或数据指纹变化，不能续训")
         if args.epochs <= previous["epoch"]:
             raise ValueError("目标轮次必须大于断点已完成轮次")
-        model = create_model(pretrained=False).cuda()
+        model = model_factory(False).cuda()
         model.load_state_dict(previous["model"], strict=True)
         start_epoch, step, best = previous["epoch"] + 1, previous["step"], previous["best_auroc"]
     else:
@@ -173,10 +186,10 @@ def run(args):
         if run_dir.exists():
             raise FileExistsError(run_dir)
         run_dir.mkdir(parents=True)
-        model = create_model(pretrained=True).cuda()
+        model = model_factory(True).cuda()
         start_epoch, step, best = 1, 0, -1.0
     digest_hash = hashlib.sha256()
-    with PRETRAIN_PATH.open("rb") as source:
+    with pretrain_path.open("rb") as source:
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest_hash.update(block)
     digest = digest_hash.hexdigest()
@@ -220,14 +233,14 @@ def run(args):
               f"报对阳性:{result['tp']}, 误报:{result['fp']}, 漏报:{result['fn']}", flush=True)
         if result["auroc"] > best:
             best, patience = result["auroc"], 0
-            selected = {"recipe": RECIPE, "model_name": NAME, "model":
+            selected = {"recipe": recipe, "model_name": model_name, "model":
                         {k: v.detach().cpu() for k, v in ema.state_dict().items()},
                         "config": config, "metric_scope": "official_valid",
                         "official_valid_auroc": best, "official_valid_ap": result["ap"],
                         "selected_epoch": epoch, "training_complete": True}
             atomic_save(selected, run_dir / "best.pth")
-            atomic_save(selected, MODEL_PATH)
-            print(f"官方验证 AUROC 提高，已更新 {MODEL_PATH}", flush=True)
+            # 本路线仅保存独立run候选，不能覆盖正式Small模型。
+            print(f"Tiny run官方验证AUROC提高，候选保存在 {run_dir / 'best.pth'}", flush=True)
         else:
             patience += 1
         atomic_save(checkpoint(model, ema, optimizer, scaler, epoch, step, best, config, patience),
@@ -240,9 +253,12 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--arch", choices=("small", "tiny"), required=True)
     parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--accumulation", type=int, default=32)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--feature-noise-std", type=float, default=0.0,
+                        help="ICCV 2021 特征高斯扰动实验；0 为原 S23 g03 对照")
     parser.add_argument("--resume", type=Path)
     run(parser.parse_args())

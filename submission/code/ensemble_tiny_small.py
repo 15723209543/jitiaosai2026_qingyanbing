@@ -137,7 +137,8 @@ if __name__ == "__main__":
     models, metadata, device = load_pair(args.small_checkpoint, args.tiny_checkpoint)
     sources = {"small_sha256": digest(args.small_checkpoint),
                "tiny_sha256": digest(args.tiny_checkpoint),
-               "small_valid_auroc": metadata[0]["official_valid_auroc"],
+               "small_model_selection_auroc": metadata[0].get("official_valid_auroc", metadata[0].get("selection_valid_auroc")),
+               "small_model_metric_scope": metadata[0]["metric_scope"],
                "tiny_valid_auroc": metadata[1]["official_valid_auroc"]}
     if args.mode == "valid":
         run_valid(models, device, args.output, sources, args.batch_size, args.workers)
@@ -147,7 +148,7 @@ if __name__ == "__main__":
                 selected.get("method") != "fixed_equal_tiny_small" or
                 selected.get("sources") != sources or
                 selected.get("rows") != 5849 or
-                selected.get("metrics", {}).get("auroc", 0) <= 0.9863724439657326):
+                selected.get("metrics", {}).get("auroc", 0) <= 0.9875753924850881):
             raise ValueError("Ensemble has not exceeded the formal official-valid AUROC")
         run_test(models, device, args.output, args.workers)
     else:

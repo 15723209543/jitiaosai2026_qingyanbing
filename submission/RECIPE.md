@@ -1,3 +1,9 @@
+# v1.28.1：2026-11-06 官网成绩 98.05
+
+用户提供的官网截图显示：2026-11-06 18:14:29，提交 ID 34323，成绩 **98.05**。截图仅显示文件名 `submission.csv`，不含上传文件 SHA256，因此不能独立证明平台文件与本地字节完全相同；本地正式 CSV SHA256 为 `46f5202f6ebac88299f25b4d81f751aa3d28211d954b417ce3ddacd96389072d`。v1.27.1 的用户反馈成绩为 97.57（提交 ID 32895），更早 v1.26.1 为 97.97。
+
+正式方案是 Small 第 6 轮成对 AUC 训练 EMA + 原 Tiny，固定各 0.5 概率融合。完整官方 valid 5,849 张 AUROC **0.9883804426480413**；模型权重分别为 `ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555` 与 `dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647`，合计 309,878,666 字节。本机同实现单张 47.845 ms；指定比赛硬件仍待验。CSV 已核验 5,855 行、官方 test 顺序、三列及 0.5 标签阈值。官网分数只作结果记录，不用于模型选择。
+
 # 冻结配方与差异
 
 配方 ID：`small320_erasing_ema_aux_consistency_official_valid_v1`。依据用户提供的 2026-11-01 报告 S23 g07；原作者没有随报告提供完整源码、权重、原始分割索引，所以本实现为**注明差异的近似复现**，不是原训练轨迹恢复。
@@ -69,64 +75,51 @@ Tiny对照run `runs/submission_tiny/20261104_095229`从ImageNet-1K初始化，�
 ### 2026-11-04 实际选模
 Tiny对照第7轮官方valid AUROC0.9864871867475788；SFA噪声0.05 run 第5轮0.987248、第6轮0.987096，仍低于预先固定0.5/0.5的Small+Tiny融合0.9875753924850881。完整官方valid5849行选择记录和权重SHA位于model/ensemble_valid.json；正式预测与计时均调用code/ensemble_tiny_small.py。融合两PTH合计309878282字节，本机同实现84.677ms/张。作者精确源码、切分和权重缺失，仍为近似复现；平台分数未知。
 
-## 2026-11-04 通宵备选：Small 全官方 train 低学习率续调（执行前冻结）
+## 2026-11-05 晚至11月6日：Small320 每轮随机子集独立续调实验
 
-实验脚本`code/train_small_full_finetune.py`，配方ID`small320_full_official_train_low_lr_finetune_v1`，与正式Small模型隔离保存到`runs/submission_small_full_finetune/<时间>/`，不自动覆盖`submission/model/`。起点是正式Small第5轮已训练EMA权重（本目录`model/best_model.pth`，SHA256 `33ce0cccaf8bdaa9d132a75c6fd25d19dc2293ae9a5955b03d2b1f2647ff7a93`），不是新的外部医学权重。官方train的51,396张全部训练；官方valid5,849张仍完全留出，仅AUROC选模；test只在最终选择后预测。与原Small配方不同：训练量从41,116增至51,396、AdamW和EMA从所选权重重置、micro-batch4×累积16（有效64）、学习率固定6轮余弦1e-5到1e-6、双视图一致性系数固定0.05、seed20261105。其他骨干/320像素/随机擦除/辅助BCE0.2/EMA0.996006/weight decay1e-4一致。最长6轮，连续3个完整轮次不提升则早停；只有官方valid AUROC严格超过原Small起点才保存新候选，最终是否替换正式融合仍须与其0.9875753924850881比较，体积/延迟过关。该实验参考用户报告关于“数据量与优化步数不可混淆”的结论，是新的可测假设，不宣称精确重现98.55。变配方绝不从旧`last.pth`跨run resume；同run中断后只以`--resume`恢复完整断点。每轮日志与真实AUROC待运行后填写。
+官网97.97的v1.26.1正式双模型权重、推理代码与CSV已经按SHA恢复；该成绩为用户反馈，历史验证AUROC 0.9875753924850881。2026-11-05单Tiny本地验证0.9897295956797492但用户反馈官网97.57，因此保持本节实验与正式文件隔离，不使用官网或test调参。
 
-## 2026-11-04 固定等权 Tiny 模型权重平均（执行前冻结与实际结果）
+本实验参考用户的《青光眼_真实实验与提交报告_20261101.md》中的Small320、随机擦除、双视图/EMA路径，和[ICCV 2021 Deep AUC Maximization](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html)、[UAI 2018 SWA](https://proceedings.mlr.press/r16/izmailov18a.html)关于高质量初始权重与权重平均/泛化的研究。论文是设计依据，并非声称严格复现。考虑此前Tiny成对AUC本地AUROC上升而官网下降，本轮首先采用官网最高97.97对应Small EMA权重作为暖启动，不改变正式提交。训练态增强和BCE+辅助头+一致性沿用现有Small配方；优化器重置，AdamW LR3e-6到5e-7/固定30轮余弦、WD3e-4、EMA0.996006。每个epoch从官方train 51,396张按seed 20261106+epoch不放回抽24,000张，完整官方valid 5,849张仅以AUROC选模，不进入训练；不使用test、TTA或外部医学数据/权重。microbatch4×累积16、workers1、CPU线程2，目标最多30轮、4个完整轮次不提升则停止并分析。每轮子集指纹、训练loss、官方valid AUROC和best/last原子保存。代码`submission/code/train_small_random_subset.py`，独立run`runs/submission_small_random_subset/`；中断只按同配方`--resume`恢复。候选不自动覆盖正式模型/CSV。正式预测与计时共用现有推理实现；晋升前还要完整官方valid评估与Tiny固定0.5融合、体积≤500MB及同实现单张≤100ms核验。目标0.995及官网98.5均为用户期望，结果待实测。
 
-依据 [ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html) 的权重平均思路，本机在看test前固定：Tiny无噪声对照第7轮EMA与Tiny训练态特征噪声0.05第5轮EMA的同名浮点参数各0.5，整数buffer沿用对照；两模型均从非医学ImageNet-1K起点训练、结构和320推理相同，噪声只在训练态。脚本`runs/submission_soup/try_soup.py`，来源SHA和完整官方valid5849张评估在`runs/submission_soup/equal_soup_valid.json`。实际单Tiny soup AUROC0.9868980399341895；与正式Small第5轮概率再各0.5融合的官方valid AUROC **0.9883693385078627**，高于v1.26.1正式等权融合0.9875753924850881。候选权重`runs/submission_soup/equal_soup_candidate.pth`；SFA来源第5轮PTH已按SHA备份`runs/submission_soup/sfa_source_epoch5.pth`，防止续训覆盖。该结果仅为验证候选，尚未生成test CSV或晋升正式模型；若最终采用，正式预测/计时须与其相同结构和权重、门槛核对后重新测量。权重平均不是新的医学预训练，也不使用官方valid训练模型或test调参。
+## 2026-11-05 晚：按用户要求分割官方 valid 的独立实验
 
-## 2026-11-04 通宵新增：Tiny320 温和 RandAugment 独立实验（执行前冻结）
+用户希望避免反复在完整官方 valid 5,849张上选轮次而导致选择偏差。先保留当前独立run `runs/submission_small_random_subset/20261105_200003` 的完整轮次断点与最佳权重，再只停止我方PID57388。新代码 `submission/code/train_small_select_holdout.py` 是独立配方：从官网97.97的Small权重 SHA256 `33ce0cccaf8bdaa9d132a75c6fd25d19dc2293ae9a5955b03d2b1f2647ff7a93` 重新暖启动，不从97.57 Tiny或零初始化。官方valid按seed20261106分层固定70%为轮次选择子集、30%留作最终一次审计；正式训练时只评估选择子集，审计子集不用于调参或早停。每轮官方train仍以seed+epoch随机不放回抽24000张，其他优化与EMA沿用上一随机子集配方。两run绝不跨配方resume，也不同时运行。此前所有实验已使用过完整官方valid，因此30%只是本轮以后减少重复查看的阶段性审计，不能声称全新盲测；最终报告同时列出选择子集、审计子集、完整官方valid AUROC，不用审计分数再反复挑模型。正式97.97版CSV与权重保持不变直至候选经完整验证与推理约束核对。
 
-参考 [NeurIPS 2020 RandAugment](https://proceedings.neurips.cc/paper/2020/hash/d85b63ef0ccb114d0a3bb7b7d808028f-Abstract.html) 的简化共享强度思路，新增`code/train_tiny_randaugment.py`，配方ID`s23_g03_tiny320_randaugment_n1m4_official_valid_v1`。仅训练态在原水平翻转±15°旋转、颜色扰动、低概率随机擦除之前加入**1个RandAugment操作、强度4/30**；valid/test单视图和预处理不变，无TTA。采用与Tiny对照相同的非医学ImageNet-1K起点、官方train内41116张、独立官方valid5849张、seed20261024、双视图BCE+辅助0.2+一致性0.05/前5轮、EMA0.996006、AdamW1e-4与固定40轮余弦；共享GPU用micro-batch4×累积16、workers1、OMP/MKL线程2（有效batch64）。新run在`runs/submission_tiny_randaugment/`，与SFA或对照断点隔离，目标上限13轮；至少10轮且patience6自动早停，但用户要求连续3完整轮不提高时可在last.pth完整后提前停。预先选择官方valid AUROC为唯一晋升标准，必须超过当前最优融合0.9886265844220017且满足体积/速度才替换。该方法可能损伤眼底色彩/结构，属于消融假设，不能预称提升或报告作者的98.55；不使用任何外部医学数据、权重或test调参。训练结果与源码指纹待完成后据实记录。
+## 2026-11-06 Small 轨迹平均与长窗口EMA独立配方（执行前冻结）
 
-## 2026-11-04 通宵备选：Small 同轨迹固定权重平均（执行前冻结）
+当前70/30实验第1–3轮的训练损失和模型轨迹与前一完整valid实验完全相同：只换验证口径，没有改变训练抽样和优化。这一配方不能作为新的提分方法重复消耗GPU。参考用户报告的Small320高分开发路线及其“同轨迹权重平均/长窗口EMA”待测建议、[ICML2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)的参数平均研究，本机尝试独立Small训练配方。论文只是方法依据，不声称论文保证本题提升。
 
-参考 [ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)，在看到官方valid之前固定：正式Small第5轮EMA与独立全官方train低LR续调第3轮EMA的同名参数各0.5，整数buffer沿用正式Small；先评估单Small权重平均，再与已固定的SFA Tiny第5轮概率各0.5融合，仅用完整官方valid5849张比较当前最高0.9886265844220017。虽然低LR续调第1–3轮单模型AUROC均低于起点，参数平均可能平滑轨迹，也可能退化；不能预设成功。两源均为非医学ImageNet起点经官方train训练，valid不入训练；test只在最终候选选择后预测。实验输出隔离在被Git忽略的`runs/submission_soup/`，正式权重/CSV不覆盖。若双模型继续受500MB/100ms限制，须同实现测量后才能晋升。
+新代码`submission/code/train_small_swa_cycle.py`从当前70%选模第2轮最佳Small权重的不可变副本`runs/submission_small_swa_cycle/source_best.pth`初始化；该权重本身继承官网97.97版Small，不从零或97.57版Tiny起。新run与旧run完全分离，优化器重置。官方train内每轮seed20261107+epoch无放回抽20,000张，训练态双视图/随机擦除沿用Small；EMA衰减由0.996006改为0.999，学习率在1e-6至3e-6之间每2轮余弦循环，AdamW WD3e-4，batch4×累积16/workers1、最多20轮、连续4轮选模AUROC不提升停。官方valid沿用固定seed20261106分层70%选模/30%最终一次审计，选模子集及分割指纹保存；不读test调参。每轮EMA快照单独原子保存，供预先固定同轨迹权重平均候选；平均后仍须先在70%选模子集评估，30%只在最终审计一次，不可反复用审计集调配比。无医学外部数据/权重或TTA。新候选不自动覆盖正式97.97版模型/CSV，体积与同实现单张时延最终验证。
 
-## 2026-11-05 03:19 RandAugment 停滞后独立低学习率实验（执行前冻结）
+### 2026-11-06 12:00 固定四快照Small参数平均候选
 
-RandAugment N1/M4 run `runs/submission_tiny_randaugment/20261104_205005` 第7轮官方独立 valid AUROC 0.9889134413766172，随后第8/9/10轮依次 0.988797/0.988726/0.985943；训练损失仍从0.16636降到0.11824，出现泛化退化。已核实第10轮 `last.pth` 完整、早停计数3，只停止我方 PID19360，原第7轮最佳权重保留（SHA256 `6686f5e5ae0042c8e4d7334206307d12a7111ce7c9b7d6d1f0d53d93b8890e30`）。
+长窗口EMA+周期LR独立run第1轮选模子集AUROC0.983802578019，第2–5轮逐轮下降至0.983559475351，连续4轮无提升自动早停；第5轮last与每轮EMA快照均完整保存。不继续重复该配方。按[ICML2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)及用户报告对同轨迹权重平均的建议，在读取平均后性能前预先固定取该run第1–4轮EMA同名浮点权重各0.25，非浮点buffer取第1轮，形成一个Small单模型候选。仅在固定70%选模子集评估并与第1轮最佳0.983802578019比较；30%留出部分暂不评估。参数平均不增加推理模型数，也不保证提升。若不优，再依据训练loss降低但选模AUROC下降的现象改训练正则化与采样，另开独立run，不覆盖官网97.97正式CSV和权重。
 
-参考 [ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html) 对同起点微调权重可平均的研究，拟从第7轮 EMA 最佳权重开启**独立新 run**，重置优化器和轮次，以 LR 1e-5、权重衰减 5e-4、8轮余弦降到1e-6，继续官方 train 内 41116 张、RandAugment N1/M4，batch4×累积16，其他损失和验证预处理与旧配方一致。新run结果只在独立官方 valid 5849 张评估；best只在AUROC严格提高时保存，且不自动覆盖正式模型/CSV。若有效，再固定等权试同架构权重平均，须独立valid证明提升、体积和同实现计时合规。该实验针对训练loss继续下降而valid退化的现象，不能保证达到0.995；测试集不用于选择。新配方与旧断点绝不跨配方resume。结果待完成后填写。
+### 2026-11-06 12:00 停滞后的训练态随机深度候选（执行前冻结）
 
-## 2026-11-05 06:18 低学习率再停滞与固定等权跨阶段Tiny权重平均
+周期LR+长EMA第1轮选择子集AUROC0.983802578019，此后第2–5轮连续4轮下降且训练loss由0.130675降至0.116537，自动早停；第5轮last与第1–5轮快照保留。参考[ECCV2016 Stochastic Depth原论文](https://arxiv.org/abs/1603.09382)的训练态残差路径随机丢弃思路，尝试ConvNeXt Small的训练态drop_path_rate=0.1、推理态禁用。此为本题独立实验，不宣称论文保证效果。新run从上一最高选择子集第1轮Small EMA（继承官网97.97 Small）不可变权重`runs/submission_small_drop_path/source_best.pth`初始化并重置优化器；仅官方train随机子集每轮20000张、seed20261108+epoch；官方valid仍为固定70%选模/30%最终一次审计。LR2e-6余弦至5e-7、WD3e-4、EMA0.996006、batch4×累积16/workers1、最多15轮、4轮无改善早停。drop path无新可学习参数，推理用原Small结构加载同一state_dict。最佳PTH只存在独立run，不覆盖正式97.97版。模型体积、时延及完整官方valid/融合AUROC必须在晋升前实测。
 
-独立低学习率run `runs/submission_tiny_randaugment_low_lr/20261105_032034` 从Rand第7轮EMA起点0.988913441377开始。第1轮官方valid AUROC 0.9889643353524361略升，第2/3/4轮依次0.988268/0.987911/0.986970；训练loss 0.10030→0.05106而valid退化。第4轮 `last.pth` 已核验 epoch4、best_auroc0.9889643353524361、patience3，训练自动早停。原最佳和正式CSV保持不动。
+### 2026-11-06 约14:00 随机深度停滞与固定融合检验
 
-参考 [ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)，在进一步看验证结果之前固定：同架构RandAugment Tiny原run第7轮EMA与低LR新run第1轮EMA的同名浮点参数各0.5；整数buffer沿用原run。先测单Tiny soup，再与正式Small固定0.5/0.5概率融合，使用完整官方valid5849张选模，不看test。实验独立输出`runs/submission_soup/`，不得覆盖正式权重；只有AUROC、模型体积和同实现单张计时门槛均通过才可晋升。此权重平均不产生新医学预训练。结果待运行。
+训练态drop_path_rate0.1独立run第1–4轮选择子集AUROC依次0.983435097241、0.983063847430、0.982809437660、0.982504145937，全部低于起点0.983802578019，完整第4轮last.pth落盘并自动早停，不续训该配方。为判断Small单模型小幅变化在原官网97.97双模型结构中是否真正有效，在读取融合结果前固定比较：原Small+原Tiny与当前70%最佳Small（长EMA周期LR第1轮）+相同原Tiny，各自概率固定50/50；两条仅在同一固定70%选模子集计算AUROC，30%继续不使用。若新融合不超过原融合，不用该候选覆盖正式97.97 CSV。评估脚本为本地`eval_small_tiny_selection.py`，输出`runs/submission_small_swa_cycle/20261106_102323/fixed_ensemble_selection.json`。用户目标0.99不是允许缩小验证集反复挑选权重的理由。
 
-## 2026-11-05 06:20 SAM 跨配方独立训练（执行前冻结）
+### 2026-11-06 下午：完整 valid 对照后独立 Small 成对 AUC 实验（启动前记录）
 
-原RandAugment Tiny第7轮官方valid0.988913；从其最佳权重独立低LR训练，第1轮0.988964，但第2–4轮降到0.988268/0.987911/0.986970，训练loss持续下降。已核验第4轮完整last及patience3，程序自动早停。参考 [ICLR 2021 Sharpness-Aware Minimization](https://openreview.net/forum?id=6Tm1mposlrM) 和 [作者官方实现](https://github.com/google-research/sam)，在看到本实验验证结果前固定下一实验：从**RandAugment第7轮EMA**作为起点，独立新run、重置AdamW优化器，使用SAM rho0.05（每个有效batch的同一批样本两次前后向）、LR1e-5按6轮余弦降至1e-6、WD1e-4；RandAugment N1/M4、320像素、batch4×累积16、官方train内41116训练及官方valid5849全量AUROC选模保持不变。SAM计算约两倍，显存需与胸片共存；若OOM只停我方进程。连续3个完整轮次无提升早停。实验候选仅保存在新run，不覆盖正式模型或CSV；测试集不参与调参。该文献给出改善泛化的一般方法，不保证本题0.995。验证结果和计时待填写。
+固定 Small+原 Tiny 各 0.5 的完整官方 valid 5849 张评估：官网 97.97 版权重 AUROC 0.9875753924850881；长 EMA 周期 LR 第 1 轮 Small 最佳权重与同一 Tiny 融合 AUROC 0.9877067914772022，确有小幅提高但仍低于目标 0.99。70% 固定选择子集上分别为 0.9849031358359717 和 0.9851518920548771。两者是不同口径，不把子集分数用于解释同一子集内的退化。30% 审计部分暂不单独评估。
 
-## 2026-11-05 09:50 SAM停滞后的成对AUC损失独立实验（执行前冻结）
+参考 ICCV 2021 Large-Scale Robust Deep AUC Maximization 的 AUC 导向训练思想，建立独立 Small 候选 `submission/code/train_small_pair_auc_subset.py`。从上述长 EMA 第 1 轮最佳 Small EMA 权重暖启动，不从零开始、不跨配方 resume。每轮从官方 train 51,396 张按 `20261109+epoch` 无放回抽 12,000 张作为基础池，再在该池内用有放回加权抽样形成 12,000 次训练输入，目标阳性采样比例 15%；重复抽样只发生在官方 train 内。loss 为 BCE 主头 + 0.2 BCE 辅助头 + 0.05 双视图一致性 + 0.05 成对平方 hinge AUC 项（margin 0.5）；该实现是论文启发的简化配方，不声称严格复现论文。正样本重采样后 BCE 的 pos_weight=1；AdamW 起点 LR 2e-6、12 轮余弦至 5e-7、WD3e-4，EMA 沿用 Small 原实现。batch4×累积16/workers1、最多12轮，连续4完整轮次无选择子集 AUROC 提升早停。官方 valid 固定 seed20261106 的70%只用于轮次选择，30%待最终单次审计；历史曾看过完整 valid，不称新盲测。每轮保存原子 last/best，候选不自动覆盖官网 97.97 版提交。最终须在完整官方 valid 同口径对比固定 Small+Tiny 融合、核验模型总量≤500MB和同实现单张≤100ms。test仅最终生成CSV，不按test或官网反馈调参；无外部医学数据/权重或 TTA。用户要求每15分钟低额度监测，18:00后不新增实验，19:00前完成选择和如实交付。0.99/0.995与官网98.5为目标，不保证达到。
 
-SAM从Rand第7轮最佳EMA启动，官方valid第1/2/3轮0.988729/0.987696/0.987934，均未超起点0.988913441377；第3轮last已完整，patience3，程序自动早停，正式权重不变。当前最佳**单Tiny**是同架构Rand第7轮与低LR第1轮固定等权soup，官方valid AUROC0.988965260697451，权重`runs/submission_soup/rand_low_lr_equal_soup_candidate.pth` SHA256 `fff98be5212da2ee2b20aa3aced1a12e7ba4b9a36d8f907208da646926ba25ce`。
+### 2026-11-06 约16:45 Small 成对 AUC 停滞后的温和独立配方（启动前记录）
 
-参考 [ICCV 2021 Deep AUC Maximization](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html) 及其先以交叉熵训练再以AUC目标微调的思路，下一独立run**从上述最高单Tiny权重**启动，重置优化器，非从零开始。继续官方train内41116张，WeightedRandomSampler以约25%阳性比例采样每轮41116次，避免microbatch4大多没有阳性的情况；Loss=原双视图BCE+辅助0.2+一致性0.05 + 0.1×成对平方hinge AUC margin0.5（仅当当前batch同时含阳性、阴性计算）。RandAugment N1/M4、320像素、batch4×累积16、workers1、BF16；AdamW LR5e-6按4轮余弦至1e-6、WD1e-4，最多4轮，连续3轮独立官方valid AUROC不提高早停。与论文的精确DAM优化器不同，这是本机可控的近似消融，不预称论文复现或结果提升。正式模型/CSV不覆盖；原始数据和junction只读，测试集不选模。实验结果待运行。
-配方补充（执行前）：WeightedRandomSampler已把阳性抽样比例设为25%，因此BCE的pos_weight固定为1，避免对阳性重复加权；其他原损失项不变。
+前一独立run `runs/submission_small_pair_auc_subset/20261106_141143` 从长EMA Small权重暖启动，固定70%选择集起点AUROC0.983802578019，第1–6轮连续提高至第6轮0.985577792854，第7–10轮连续4轮下降，完整第10轮last.pth记录patience4正常早停。第6轮最佳权重已冻结`candidate_epoch6.pth`，SHA256 AB36E4F40F5C630DB94D93FFF35ECE25C522F303194906B1B8A72EA0EE533555。其与原Tiny固定概率各0.5在完整官方valid5849张AUROC **0.9883804426480413**，高于官网97.97版0.9875753924850881；当前仅候选，正式文件未替换。第7–10轮选择集AUROC下降但训练loss未一致上涨，继续原配方意义有限。
 
-## 2026-11-05 10:10 报告高分方法组合的单Tiny模型平均（执行前冻结）
+参考 [ICCV2021 Large-Scale Robust Deep AUC Maximization](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html) 的AUC导向训练，以及当前本机回落现象，独立新run从上述第6轮最佳Small EMA权重暖启动，重置优化器，不跨配方resume。每轮官方train seed20261110+epoch无放回抽10000张基础池，池内有放回加权抽样10000次，目标阳性比例由15%降至10%；成对平方hinge AUC loss系数由0.05降至0.02，margin仍0.5；BCE主头、0.2辅助头、0.05双视图一致性不变且pos_weight=1。LR1e-6至3e-7/6轮余弦，AdamW WD3e-4，batch4×累积16/workers1，连续3轮选择集AUROC不提高即早停。该配方只是论文启发的本题消融，不宣称严格复现。固定seed20261106的70%官方valid仅选模、30%只最终一次审计；历史曾看过完整valid，不能称全新盲测。每次新best原子保存，不自动覆盖正式97.97文件。18:00后不新增实验，19:00前对最终候选做完整valid同口径评估、部署体积和时延、5855行CSV顺序/三列/阈值/哈希核验；按用户最新要求以**今天训练得到的完整官方valid AUROC最高且合规版本**最终生成CSV，即使官网未知。无test或官网调参、外部医学数据权重和TTA。
 
-用户报告S23开发组显示Small320+erasing g07平台98.55、全量Tiny+Small双模型98.43、全量Tiny+Small+Swin三模型98.35；这些平台反馈的本地分区与当前官方valid5849不可直接比，历史高分权重并未作为当前可用checkpoint核实。当前本机正式Small+Tiny已测同实现84.677ms、总权重约310MB；再增加第三次骨干前向可能突破100ms，故先试**同架构Tiny权重平均**，不增加推理模型数量和结构。
 
-参考 [ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)，在看新验证结果前固定：当前最高Tiny Rand+低LR等权soup（官方valid0.988965260697451）权重0.75，与训练态SFA噪声0.05第5轮EMA权重0.25做逐参数平均；整型buffer沿用前者。先评估单Tiny，再固定Small与Tiny各0.5概率评估，官方valid全5849张只用于选模。若无提高则丢弃；不使用平台分数或test预测选择。该方案融合报告里高分的Tiny增强路线，仍为单Tiny推理，须最终同实现计时。实验脚本和候选置于被Git忽略的runs/submission_soup，正式权重/CSV暂不覆盖。结果待运行。
-2026-11-05 12:18阶段结果：成对AUC新run第1/2/3/4轮官方valid AUROC依次0.9894010982/0.9896361358/0.9897295957/0.989682（AP仅记录）。最佳第3轮权重已单独归档candidate_epoch3.pth，第4轮完整last保存，只有1轮未提升。保持配方不变，允许同run --resume把目标轮数从4延长至7；每轮AUROC严格升高即保存best及不可变候选，连续3轮不提升提前止训，最晚17:00停训准备交付。
+## 2026-11-06 今日正式提交（本地，未获官网评分）
 
-## 2026-11-05 13:50 成对AUC停滞后的温和重启（执行前冻结）
+按用户最新要求，正式 `submission/` 已改为今天训练的 Small 第6轮 EMA + 原 Tiny，推理概率固定各0.5；**尚未上传官网，不能把本地结果当作平台分数**。从官网97.97版 Small 暖启动，逐轮官方 train 随机12,000张基础池并在池内按15%阳性比例加权抽样，加入0.05成对平方hinge AUC项；固定70%官方valid用于轮次选择。第1–6轮选择集AUROC从0.984091升至最佳 **0.9855777928539122**，第7–10轮连续4轮下降后自动早停，完整last已核验。第6轮冻结Small权重SHA256 `ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555`。随后从该最佳权重做10%阳性抽样、0.02成对AUC项的温和新run，第1–3轮选择集AUROC依次0.985442/0.985289/0.985107，自动早停，未晋升。
 
-上一同配方run `runs/submission_tiny_pair_auc/20261105_095121` 第3轮官方valid AUROC 0.9897295956797492；第4/5/6轮分别约0.989682/0.989656/0.989608，训练loss仍低而验证连续三轮退化，完整第6轮last.pth记录patience=3并早停。依据 [ICCV 2021 Deep AUC Maximization](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html) 对AUC指标易受少数排序错误影响的分析，以及本机连续退化现象，提出更温和的独立验证：从第3轮最佳EMA权重 `runs/submission_tiny_pair_auc/candidate_epoch3.pth`（SHA256 `0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`）初始化**新run**，优化器重置；阳性重采样目标由25%降至15%，成对平方hinge系数由0.1降至0.05，学习率恒定2e-6、最多3轮。保留Tiny320、RandAugment N1/M4、batch4×累积16、官方train内41116张训练、官方valid5849张仅以AUROC选模，test完全不参与调整。每轮AUROC严格提升才更新候选；若未超0.9897295956797492，保持上一最佳。此为本机温和消融，不声称精确复现论文提出的完整优化器。
-## 2026-11-05 16:18 全量官方train温和AUC微调（执行前冻结）
+第6轮Small与原Tiny在**完整官方valid 5,849张**固定等权AUROC **0.9883804426480413**，比旧官网97.97版同口径 **0.9875753924850881** 高0.0008050501629532。最终保留的30%分区仅作一次阶段性审计：新旧AUROC分别 **0.9931808319385035** / **0.9936457752154236**，候选在该分区反而低0.0004649432769201；该分区在历史实验中曾被看到，不能称真正盲测。这个分歧提示官网泛化收益不确定，须如实告知。
 
-前一个温和AUC run `runs/submission_tiny_pair_auc_mild/20261105_135132` 从当前最高Tiny第3轮EMA起训练，第1/2/3轮官方valid AUROC约0.989632/0.989522/0.989427，连续3轮均低于起点0.9897295956797492，epoch3完整last.pth已核验patience3并正常早停。参考[ICCV 2021 Large-Scale Robust Deep AUC Maximization](https://openaccess.thecvf.com/content/ICCV2021/html/Yuan_Large-Scale_Robust_Deep_AUC_Maximization_A_New_Surrogate_Loss_and_ICCV_2021_paper.html)对大规模AUC训练的实证思路，现做**独立本机消融**：从已冻结的原成对AUC第3轮最佳EMA `runs/submission_tiny_pair_auc/candidate_epoch3.pth`（SHA256 `0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`）出发，不从零；将官方train的51,396张全部用于训练而非之前内部41,116张；官方valid5,849张完全留出。恢复原成对AUC配方的25%阳性采样及pairwise平方hinge系数0.1，优化器重新初始化、固定1e-6学习率、至多2轮、batch4×累积16/workers1。RandAugment N1/M4、Tiny320模型、EMA等保持不变。新配方独立run，不跨旧run恢复；每完整轮只以官方valid AUROC严格高于0.9897295956797492才保存新候选。此实验不是论文DAM优化器的精确复现；test仅最终预测，不能选模。19:00训练硬截止，之后选择已完成的最高且合规候选。
-## 2026-11-05 18:08 固定等权Tiny快照平均（执行前冻结）
-
-全量官方train独立实验第1轮完整官方valid AUROC约0.989619，第2轮约0.989592，均未超过原成对AUC第3轮最佳0.9897295956797492。依据[ICML 2022 Model soups](https://proceedings.mlr.press/v162/wortsman22a.html)和[SWA](https://proceedings.mlr.press/r16/izmailov18a.html)的已训练权重平均思路，在评估前固定原成对AUC第3轮最佳EMA权重与全量官方train第2轮EMA权重各0.5进行同架构逐参数平均，整数buffer取原第3轮。官方valid5849全量仅用于AUROC选模，绝不读取test预测选择；若不严格超过0.9897295956797492则保留原第3轮。平均后的单Tiny仍须核对体积≤500MB与同实现单张≤100ms。本实验不增加推理模型数，不声称论文精确复现。## 2026-11-05 v1.26.2 选模与交付
-
-正式路线现为**单Tiny320**，从已训练权重继续的成对AUC实验第3轮在完整官方valid 5,849张的AUROC为 **0.9897295956797492**，高于上一正式Small+Tiny融合的0.9875753924850881。最佳权重SHA256为`0feb9619de1c5316bb2d0947bd5ea122fe9957f77d36a7bef174468f2da516c8`，已复制至`submission/model/tiny_best_model.pth`；训练证据为`runs/submission_tiny_pair_auc/20261105_095121/best.pth`和不可变`runs/submission_tiny_pair_auc/candidate_epoch3.pth`。第4/5/6轮未提升后早停。温和成对AUC新run第1/2/3轮约0.989632/0.989522/0.989427；全量官方train新run第1/2轮约0.989619/0.989592；固定等权Tiny快照平均0.9896916565341388，均未超过第3轮，故不晋升。仅AUROC选模，AP和test/官网成绩不参与。正式`submission/code/predict.py`与`submission/cost.py`均调用单Tiny的同一推理实现；单权重111,644,807字节，RTX 5060 Laptop本机100张×3轮平均43.440ms/张，指定比赛硬件仍待验。CSV最终生成、独立核验和远端状态见`项目文档/训练记录/20261105_最终交付/README.md`；官网分数未知，不承诺达到98.5。历史Small模型和融合记录保留供回退。
-
-## 2026-11-05 元数据勘误
-
-成对AUC原run保存的候选PTH `config.initial_lr=1e-5`、`config.weight_decay=5e-4` 是启动脚本中的**展示字段错误**；真实训练执行的学习率由同脚本`learning_rate()`定义为5e-6预热后4轮余弦至1e-6，真实`AdamW`权重衰减为1e-4，优化器状态亦按真实值保存。该勘误不修改已冻结的最佳PTH及其SHA；代码现把新run元数据改为实际值，并在同配方resume时兼容上述旧元数据记录。历史配方与权重选择仍以真实日志和代码为准。
+正式双权重总量 **309,878,666字节**，同一`ensemble_tiny_small.py`推理路径在本机100张×3轮平均 **47.845 ms/张**，指定比赛硬件仍需验收。正式`submission/submission.csv`按该权重和完整valid选择记录生成，独立验证**5,855行、官方test顺序、Image_name/Probability/Pred_Label、概率范围和0.5阈值**；CSV SHA256 `46f5202f6ebac88299f25b4d81f751aa3d28211d954b417ce3ddacd96389072d`。Small/Tiny权重哈希分别为`ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555`与`dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647`。旧97.97版CSV/Small权重与推理代码备份在`runs/final_20261106/previous_*`；完整评估、计时和审计证据也在该目录。没有Git推送，用户可自行提交CSV；官网分数待实际上传后记录。

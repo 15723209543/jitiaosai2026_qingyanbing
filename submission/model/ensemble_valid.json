@@ -3,17 +3,18 @@
   "method": "fixed_equal_tiny_small",
   "rows": 5849,
   "sources": {
-    "small_sha256": "33ce0cccaf8bdaa9d132a75c6fd25d19dc2293ae9a5955b03d2b1f2647ff7a93",
+    "small_sha256": "ab36e4f40f5c630db94d93fff35ece25c522f303194906b1b8a72ea0ee533555",
     "tiny_sha256": "dd4253f1ddc6a103478a43b32b21a06d9ff087567be8b95f4936e3930141a647",
-    "small_valid_auroc": 0.9863724439657326,
+    "small_model_selection_auroc": 0.9855777928539122,
+    "small_model_metric_scope": "official_valid_selection70",
     "tiny_valid_auroc": 0.9864871867475788
   },
   "metrics": {
-    "auroc": 0.9875753924850881,
-    "ap": 0.8414648545098884,
+    "auroc": 0.9883804426480413,
+    "ap": 0.8432519208948493,
     "positive": 191,
-    "tp": 146,
-    "fp": 49,
-    "fn": 45
+    "tp": 153,
+    "fp": 60,
+    "fn": 38
   }
 }

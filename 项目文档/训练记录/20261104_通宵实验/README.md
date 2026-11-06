@@ -7,7 +7,7 @@
 - 18:54启动Small全官方train低LR独立新run，PID15552，配方见`submission/RECIPE.md`，日志`runs/submission_small_full_finetune/launch_20261104_fulltrain.{out,err}.log`；起点Small第5轮官方valid AUROC已核对0.986372443966。真实轮次与候选待日志核实。
 - 19:00额外SFA Tiny+Small验证因共享GPU仅余696MiB，安全停止仅该可中断验证进程PID42276。两条训练及胸片任务未触碰，显存余量恢复约1455MiB。该验证**没有完成、无有效AUROC**，不可引用；待至少一条训练结束且显存充足后可重新评估。
 
-最终选择只以官方独立valid AUROC严格提高为准；test仅生成最终CSV。11月5日约17:00停止新增训练、17:30开始最终推理与核验，19:00前交付并集中推送v1.26.2。所有未完成内容须据实更新。
+最终选择只以官方独立valid AUROC严格提高为准；test仅生成最终CSV。11月5日约17:00停止新增训练、17:30开始最终推理与核验，19:00前交付并集中推送v1.27.1。所有未完成内容须据实更新。
 SFA第5轮用于soup的精确权重已备份在runs/submission_soup/sfa_source_epoch5.pth，SHA256 b30b61064fe2fa88572dc0ca4df4ecf92e5e64075898320d25fb476596bd9c63。19:00安全停止额外验证后，两条训练仍正常、共享GPU空闲约1.45GiB。
 
 

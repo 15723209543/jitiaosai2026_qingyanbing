@@ -9,16 +9,17 @@ import torch
 from torch.utils.data import DataLoader
 
 from model import NAME, create_model
-from train import RECIPE, score_batch
+from train import SMALL_RECIPE as RECIPE, score_batch
 from utils import MODEL_PATH, ROOT, FundusDataset, load_checkpoint, read_records
 
 
 def load_model(path=MODEL_PATH):
     """【复用并修改】submission4/code/predict.py:load_model；核对模型配方及官方验证来源。"""
     checkpoint = load_checkpoint(path)
-    if (checkpoint.get("recipe") != RECIPE or checkpoint.get("model_name") != NAME or
-            checkpoint.get("metric_scope") != "official_valid" or
-            checkpoint.get("training_complete") is not True):
+    allowed = {(RECIPE, "official_valid"),
+               ("small320_pairauc15_random12000_selection70_v1", "official_valid_selection70")}
+    if ((checkpoint.get("recipe"), checkpoint.get("metric_scope")) not in allowed or
+            checkpoint.get("model_name") != NAME or checkpoint.get("training_complete") is not True):
         raise ValueError("这不是 submission_new 已通过官方验证的完整权重")
     model = create_model(pretrained=False)
     model.load_state_dict(checkpoint["model"], strict=True)
@@ -29,7 +30,7 @@ def load_model(path=MODEL_PATH):
 def predict(output=ROOT / "submission.csv", checkpoint_path=MODEL_PATH, workers=2):
     """【复用并修改】submission4/code/predict.py:predict；按官方 test.csv 顺序写三列。"""
     model, checkpoint, device = load_model(checkpoint_path)
-    print(f"预测设备:{device}; 最佳官方验证AUROC:{checkpoint['official_valid_auroc']:.6f}", flush=True)
+    print(f"预测设备:{device}; 最佳官方验证AUROC:{checkpoint.get('official_valid_auroc', checkpoint.get('selection_valid_auroc')):.6f}", flush=True)
     records = read_records("test")
     loader = DataLoader(FundusDataset(records), batch_size=1, shuffle=False,
                         num_workers=workers, pin_memory=device == "cuda")
